@@ -3216,14 +3216,13 @@ function handleDeleteTeam(teamName) {
   );
 }
 
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("service-worker.js")
-            .then((registration) => {})
-            .catch((err) => {});
-        });
-      }
+    if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/rook_Migration_Test/service-worker.js", {
+    scope: "/rook_Migration_Test/"
+  })
+  .then(() => console.log("SW registered"))
+  .catch((err) => console.error("SW registration failed:", err));
+}
 
       function updateState(newState) {
         state = { ...state, ...newState };
