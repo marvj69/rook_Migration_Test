@@ -978,7 +978,59 @@
   // Mark migration as complete
   localStorage.setItem(MIGRATION_VERSION_KEY, CURRENT_MIGRATION_VERSION.toString());
 }
+function fixOldRounds() {
+  let changed = false;
+  const savedGames = JSON.parse(localStorage.getItem("savedGames") || "[]");
+  savedGames.forEach((game) => {
+    // Use either the new fields or fall back to old ones
+    const team1Name = game.usTeamName || game.player1 || "Us";
+    const team2Name = game.demTeamName || game.player2 || "Dem";
 
+    if (Array.isArray(game.rounds)) {
+      game.rounds.forEach((round) => {
+        // Ensure that if the round still uses "DemPoints", it gets renamed.
+        if (typeof round.DemPoints !== "undefined" && typeof round.demPoints === "undefined") {
+          round.demPoints = round.DemPoints;
+          delete round.DemPoints;
+          changed = true;
+        }
+        // Map biddingTeam from "us" to the actual team1 name.
+        if (round.biddingTeam === "us") {
+          round.biddingTeam = team1Name;
+          changed = true;
+        } else if (
+          typeof round.biddingTeam === "string" &&
+          round.biddingTeam.toLowerCase() === "dem"
+        ) {
+          round.biddingTeam = team2Name;
+          changed = true;
+        }
+        // Rename runningTotals.Dem if needed.
+        if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
+          round.runningTotals.dem = round.runningTotals.Dem;
+          delete round.runningTotals.Dem;
+          changed = true;
+        }
+      });
+    }
+    // Also update game.winner if still "us"/"Dem"
+    if (game.winner === "us") {
+      game.winner = team1Name;
+      changed = true;
+    } else if (typeof game.winner === "string" && game.winner.toLowerCase() === "dem") {
+      game.winner = team2Name;
+      changed = true;
+    }
+    if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
+      game.finalScore.dem = game.finalScore.Dem;
+      delete game.finalScore.Dem;
+      changed = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem("savedGames", JSON.stringify(savedGames));
+  }
+}
       /*
         ====================================================
         THEME SELECTION LOGIC
