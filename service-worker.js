@@ -1,11 +1,9 @@
-// Update your cache name whenever you change the service worker or want to force a refresh
-const CACHE_NAME = "rook-cache-v8";
-
-// Use the exact path to your index.html, matching how it’s served on GitHub Pages
+const CACHE_NAME = "rook-cache-v9";
 const OFFLINE_URL = "/rook_Migration_Test/index.html";
 
-// The files we want to cache ahead of time. Must match your GH Pages paths exactly.
+// Cache both the folder root and the index file so navigation requests match.
 const urlsToCache = [
+  "/rook_Migration_Test/",
   "/rook_Migration_Test/index.html",
   "/rook_Migration_Test/manifest.json",
   "/rook_Migration_Test/service-worker.js",
@@ -14,12 +12,9 @@ const urlsToCache = [
   "https://cdn.tailwindcss.com"
 ];
 
-// Flag to ensure we only do a network-first check once
+// This flag ensures we only perform a network-first check on the first navigation.
 let hasCheckedForUpdate = false;
 
-/**
- * INSTALL: Cache the specified resources and activate immediately.
- */
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -30,12 +25,6 @@ self.addEventListener("install", (event) => {
   );
 });
 
-/**
- * FETCH:
- *   - On the *first* navigation request, do a network-first approach. If offline, serve OFFLINE_URL.
- *   - On subsequent navigation requests, serve from cache (fallback to network, then to OFFLINE_URL).
- *   - For non-navigation requests, do cache-first with background update.
- */
 self.addEventListener("fetch", (event) => {
   const isNavigationRequest =
     event.request.mode === "navigate" ||
@@ -43,22 +32,20 @@ self.addEventListener("fetch", (event) => {
       event.request.headers.get("accept")?.includes("text/html"));
 
   if (isNavigationRequest) {
-    // Only do the network-first approach once:
     if (!hasCheckedForUpdate) {
+      // On the very first navigation, try network-first
       hasCheckedForUpdate = true;
       event.respondWith(
         fetch(event.request)
           .then((networkResponse) => {
             console.log("[SW] Fetched (first nav) from network:", event.request.url);
-            // Cache the fresh version
             return caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, networkResponse.clone());
               return networkResponse;
             });
           })
           .catch((err) => {
-            console.warn("[SW] First nav fetch failed, offline fallback:", err);
-            // Return offline fallback
+            console.warn("[SW] First nav fetch failed, using offline fallback:", err);
             return caches.match(OFFLINE_URL).then((cached) => {
               return (
                 cached ||
@@ -70,17 +57,15 @@ self.addEventListener("fetch", (event) => {
           })
       );
     } else {
-      // Subsequent navigations => cache-first fallback to network => fallback to OFFLINE_URL
+      // Subsequent navigations: try cache, then network, then fallback.
       event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
-            console.log("[SW] Serving nav from cache:", event.request.url);
+            console.log("[SW] Serving navigation from cache:", event.request.url);
             return cachedResponse;
           }
-          // Not in cache, try network
           return fetch(event.request).catch((err) => {
-            console.warn("[SW] Subsequent nav fetch failed:", err);
-            // Fallback to OFFLINE_URL
+            console.warn("[SW] Navigation fetch failed:", err);
             return caches.match(OFFLINE_URL).then((fallback) => {
               return (
                 fallback ||
@@ -94,10 +79,9 @@ self.addEventListener("fetch", (event) => {
       );
     }
   } else {
-    // For non-navigation requests => cache-first with background update
+    // For non-navigation requests, use a cache-first approach with background update.
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        // Attempt a network fetch in the background
         const fetchPromise = fetch(event.request)
           .then((networkResponse) => {
             if (
@@ -112,18 +96,14 @@ self.addEventListener("fetch", (event) => {
             return networkResponse;
           })
           .catch(() => {
-            // If the network fails, rely on the cached response
+            // If network fails, use cached response (if any)
           });
-        // Return cache or the network fetch promise
         return cachedResponse || fetchPromise;
       })
     );
   }
 });
 
-/**
- * ACTIVATE: Clean up old caches, claim clients so the SW controls pages immediately.
- */
 self.addEventListener("activate", (event) => {
   self.clients.claim();
   const cacheWhitelist = [CACHE_NAME];
