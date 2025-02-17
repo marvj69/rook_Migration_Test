@@ -851,15 +851,6 @@
         </div>
       </div>
     </div>
-    <!-- Request Update Button -->
-<div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-  <button
-    id="requestUpdateButton"
-    class="px-4 py-2 bg-red-600 text-white rounded shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-  >
-    Request Update
-  </button>
-</div>
 
     <script>
       "use strict";
@@ -867,152 +858,163 @@
       // =========================
       // DATA MIGRATION
       // =========================
-      const CURRENT_MIGRATION_VERSION = 1;
+      const CURRENT_MIGRATION_VERSION = 7;
       const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
       function performDataMigration() {
-        const currentVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
+  const currentVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
 
-        // If we've already run a migration >= CURRENT_MIGRATION_VERSION, skip.
-        if (currentVersion && parseInt(currentVersion) >= CURRENT_MIGRATION_VERSION) {
-          return;
-        }
+  // If we've already run a migration >= CURRENT_MIGRATION_VERSION, skip.
+  if (currentVersion && parseInt(currentVersion) >= CURRENT_MIGRATION_VERSION) {
+    return;
+  }
 
-        // Helper to get/set local storage arrays
-        function getLocalStorage(key) {
-          return JSON.parse(localStorage.getItem(key)) || [];
-        }
-        function setLocalStorage(key, value) {
-          localStorage.setItem(key, JSON.stringify(value));
-        }
+  // Helper to get/set local storage arrays
+  function getLocalStorage(key) {
+    return JSON.parse(localStorage.getItem(key)) || [];
+  }
+  function setLocalStorage(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
 
-        // 1) Migrate savedGames
-        const savedGames = getLocalStorage("savedGames");
-        if (savedGames.length) {
-          const migratedSavedGames = savedGames.map((game) => {
-            // (a) Map old player1/player2 to usTeamName/demTeamName
-            if (!game.usTeamName && game.player1) {
-              game.usTeamName = game.player1;
-            }
-            if (!game.demTeamName && game.player2) {
-              game.demTeamName = game.player2;
-            }
-            // Default if still missing
-            game.usTeamName = game.usTeamName || "Us";
-            game.demTeamName = game.demTeamName || "Dem";
+  // 1) Migrate savedGames
+  const savedGames = getLocalStorage("savedGames");
+  if (savedGames.length) {
+    const migratedSavedGames = savedGames.map((game) => {
+      // (a) Map old player1/player2 to usTeamName/demTeamName
+      if (!game.usTeamName && game.player1) {
+        game.usTeamName = game.player1;
+      }
+      if (!game.demTeamName && game.player2) {
+        game.demTeamName = game.player2;
+      }
+      // Default if still missing
+      game.usTeamName = game.usTeamName || "Us";
+      game.demTeamName = game.demTeamName || "Dem";
 
-            // (b) Rename finalScore.Dem -> finalScore.dem
-            if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
-              game.finalScore.dem = game.finalScore.Dem;
-              delete game.finalScore.Dem;
-            }
+      // (b) Rename finalScore.Dem -> finalScore.dem
+      if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
+        game.finalScore.dem = game.finalScore.Dem;
+        delete game.finalScore.Dem;
+      }
 
-            // (c) Rename each round’s DemPoints -> demPoints and runningTotals.Dem -> runningTotals.dem
-            if (Array.isArray(game.rounds)) {
-              game.rounds.forEach((r) => {
-                if (typeof r.DemPoints !== "undefined") {
-                  r.demPoints = r.DemPoints;
-                  delete r.DemPoints;
-                }
-                if (r.runningTotals && typeof r.runningTotals.Dem !== "undefined") {
-                  r.runningTotals.dem = r.runningTotals.Dem;
-                  delete r.runningTotals.Dem;
-                }
-              });
-            }
-
-            // (d) Normalize winner to "us" or "dem"
-            if (typeof game.winner === "string") {
-              if (game.winner === game.player1) {
-                game.winner = "us";
-              } else if (game.winner === game.player2) {
-                game.winner = "dem";
-              } else if (game.winner.toLowerCase() === "us") {
-                game.winner = "us";
-              } else if (game.winner.toLowerCase() === "dem") {
-                game.winner = "dem";
-              }
-            }
-
-            return game;
-          });
-
-          setLocalStorage("savedGames", migratedSavedGames);
-        }
-
-        // 2) Migrate freezerGames
-        const freezerGames = getLocalStorage("freezerGames");
-        if (freezerGames.length) {
-          const migratedFreezerGames = freezerGames.map((game) => {
-            if (!game.usName) {
-              game.usName = "Us";
-            }
-            if (!game.demName) {
-              game.demName = "Dem";
-            }
-
-            if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
-              game.finalScore.dem = game.finalScore.Dem;
-              delete game.finalScore.Dem;
-            }
-
-            if (Array.isArray(game.rounds)) {
-              game.rounds.forEach((r) => {
-                if (typeof r.DemPoints !== "undefined") {
-                  r.demPoints = r.DemPoints;
-                  delete r.DemPoints;
-                }
-                if (r.runningTotals && typeof r.runningTotals.Dem !== "undefined") {
-                  r.runningTotals.dem = r.runningTotals.Dem;
-                  delete r.runningTotals.Dem;
-                }
-              });
-            }
-
-            if (typeof game.winner === "string") {
-              if (game.winner.toLowerCase() === "us") {
-                game.winner = "us";
-              } else if (game.winner.toLowerCase() === "dem") {
-                game.winner = "dem";
-              }
-            }
-
-            return game;
-          });
-
-          setLocalStorage("freezerGames", migratedFreezerGames);
-        }
-
-        // 3) Migrate overall stats to team-based
-        const teams = JSON.parse(localStorage.getItem("teams")) || {};
-        const updatedSavedGames = getLocalStorage("savedGames");
-        updatedSavedGames.forEach((game) => {
-          const usTeam = game.usTeamName || "Us";
-          const demTeam = game.demTeamName || "Dem";
-
-          if (!teams[usTeam]) {
-            teams[usTeam] = { wins: 0, losses: 0, gamesPlayed: 0 };
+      // (c) Rename each round’s DemPoints -> demPoints and runningTotals.Dem -> runningTotals.dem,
+      // and also migrate an old "bid" property to "bidAmount" if needed.
+      if (Array.isArray(game.rounds)) {
+        game.rounds.forEach((r) => {
+          if (typeof r.DemPoints !== "undefined") {
+            r.demPoints = r.DemPoints;
+            delete r.DemPoints;
           }
-          if (!teams[demTeam]) {
-            teams[demTeam] = { wins: 0, losses: 0, gamesPlayed: 0 };
+          if (r.runningTotals && typeof r.runningTotals.Dem !== "undefined") {
+            r.runningTotals.dem = r.runningTotals.Dem;
+            delete r.runningTotals.Dem;
           }
-
-          teams[usTeam].gamesPlayed++;
-          teams[demTeam].gamesPlayed++;
-
-          if (game.winner === "us") {
-            teams[usTeam].wins++;
-            teams[demTeam].losses++;
-          } else if (game.winner === "dem") {
-            teams[demTeam].wins++;
-            teams[usTeam].losses++;
+          // NEW: If the round has an old "bid" property but no bidAmount, migrate it.
+          if (typeof r.bid !== "undefined" && (typeof r.bidAmount === "undefined" || r.bidAmount === null)) {
+            r.bidAmount = r.bid;
+            delete r.bid;
           }
         });
-        localStorage.setItem("teams", JSON.stringify(teams));
-
-        // 4) Mark we have migrated
-        localStorage.setItem(MIGRATION_VERSION_KEY, CURRENT_MIGRATION_VERSION.toString());
       }
+
+      // (d) Normalize winner to "us" or "dem"
+      if (typeof game.winner === "string") {
+        if (game.winner === game.player1) {
+          game.winner = "us";
+        } else if (game.winner === game.player2) {
+          game.winner = "dem";
+        } else if (game.winner.toLowerCase() === "us") {
+          game.winner = "us";
+        } else if (game.winner.toLowerCase() === "dem") {
+          game.winner = "dem";
+        }
+      }
+
+      return game;
+    });
+
+    setLocalStorage("savedGames", migratedSavedGames);
+  }
+
+  // 2) Migrate freezerGames
+  const freezerGames = getLocalStorage("freezerGames");
+  if (freezerGames.length) {
+    const migratedFreezerGames = freezerGames.map((game) => {
+      if (!game.usName) {
+        game.usName = "Us";
+      }
+      if (!game.demName) {
+        game.demName = "Dem";
+      }
+
+      if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
+        game.finalScore.dem = game.finalScore.Dem;
+        delete game.finalScore.Dem;
+      }
+
+      if (Array.isArray(game.rounds)) {
+        game.rounds.forEach((r) => {
+          if (typeof r.DemPoints !== "undefined") {
+            r.demPoints = r.DemPoints;
+            delete r.DemPoints;
+          }
+          if (r.runningTotals && typeof r.runningTotals.Dem !== "undefined") {
+            r.runningTotals.dem = r.runningTotals.Dem;
+            delete r.runningTotals.Dem;
+          }
+          // NEW: Migrate an old "bid" property to "bidAmount" if needed.
+          if (typeof r.bid !== "undefined" && (typeof r.bidAmount === "undefined" || r.bidAmount === null)) {
+            r.bidAmount = r.bid;
+            delete r.bid;
+          }
+        });
+      }
+
+      if (typeof game.winner === "string") {
+        if (game.winner.toLowerCase() === "us") {
+          game.winner = "us";
+        } else if (game.winner.toLowerCase() === "dem") {
+          game.winner = "dem";
+        }
+      }
+
+      return game;
+    });
+
+    setLocalStorage("freezerGames", migratedFreezerGames);
+  }
+
+  // 3) Migrate overall stats to team-based
+  const teams = JSON.parse(localStorage.getItem("teams")) || {};
+  const updatedSavedGames = getLocalStorage("savedGames");
+  updatedSavedGames.forEach((game) => {
+    const usTeam = game.usTeamName || "Us";
+    const demTeam = game.demTeamName || "Dem";
+
+    if (!teams[usTeam]) {
+      teams[usTeam] = { wins: 0, losses: 0, gamesPlayed: 0 };
+    }
+    if (!teams[demTeam]) {
+      teams[demTeam] = { wins: 0, losses: 0, gamesPlayed: 0 };
+    }
+
+    teams[usTeam].gamesPlayed++;
+    teams[demTeam].gamesPlayed++;
+
+    if (game.winner === "us") {
+      teams[usTeam].wins++;
+      teams[demTeam].losses++;
+    } else if (game.winner === "dem") {
+      teams[demTeam].wins++;
+      teams[usTeam].losses++;
+    }
+  });
+  localStorage.setItem("teams", JSON.stringify(teams));
+
+  // 4) Mark we have migrated
+  localStorage.setItem(MIGRATION_VERSION_KEY, CURRENT_MIGRATION_VERSION.toString());
+}
 
       /*
         ====================================================
@@ -3157,22 +3159,6 @@ function handleDeleteTeam(teamName) {
         state = { ...state, ...newState };
         renderApp();
       }
-      document.getElementById("requestUpdateButton").addEventListener("click", function () {
-  // Unregister any service workers (if present)
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      registrations.forEach(function(registration) {
-        registration.unregister();
-      });
-    }).finally(function() {
-      // Force reload by adding a cache-busting query param
-      window.location.href = window.location.href.split('?')[0] + '?cacheBuster=' + Date.now();
-    });
-  } else {
-    // If no service worker, just force a reload bypassing cache
-    window.location.href = window.location.href.split('?')[0] + '?cacheBuster=' + Date.now();
-  }
-});
     </script>
   </body>
 </html>
