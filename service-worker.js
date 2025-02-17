@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rook-cache-v2';
+const CACHE_NAME = 'rook-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -25,11 +25,17 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch Event: Uses a network-first strategy for navigation requests
-// and a cache-first with background update for other requests.
+// Fetch Event: Uses a network-first strategy for navigation requests with a broader detection
+// and a cache-first strategy for other requests.
 self.addEventListener('fetch', (event) => {
-  // If this is a navigation request (i.e. the user opening the app)
-  if (event.request.mode === 'navigate') {
+  // Broaden navigation detection to include requests that accept HTML
+  const isNavigationRequest =
+    event.request.mode === 'navigate' ||
+    (event.request.method === 'GET' &&
+      event.request.headers.get('accept') &&
+      event.request.headers.get('accept').includes('text/html'));
+
+  if (isNavigationRequest) {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
@@ -41,17 +47,18 @@ self.addEventListener('fetch', (event) => {
         })
         .catch((error) => {
           console.warn('Network fetch failed, serving cached content:', error);
-          return caches.match(event.request);
+          // Fallback to cached index.html for offline scenarios
+          return caches.match('/index.html');
         })
     );
   } else {
-    // For non-navigation requests, use the cached version immediately if available.
+    // For non-navigation requests, use the cache-first strategy with background update.
     event.respondWith(
       caches.match(event.request)
         .then((cachedResponse) => {
           const fetchPromise = fetch(event.request)
             .then((networkResponse) => {
-              // If the response is valid, update the cache.
+              // If valid response, update the cache.
               if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
                 caches.open(CACHE_NAME).then((cache) => {
                   cache.put(event.request, networkResponse.clone());
@@ -60,9 +67,8 @@ self.addEventListener('fetch', (event) => {
               return networkResponse;
             })
             .catch(() => {
-              // In case of network error, just let the cached version stand.
+              // In case of a network error, the cached response (if any) will be used.
             });
-          // Return the cached response immediately, or the network response if not cached.
           return cachedResponse || fetchPromise;
         })
     );
