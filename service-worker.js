@@ -6,15 +6,17 @@ const urlsToCache = [
   '/service-worker.js',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
-  'https://cdn.tailwindcss.com'  // Added Tailwind CDN URL for offline caching
+  'https://cdn.tailwindcss.com'  // Tailwind CDN for offline caching
 ];
 
-// Install Event: Caches the specified resources
+// Install Event: Cache specified resources and force waiting SW to become active
 self.addEventListener('install', (event) => {
+  // Force the waiting service worker to become active
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
+        console.log('Opened cache during install');
         return cache.addAll(urlsToCache);
       })
       .catch((error) => {
@@ -23,41 +25,54 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch Event: Serves cached content when offline
+// Fetch Event: Uses a network-first strategy for navigation requests
+// and a cache-first with background update for other requests.
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return the cached response
-        if (response) {
-          return response;
-        }
-        // Clone the request as it's a stream and can be consumed only once
-        const fetchRequest = event.request.clone();
-        return fetch(fetchRequest)
-          .then((networkResponse) => {
-            // Check for a valid response
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse;
-            }
-            // Clone the response as it's a stream and can be consumed only once
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-            return networkResponse;
+  // If this is a navigation request (i.e. the user opening the app)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          // Update the cache with the latest version
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
           });
-      })
-      .catch(() => {
-        // Fallback content if both cache and network are unavailable
-        return caches.match('/index.html');
-      })
-  );
+          return networkResponse;
+        })
+        .catch((error) => {
+          console.warn('Network fetch failed, serving cached content:', error);
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // For non-navigation requests, use the cached version immediately if available.
+    event.respondWith(
+      caches.match(event.request)
+        .then((cachedResponse) => {
+          const fetchPromise = fetch(event.request)
+            .then((networkResponse) => {
+              // If the response is valid, update the cache.
+              if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(event.request, networkResponse.clone());
+                });
+              }
+              return networkResponse;
+            })
+            .catch(() => {
+              // In case of network error, just let the cached version stand.
+            });
+          // Return the cached response immediately, or the network response if not cached.
+          return cachedResponse || fetchPromise;
+        })
+    );
+  }
 });
 
-// Activate Event: Cleans up old caches
+// Activate Event: Cleans up old caches and claims clients immediately.
 self.addEventListener('activate', (event) => {
+  // Claim any clients immediately so that the SW starts controlling pages
+  self.clients.claim();
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys()
