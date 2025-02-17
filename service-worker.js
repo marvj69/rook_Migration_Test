@@ -1,7 +1,7 @@
-const CACHE_NAME = "rook-cache-v9";
+const CACHE_NAME = "rook-cache-v11"; // Bump this if you want to force an update
 const OFFLINE_URL = "/rook_Migration_Test/index.html";
 
-// Put all your important files here so they're cached at install.
+// List all critical URLs you want pre-cached here:
 const urlsToCache = [
   "/rook_Migration_Test/",
   "/rook_Migration_Test/index.html",
@@ -9,11 +9,11 @@ const urlsToCache = [
   "/rook_Migration_Test/service-worker.js",
   "/rook_Migration_Test/icons/icon-192x192.png",
   "/rook_Migration_Test/icons/icon-512x512.png",
-  "https://cdn.tailwindcss.com" // Example external resource
+  "https://cdn.tailwindcss.com"
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1) INSTALL EVENT: Precache all your core resources
+// 1) INSTALL: Pre-cache critical assets, including the offline fallback page
 // ─────────────────────────────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -26,63 +26,77 @@ self.addEventListener("install", (event) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2) FETCH EVENT: Serve pages with a cache-fallback-to-network approach
-//    so the site works offline on first visit. Other requests use a
-//    cache-first approach with background updates.
+// 2) FETCH: For HTML requests (navigations), do:
+//    - cache match (ignoreSearch) → if not found, fetch → if fetch fails, offline fallback.
+//    For non-HTML, do a cache-first with background update.
 // ─────────────────────────────────────────────────────────────────────────────
 self.addEventListener("fetch", (event) => {
+  const request = event.request;
   const isHTMLRequest =
-    event.request.mode === "navigate" ||
-    (event.request.method === "GET" &&
-      event.request.headers.get("accept")?.includes("text/html"));
+    request.mode === "navigate" ||
+    (request.method === "GET" &&
+      request.headers.get("accept")?.includes("text/html"));
 
   if (isHTMLRequest) {
-    // For navigations (HTML pages), try cache, then network, then offline fallback.
+    // Navigation requests
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          console.log("[SW] Serving navigation from cache:", event.request.url);
-          return cachedResponse;
-        }
-        // If not in cache, try the network.
-        return fetch(event.request).catch((err) => {
-          console.warn("[SW] Navigation fetch failed; returning offline page:", err);
-          return caches.match(OFFLINE_URL).then((offlinePage) => {
-            return (
-              offlinePage ||
-              new Response("<h1>You are offline</h1>", {
-                headers: { "Content-Type": "text/html" },
-              })
-            );
-          });
-        });
-      })
+      caches
+        .match(request, { ignoreSearch: true })
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            console.log("[SW] Serving HTML from cache:", request.url);
+            return cachedResponse;
+          }
+          // If not in cache, try the network.
+          return fetch(request).then(
+            (networkResponse) => {
+              // If successful, update cache in background for next time:
+              if (
+                networkResponse &&
+                networkResponse.ok &&
+                networkResponse.type === "basic"
+              ) {
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(request, networkResponse.clone());
+                });
+              }
+              return networkResponse;
+            },
+            (error) => {
+              console.warn("[SW] HTML fetch failed, returning offline page:", error);
+              // Fallback to your offline HTML.
+              return caches.match(OFFLINE_URL, { ignoreSearch: true }).then((offline) => {
+                // If for some reason the offline page isn't in the cache, show a minimal message.
+                return (
+                  offline ||
+                  new Response("<h1>You are offline</h1>", {
+                    headers: { "Content-Type": "text/html" },
+                  })
+                );
+              });
+            }
+          );
+        })
     );
   } else {
-    // For non-HTML (CSS, JS, images, fonts), do a "cache-first" approach with background update.
+    // Non-HTML requests (CSS, JS, images, etc.)
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        // Always fetch in the background to update the cache if possible.
-        const fetchPromise = fetch(event.request)
+      caches.match(request).then((cachedResponse) => {
+        // Always attempt a background update from the network:
+        const fetchPromise = fetch(request)
           .then((networkResponse) => {
-            // If OK, update the cache behind the scenes.
-            if (
-              networkResponse &&
-              networkResponse.status === 200 &&
-              networkResponse.type === "basic"
-            ) {
+            if (networkResponse && networkResponse.status === 200 && networkResponse.type === "basic") {
               caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, networkResponse.clone());
+                cache.put(request, networkResponse.clone());
               });
             }
             return networkResponse;
           })
           .catch(() => {
-            // If the network fails, we don't want to break everything —
-            // just rely on the existing cachedResponse if present.
+            // If network fails, we rely on the existing cachedResponse.
           });
 
-        // If we have something cached, return that first, else wait for fetchPromise.
+        // Return cached response if available, else wait for fetch.
         return cachedResponse || fetchPromise;
       })
     );
@@ -90,7 +104,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3) ACTIVATE EVENT: Clean up old caches if you change CACHE_NAME
+// 3) ACTIVATE: Clean up older caches when a new service worker activates
 // ─────────────────────────────────────────────────────────────────────────────
 self.addEventListener("activate", (event) => {
   self.clients.claim();
@@ -98,10 +112,10 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) =>
       Promise.all(
-        cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log("[SW] Deleting old cache:", cacheName);
-            return caches.delete(cacheName);
+        cacheNames.map((oldCache) => {
+          if (!cacheWhitelist.includes(oldCache)) {
+            console.log("[SW] Deleting old cache:", oldCache);
+            return caches.delete(oldCache);
           }
         })
       )
