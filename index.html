@@ -858,7 +858,7 @@
       // =========================
       // DATA MIGRATION
       // =========================
-      const CURRENT_MIGRATION_VERSION = 7;
+      const CURRENT_MIGRATION_VERSION = 6;
       const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
       function performDataMigration() {
@@ -2984,20 +2984,22 @@ function deleteGame(storageKey, index, descriptor) {
 
       function getStatistics() {
   const savedGames = getLocalStorage("savedGames");
-  const teamsFromStorage = JSON.parse(localStorage.getItem("teams")) || {};
+  // Only consider games that actually have rounds.
+  const validSavedGames = savedGames.filter(
+    (game) => Array.isArray(game.rounds) && game.rounds.length > 0
+  );
 
-  // Create a map for lastPlayed timestamps.
+  // Recalculate team stats (games played and wins) from valid games.
+  const calculatedTeamStats = {};
+  const aggregator = {}; // For bid-related stats and hand wins.
   const lastPlayedMap = {};
-  // Aggregator for per-team bidding and hand stats.
-  const aggregator = {};
 
-  savedGames.forEach(game => {
-    // Use provided team names or fall back to defaults.
+  validSavedGames.forEach((game) => {
     const team1 = game.usTeamName || game.player1 || "Us";
     const team2 = game.demTeamName || game.player2 || "Dem";
     const gameTimestamp = new Date(game.timestamp).getTime();
 
-    // Update lastPlayed for both teams.
+    // Update most-recent played time.
     if (!lastPlayedMap[team1] || gameTimestamp > lastPlayedMap[team1]) {
       lastPlayedMap[team1] = gameTimestamp;
     }
@@ -3005,47 +3007,63 @@ function deleteGame(storageKey, index, descriptor) {
       lastPlayedMap[team2] = gameTimestamp;
     }
 
+    // Only count games that actually have rounds.
+    if (!calculatedTeamStats[team1]) {
+      calculatedTeamStats[team1] = { wins: 0, gamesPlayed: 0 };
+    }
+    if (!calculatedTeamStats[team2]) {
+      calculatedTeamStats[team2] = { wins: 0, gamesPlayed: 0 };
+    }
+    calculatedTeamStats[team1].gamesPlayed++;
+    calculatedTeamStats[team2].gamesPlayed++;
+    if (game.winner === "us") {
+      calculatedTeamStats[team1].wins++;
+    } else if (game.winner === "dem") {
+      calculatedTeamStats[team2].wins++;
+    }
+
     // Process each round in this game.
-    (game.rounds || []).forEach(round => {
-      // For team1 (the "us" side)
+    (game.rounds || []).forEach((round) => {
+      // Convert bidAmount to a number (if not present, it becomes 0)
+      const bidAmt = Number(round.bidAmount) || 0;
+      
+      // Process stats for team1 (the "us" side)
       if (!aggregator[team1]) {
         aggregator[team1] = {
           totalBidSum: 0,
           bidCount: 0,
           bidSuccess: 0,
           totalHands: 0,
-          handsWon: 0
+          handsWon: 0,
         };
       }
       aggregator[team1].totalHands++;
-      // If team1 was bidding (round.biddingTeam is "us")
-      if (round.biddingTeam === "us") {
+      if (round.biddingTeam === "us" && bidAmt > 0) {
         aggregator[team1].bidCount++;
-        aggregator[team1].totalBidSum += Number(round.bidAmount);
-        if (Number(round.usPoints) >= Number(round.bidAmount)) {
+        aggregator[team1].totalBidSum += bidAmt;
+        if (Number(round.usPoints) >= bidAmt) {
           aggregator[team1].bidSuccess++;
         }
       }
-      // Determine if team1 won the hand.
       if (Number(round.usPoints) > Number(round.demPoints)) {
         aggregator[team1].handsWon++;
       }
 
-      // For team2 (the "dem" side)
+      // Process stats for team2 (the "dem" side)
       if (!aggregator[team2]) {
         aggregator[team2] = {
           totalBidSum: 0,
           bidCount: 0,
           bidSuccess: 0,
           totalHands: 0,
-          handsWon: 0
+          handsWon: 0,
         };
       }
       aggregator[team2].totalHands++;
-      if (round.biddingTeam === "dem") {
+      if (round.biddingTeam === "dem" && bidAmt > 0) {
         aggregator[team2].bidCount++;
-        aggregator[team2].totalBidSum += Number(round.bidAmount);
-        if (Number(round.demPoints) >= Number(round.bidAmount)) {
+        aggregator[team2].totalBidSum += bidAmt;
+        if (Number(round.demPoints) >= bidAmt) {
           aggregator[team2].bidSuccess++;
         }
       }
@@ -3055,55 +3073,63 @@ function deleteGame(storageKey, index, descriptor) {
     });
   });
 
-  // Overall saved games stats (for overall average bid).
-  let totalGames = savedGames.length;
+  // Overall average bid from valid rounds.
   let bidSum = 0;
   let bidCount = 0;
-  savedGames.forEach(game => {
-    (game.rounds || []).forEach(r => {
-      if (r.bidAmount) {
-        bidSum += Number(r.bidAmount);
+  validSavedGames.forEach((game) => {
+    (game.rounds || []).forEach((r) => {
+      const amt = Number(r.bidAmount) || 0;
+      if (amt > 0) {
+        bidSum += amt;
         bidCount++;
       }
     });
   });
-  // Overall average bid rounded to nearest 5.
-  let overallAverageBid = bidCount > 0 ? Math.round((bidSum / bidCount) / 5) * 5 : 0;
+  const overallAverageBid = bidCount > 0 ? Math.round((bidSum / bidCount) / 5) * 5 : 0;
 
-  // Build a union of team names from storage and aggregator.
+  // Build a union of team names from our calculated stats and the aggregator.
   const allTeamNames = new Set([
-    ...Object.keys(teamsFromStorage),
-    ...Object.keys(aggregator)
+    ...Object.keys(calculatedTeamStats),
+    ...Object.keys(aggregator),
   ]);
 
-  // Build teamsData including the new stats.
-  const teamsData = Array.from(allTeamNames).map(teamName => {
-    const storedStats = teamsFromStorage[teamName] || { wins: 0, gamesPlayed: 0 };
-    const agg = aggregator[teamName] || { totalBidSum: 0, bidCount: 0, bidSuccess: 0, totalHands: 0, handsWon: 0 };
-    const winPercent = storedStats.gamesPlayed > 0
-      ? ((storedStats.wins / storedStats.gamesPlayed) * 100).toFixed(2)
-      : "N/A";
+  const teamsData = Array.from(allTeamNames).map((teamName) => {
+    const teamStats = calculatedTeamStats[teamName] || { wins: 0, gamesPlayed: 0 };
+    const agg = aggregator[teamName] || {
+      totalBidSum: 0,
+      bidCount: 0,
+      bidSuccess: 0,
+      totalHands: 0,
+      handsWon: 0,
+    };
+    const winPercent =
+      teamStats.gamesPlayed > 0
+        ? ((teamStats.wins / teamStats.gamesPlayed) * 100).toFixed(2)
+        : "N/A";
     // Average bid rounded to the nearest 5.
-    const avgBid = agg.bidCount > 0 ? Math.round((agg.totalBidSum / agg.bidCount) / 5) * 5 : "N/A";
-    const bidSuccessPct = agg.bidCount > 0 ? ((agg.bidSuccess / agg.bidCount) * 100).toFixed(2) : "N/A";
-    const handsWonPct = agg.totalHands > 0 ? ((agg.handsWon / agg.totalHands) * 100).toFixed(2) : "N/A";
+    const avgBid =
+      agg.bidCount > 0 ? Math.round((agg.totalBidSum / agg.bidCount) / 5) * 5 : "N/A";
+    const bidSuccessPct =
+      agg.bidCount > 0 ? ((agg.bidSuccess / agg.bidCount) * 100).toFixed(2) : "N/A";
+    const handsWonPct =
+      agg.totalHands > 0 ? ((agg.handsWon / agg.totalHands) * 100).toFixed(2) : "N/A";
 
     return {
       name: teamName,
-      gamesPlayed: storedStats.gamesPlayed || 0,
+      gamesPlayed: teamStats.gamesPlayed,
       winPercent,
       lastPlayed: lastPlayedMap[teamName] || 0,
       avgBid,
       bidSuccessPct,
-      handsWonPct
+      handsWonPct,
     };
   });
 
-  // Sort teamsData so the most recently played teams appear first.
+  // Sort teams so that the most recently active teams appear first.
   teamsData.sort((a, b) => b.lastPlayed - a.lastPlayed);
 
   return {
-    totalGames,
+    totalGames: validSavedGames.length,
     overallAverageBid,
     teamsData,
   };
