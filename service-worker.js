@@ -1,94 +1,119 @@
-const CACHE_NAME = 'rook-cache-v5';
+const CACHE_NAME = "rook-cache-v6";
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/service-worker.js',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  'https://cdn.tailwindcss.com'  // Tailwind CDN for offline caching
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/service-worker.js",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+  "https://cdn.tailwindcss.com" // Tailwind CDN for offline caching
 ];
 
-// Install Event: Cache specified resources and force waiting SW to become active
-self.addEventListener('install', (event) => {
-  // Force the waiting service worker to become active
-  self.skipWaiting();
+// This flag will ensure we only do a network-first check ONCE per SW "lifecycle."
+let hasCheckedForUpdate = false;
+
+// INSTALL: Cache specified resources, force waiting SW to become active
+self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Immediately activate this SW
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache during install');
+        console.log("Opened cache during install");
         return cache.addAll(urlsToCache);
       })
       .catch((error) => {
-        console.error('Failed to cache during install:', error);
+        console.error("Failed to cache during install:", error);
       })
   );
 });
 
-// Fetch Event: Uses a network-first strategy for navigation requests with a broader detection
-// and a cache-first strategy for other requests.
-self.addEventListener('fetch', (event) => {
-  // Broaden navigation detection to include requests that accept HTML
+// FETCH: Single network-first attempt for the first navigation request;
+//        after that, serve cached for navigation requests. Non-navigation
+//        requests use a cache-first approach with background update.
+self.addEventListener("fetch", (event) => {
+  // Detect “navigation” by checking either the request mode or the Accept header
   const isNavigationRequest =
-    event.request.mode === 'navigate' ||
-    (event.request.method === 'GET' &&
-      event.request.headers.get('accept') &&
-      event.request.headers.get('accept').includes('text/html'));
+    event.request.mode === "navigate" ||
+    (event.request.method === "GET" &&
+      event.request.headers.get("accept") &&
+      event.request.headers.get("accept").includes("text/html"));
 
   if (isNavigationRequest) {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          // Update the cache with the latest version
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-          });
-          return networkResponse;
-        })
-        .catch((error) => {
-          console.warn('Network fetch failed, serving cached content:', error);
-          // Fallback to cached index.html for offline scenarios
-          return caches.match('/index.html');
-        })
-    );
-  } else {
-    // For non-navigation requests, use the cache-first strategy with background update.
-    event.respondWith(
-      caches.match(event.request)
-        .then((cachedResponse) => {
-          const fetchPromise = fetch(event.request)
-            .then((networkResponse) => {
-              // If valid response, update the cache.
-              if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-                caches.open(CACHE_NAME).then((cache) => {
-                  cache.put(event.request, networkResponse.clone());
-                });
-              }
+    // If we haven't yet tried for an update, do a network-first approach
+    if (!hasCheckedForUpdate) {
+      hasCheckedForUpdate = true; // Mark that we tried
+      event.respondWith(
+        fetch(event.request)
+          .then((networkResponse) => {
+            // If successful, update the cache
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse.clone());
               return networkResponse;
-            })
-            .catch(() => {
-              // In case of a network error, the cached response (if any) will be used.
             });
-          return cachedResponse || fetchPromise;
+          })
+          .catch((error) => {
+            console.warn("Network fetch failed (first navigation). Using cache:", error);
+            // Fall back to cached /index.html (or request) if offline
+            return caches.match("/index.html");
+          })
+      );
+    } else {
+      // Subsequent navigations: just use the cached version
+      event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+          // If found in cache, serve it; if not, attempt network
+          return (
+            cachedResponse ||
+            fetch(event.request).catch(() => {
+              // Ultimately fallback to /index.html if nothing else
+              return caches.match("/index.html");
+            })
+          );
         })
+      );
+    }
+  } else {
+    // For non-navigation (CSS, JS, images, etc.), do "cache-first with background update"
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request)
+          .then((networkResponse) => {
+            // If valid, update the cache
+            if (
+              networkResponse &&
+              networkResponse.status === 200 &&
+              networkResponse.type === "basic"
+            ) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, networkResponse.clone());
+              });
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            // If network fails, we rely on the cachedResponse (if any)
+          });
+        return cachedResponse || fetchPromise;
+      })
     );
   }
 });
 
-// Activate Event: Cleans up old caches and claims clients immediately.
-self.addEventListener('activate', (event) => {
-  // Claim any clients immediately so that the SW starts controlling pages
+// ACTIVATE: Clean up old caches and claim clients immediately
+self.addEventListener("activate", (event) => {
   self.clients.claim();
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map((cacheName) => {
           if (!cacheWhitelist.includes(cacheName)) {
-            console.log('Deleting old cache:', cacheName);
+            console.log("Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         })
-      ))
+      )
+    )
   );
 });
