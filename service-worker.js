@@ -1,20 +1,29 @@
-const CACHE_NAME = "rook-cache-v6";
+const CACHE_NAME = "rook-cache-v7";
+
+// IMPORTANT: Use a relative path if your site is not at domain root.
+// If hosting at GitHub Pages under a subfolder, e.g. /myProject/,
+// then set OFFLINE_URL = "./index.html" and ensure your code caches "./index.html".
+const OFFLINE_URL = "./index.html";
+
+// List all files to pre-cache. Remove "/" if it doesn’t match your GH Pages path.
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/service-worker.js",
-  "/icons/icon-192x192.png",
-  "/icons/icon-512x512.png",
-  "https://cdn.tailwindcss.com" // Tailwind CDN for offline caching
+  // "/",
+  "./index.html",
+  "./manifest.json",
+  "./service-worker.js",
+  "./icons/icon-192x192.png",
+  "./icons/icon-512x512.png",
+  "https://cdn.tailwindcss.com"
 ];
 
-// This flag will ensure we only do a network-first check ONCE per SW "lifecycle."
+// This flag ensures we only do a network-first check ONCE per SW lifecycle
 let hasCheckedForUpdate = false;
 
-// INSTALL: Cache specified resources, force waiting SW to become active
+/**
+ * INSTALL: Cache the specified resources, force this SW to activate immediately.
+ */
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // Immediately activate this SW
+  self.skipWaiting();
   event.waitUntil(
     caches
       .open(CACHE_NAME)
@@ -28,58 +37,72 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// FETCH: Single network-first attempt for the first navigation request;
-//        after that, serve cached for navigation requests. Non-navigation
-//        requests use a cache-first approach with background update.
+/**
+ * FETCH: For the first navigation request, do a network-first attempt.
+ *        If offline, fallback to cached OFFLINE_URL. After that first attempt,
+ *        we serve navigations from cache. Non-HTML requests use a cache-first
+ *        with background update approach.
+ */
 self.addEventListener("fetch", (event) => {
-  // Detect “navigation” by checking either the request mode or the Accept header
   const isNavigationRequest =
     event.request.mode === "navigate" ||
     (event.request.method === "GET" &&
-      event.request.headers.get("accept") &&
-      event.request.headers.get("accept").includes("text/html"));
+      event.request.headers.get("accept")?.includes("text/html"));
 
   if (isNavigationRequest) {
-    // If we haven't yet tried for an update, do a network-first approach
+    // Only do the network-first approach once:
     if (!hasCheckedForUpdate) {
-      hasCheckedForUpdate = true; // Mark that we tried
+      hasCheckedForUpdate = true;
       event.respondWith(
         fetch(event.request)
           .then((networkResponse) => {
-            // If successful, update the cache
+            // If we got a valid response, update the cache
             return caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, networkResponse.clone());
               return networkResponse;
             });
           })
-          .catch((error) => {
-            console.warn("Network fetch failed (first navigation). Using cache:", error);
-            // Fall back to cached /index.html (or request) if offline
-            return caches.match("/index.html");
+          .catch((err) => {
+            console.warn("Network fetch failed (first nav). Using cache:", err);
+            // If offline, serve the fallback
+            return caches.match(OFFLINE_URL).then((res) => {
+              // If the fallback also isn't in the cache, return a minimal offline response
+              return (
+                res ||
+                new Response("<h1>You are offline</h1>", {
+                  headers: { "Content-Type": "text/html" },
+                })
+              );
+            });
           })
       );
     } else {
-      // Subsequent navigations: just use the cached version
+      // Subsequent navigations: serve from cache if available; if not, try network
       event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-          // If found in cache, serve it; if not, attempt network
-          return (
-            cachedResponse ||
-            fetch(event.request).catch(() => {
-              // Ultimately fallback to /index.html if nothing else
-              return caches.match("/index.html");
-            })
-          );
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // If not in cache, attempt network, fallback to OFFLINE_URL
+          return fetch(event.request).catch(() => {
+            return caches.match(OFFLINE_URL).then((res) => {
+              return (
+                res ||
+                new Response("<h1>You are offline</h1>", {
+                  headers: { "Content-Type": "text/html" },
+                })
+              );
+            });
+          });
         })
       );
     }
   } else {
-    // For non-navigation (CSS, JS, images, etc.), do "cache-first with background update"
+    // Non-navigation requests: cache-first with background update
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         const fetchPromise = fetch(event.request)
           .then((networkResponse) => {
-            // If valid, update the cache
             if (
               networkResponse &&
               networkResponse.status === 200 &&
@@ -92,7 +115,7 @@ self.addEventListener("fetch", (event) => {
             return networkResponse;
           })
           .catch(() => {
-            // If network fails, we rely on the cachedResponse (if any)
+            // If the network fails, we rely on the cached response
           });
         return cachedResponse || fetchPromise;
       })
@@ -100,7 +123,9 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-// ACTIVATE: Clean up old caches and claim clients immediately
+/**
+ * ACTIVATE: Clean up old caches, claim clients so the SW starts controlling pages immediately.
+ */
 self.addEventListener("activate", (event) => {
   self.clients.claim();
   const cacheWhitelist = [CACHE_NAME];
