@@ -850,7 +850,7 @@
     /**
  * The overall version of your migrations
  */
-const CURRENT_MIGRATION_VERSION = 3;
+const CURRENT_MIGRATION_VERSION = 4;
 const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
 /**
@@ -1026,7 +1026,7 @@ function setLocalStorage(key, value) {
     });
     setLocalStorage("freezerGames", freezerGames);
   }
-
+  recalcTeamsStats();
   // Mark migration as complete
   localStorage.setItem(MIGRATION_VERSION_KEY, String(CURRENT_MIGRATION_VERSION));
 }
