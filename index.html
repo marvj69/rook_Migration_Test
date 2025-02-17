@@ -3216,11 +3216,40 @@ function handleDeleteTeam(teamName) {
   );
 }
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("./service-worker.js", { scope: "./" })
-    .then(() => console.log("SW registered"))
-    .catch((err) => console.error("SW registration failed:", err));
+// Service Worker update handling
+let refreshing = false;
+
+// Detect when new SW is available
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (refreshing) return;
+  refreshing = true;
+  window.location.reload();
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            // Show update notification
+            if (window.confirm('New version available! Reload to update?')) {
+              newWorker.postMessage('skipWaiting');
+            }
+          }
+        });
+      });
+    })
+    .catch(error => console.log('SW registration failed:', error));
+
+  // Check for updates every hour
+  setInterval(() => {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.update();
+    });
+  }, 60 * 60 * 1000);
 }
 
       function updateState(newState) {
