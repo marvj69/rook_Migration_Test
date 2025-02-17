@@ -472,7 +472,7 @@
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.3.0</p>
+      <p>version 1.2.9</p>
     </div>
 
     <!-- Main App Container -->
@@ -647,9 +647,9 @@
             overall wins, average bids, and more.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.3.0:</strong>
+            <strong>What's New in 1.2.9:</strong>
             <p>
-              version 1.3.0 introduces a better way to handle team names and statistics. Here’s
+              version 1.2.9 introduces a better way to handle team names and statistics. Here’s
               what’s new:
             </p>
             - Select teams: Team statistics save per team once team names are entered.<br />
@@ -1027,21 +1027,6 @@ function setLocalStorage(key, value) {
   // Mark migration as complete
   localStorage.setItem(MIGRATION_VERSION_KEY, String(CURRENT_MIGRATION_VERSION));
 }
-
-function cleanDefaultTeams() {
-  const teams = getTeamsObject();
-  let changed = false;
-  Object.keys(teams).forEach((teamName) => {
-    if (teamName === "Us" || teamName === "Dem") {
-      delete teams[teamName];
-      changed = true;
-    }
-  });
-  if (changed) {
-    setTeamsObject(teams);
-  }
-}
-
       /*
         ====================================================
         THEME SELECTION LOGIC
@@ -1391,47 +1376,57 @@ function deleteGame(storageKey, index, descriptor) {
 
       // Populate the selects with existing teams or option to add new
       function populateTeamSelects() {
-        const teamsObj = getTeamsObject();
-        const sortedNames = Object.keys(teamsObj).sort();
-        const usSelect = document.getElementById("selectUsTeam");
-        const demSelect = document.getElementById("selectDemTeam");
-        usSelect.innerHTML = "";
-        demSelect.innerHTML = "";
-        const defaultUsOption = new Option("-- Select or Add Team --", "", true, false);
-        const defaultDemOption = new Option("-- Select or Add Team --", "", true, false);
-        usSelect.appendChild(defaultUsOption);
-        demSelect.appendChild(defaultDemOption);
-        sortedNames.forEach((teamName) => {
-          const opt = new Option(teamName, teamName, false, teamName === state.usTeamName);
-          usSelect.appendChild(opt);
-          const opt2 = new Option(teamName, teamName, false, teamName === state.demTeamName);
-          demSelect.appendChild(opt2);
-        });
-        const newUsOption = document.createElement("option");
-        newUsOption.value = "NEW_TEAM";
-        newUsOption.textContent = "Add New Team...";
-        const newDemOption = document.createElement("option");
-        newDemOption.value = "NEW_TEAM";
-        newDemOption.textContent = "Add New Team...";
-        usSelect.appendChild(newUsOption);
-        demSelect.appendChild(newDemOption);
-        document.getElementById("newUsTeamName").classList.add("hidden");
-        document.getElementById("newDemTeamName").classList.add("hidden");
-        usSelect.onchange = () => {
-          if (usSelect.value === "NEW_TEAM") {
-            document.getElementById("newUsTeamName").classList.remove("hidden");
-          } else {
-            document.getElementById("newUsTeamName").classList.add("hidden");
-          }
-        };
-        demSelect.onchange = () => {
-          if (demSelect.value === "NEW_TEAM") {
-            document.getElementById("newDemTeamName").classList.remove("hidden");
-          } else {
-            document.getElementById("newDemTeamName").classList.add("hidden");
-          }
-        };
-      }
+  const teamsObj = getTeamsObject();
+  // Filter out teams named "Us" or "Dem"
+  const sortedNames = Object.keys(teamsObj)
+    .filter(teamName => teamName !== "Us" && teamName !== "Dem")
+    .sort();
+
+  const usSelect = document.getElementById("selectUsTeam");
+  const demSelect = document.getElementById("selectDemTeam");
+  usSelect.innerHTML = "";
+  demSelect.innerHTML = "";
+
+  const defaultUsOption = new Option("-- Select or Add Team --", "", true, false);
+  const defaultDemOption = new Option("-- Select or Add Team --", "", true, false);
+  usSelect.appendChild(defaultUsOption);
+  demSelect.appendChild(defaultDemOption);
+
+  sortedNames.forEach((teamName) => {
+    const opt = new Option(teamName, teamName, false, teamName === state.usTeamName);
+    usSelect.appendChild(opt);
+    const opt2 = new Option(teamName, teamName, false, teamName === state.demTeamName);
+    demSelect.appendChild(opt2);
+  });
+
+  const newUsOption = document.createElement("option");
+  newUsOption.value = "NEW_TEAM";
+  newUsOption.textContent = "Add New Team...";
+  const newDemOption = document.createElement("option");
+  newDemOption.value = "NEW_TEAM";
+  newDemOption.textContent = "Add New Team...";
+  usSelect.appendChild(newUsOption);
+  demSelect.appendChild(newDemOption);
+
+  document.getElementById("newUsTeamName").classList.add("hidden");
+  document.getElementById("newDemTeamName").classList.add("hidden");
+
+  usSelect.onchange = () => {
+    if (usSelect.value === "NEW_TEAM") {
+      document.getElementById("newUsTeamName").classList.remove("hidden");
+    } else {
+      document.getElementById("newUsTeamName").classList.add("hidden");
+    }
+  };
+
+  demSelect.onchange = () => {
+    if (demSelect.value === "NEW_TEAM") {
+      document.getElementById("newDemTeamName").classList.remove("hidden");
+    } else {
+      document.getElementById("newDemTeamName").classList.add("hidden");
+    }
+  };
+}
 
       function handleTeamSelectionSubmit(e) {
         e.preventDefault();
@@ -2811,7 +2806,7 @@ function deleteGame(storageKey, index, descriptor) {
 
       function showVersionNum() {
         alert(
-          "version 1.3.0 adds a feature to track each team's individual performance, moved statistics to the menu, added more statistics, added a new 'Themes' option, various improvements."
+          "version 1.2.9 adds a feature to track each team's individual performance, moved statistics to the menu, added more statistics, added a new 'Themes' option, various improvements."
         );
       }
 
@@ -2857,7 +2852,6 @@ function deleteGame(storageKey, index, descriptor) {
         themeModal = document.getElementById("themeModal");
 
         performDataMigration();
-        cleanDefaultTeams();
         loadCurrentGameState();
         initializeDarkMode();
         initializeTheme();
@@ -3232,14 +3226,41 @@ function handleDeleteTeam(teamName) {
   );
 }
 
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("service-worker.js")
-            .then((registration) => {})
-            .catch((err) => {});
+ // Service Worker update handling
+let refreshing = false;
+
+// Detect when new SW is available
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (refreshing) return;
+  refreshing = true;
+  window.location.reload();
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            // Show update notification
+            if (window.confirm('New version available! Reload to update?')) {
+              newWorker.postMessage('skipWaiting');
+            }
+          }
         });
-      }
+      });
+    })
+    .catch(error => console.log('SW registration failed:', error));
+
+  // Check for updates every hour
+  setInterval(() => {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.update();
+    });
+  }, 60 * 1000);
+}
 
       function updateState(newState) {
         state = { ...state, ...newState };
