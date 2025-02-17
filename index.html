@@ -472,7 +472,7 @@
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.2.9</p>
+      <p>version 1.3.0</p>
     </div>
 
     <!-- Main App Container -->
@@ -643,24 +643,16 @@
             <strong>How to Use:</strong> Tap a team to begin bidding, enter the bid and the points,
             then press "Submit." Keep track of all round scores in the “History” section. You can
             also freeze a current game, view saved games, start a new game, view statistics, toggle
-            dark mode, and change the theme from the menu. Explore the statistics section to see
-            overall wins, average bids, and more.
+            dark mode, and change the theme from the menu.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.2.9:</strong>
+            <strong>What's New in 1.3.0:</strong>
             <p>
-              version 1.2.9 introduces a better way to handle team names and statistics. Here’s
-              what’s new:
+              version 1.3.0 introduces a better way to handle team names and statistics.
             </p>
             - Select teams: Team statistics save per team once team names are entered.<br />
-            - Automatic Team Stats: Newly created team names are stored locally, along with wins,
-            losses, and games played.<br />
-            - Team Names in History & Freeze: The chosen team names appear in the “History” section
-            and are preserved when you freeze a game.<br />
-            - Expanded Statistics Section: View each team's record in "Team-Based Stats" with an
-            ability to delete teams.<br />
-            - Added separate team name fields for freezer games.<br />
-            - Changed 'New Game' confirmation to a yes/no prompt.<br />
+            - Automatic Team Stats: Newly created team names are stored locally, along with more stats.<br />
+            - Expanded Statistics Section: Click the dropdown for more stats.<br />
             - Various small UI and logic improvements.
           </p>
           <div class="flex justify-end space-x-2">
@@ -2806,7 +2798,7 @@ function deleteGame(storageKey, index, descriptor) {
 
       function showVersionNum() {
         alert(
-          "version 1.2.9 adds a feature to track each team's individual performance, moved statistics to the menu, added more statistics, added a new 'Themes' option, various improvements."
+          "version 1.3.0 adds a feature to track each team's individual performance, moved statistics to the menu, added more statistics, added a new 'Themes' option, various improvements."
         );
       }
 
@@ -2924,75 +2916,140 @@ function deleteGame(storageKey, index, descriptor) {
         }
       });
 
-      function openStatisticsModal() {
+      // Helper to render the team stats table based on the selected additional stat.
+function renderTeamStatsTable(teamsData, additionalStatKey) {
+  let headerText = "";
+  if (additionalStatKey === "games") {
+    headerText = "Games";
+  } else if (additionalStatKey === "avgBid") {
+    headerText = "Avg Bid";
+  } else if (additionalStatKey === "bidSuccessPct") {
+    headerText = "Bid Success %";
+  } else if (additionalStatKey === "handsWonPct") {
+    headerText = "Hands Won %";
+  }
+
+  let tableHTML = `
+    <div id="teamStatsTableContainer">
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-gray-50 dark:bg-gray-700 rounded-xl">
+          <thead>
+            <tr class="border-b dark:border-gray-600">
+              <!-- Sticky Team header -->
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
+                Team
+              </th>
+              <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">
+                Win %
+              </th>
+              <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">
+                ${headerText}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+
+  teamsData.forEach((team) => {
+    tableHTML += `
+      <tr class="border-b last:border-0 dark:border-gray-700">
+        <!-- Sticky Team cell -->
+        <td class="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
+          ${team.name}
+          <button
+            onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();"
+            class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500 ml-2 threed"
+            aria-label="Delete Team"
+            type="button"
+          >
+            ${Icons.Trash}
+          </button>
+        </td>
+        <td class="px-4 py-2 text-center text-gray-700 dark:text-white">
+          ${team.winPercent}%
+        </td>
+    `;
+    let statValue = "";
+    if (additionalStatKey === "games") {
+      statValue = team.gamesPlayed;
+    } else if (additionalStatKey === "avgBid") {
+      statValue = team.avgBid;
+    } else if (additionalStatKey === "bidSuccessPct") {
+      statValue = team.bidSuccessPct + "%";
+    } else if (additionalStatKey === "handsWonPct") {
+      statValue = team.handsWonPct + "%";
+    }
+    tableHTML += `
+        <td class="px-4 py-2 text-center text-gray-700 dark:text-white">
+          ${statValue}
+        </td>
+      </tr>
+    `;
+  });
+
+  tableHTML += `
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  return tableHTML;
+}
+
+// Updated openStatisticsModal() function.
+function openStatisticsModal() {
   const stats = getStatistics();
   let content = "";
   if (!stats.totalGames && !stats.teamsData.length) {
     content =
       '<p class="text-gray-600 dark:text-white mt-2">No completed games and no teams yet.</p>';
   } else {
-    // Only display the Average Bid section (overall) if there are any games.
+    // Optional top row: overall average bid (or any other overall stat)
     let topRow = "";
     if (stats.totalGames > 0) {
       topRow = `
         <div class="grid grid-cols-1 gap-6 mb-8">
           <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
-            <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">Overall Average Bid</p>
-            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">${stats.overallAverageBid}</p>
+            <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">
+              Overall Average Bid
+            </p>
+            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              ${stats.overallAverageBid}
+            </p>
           </div>
         </div>`;
     }
-    
-    let teamStatsTable = "";
-    if (stats.teamsData.length) {
-      teamStatsTable = `
-        <div class="mt-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Team-Based Stats</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <thead>
-                <tr class="border-b dark:border-gray-600">
-                  <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-white">Team</th>
-                  <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Games</th>
-                  <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Win %</th>
-                  <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Avg Bid</th>
-                  <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Bid Success %</th>
-                  <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Hands Won %</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${stats.teamsData
-                  .map((team) => {
-                    return `
-                  <tr class="border-b last:border-0 dark:border-gray-700">
-                    <td class="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-white">
-                      ${team.name}
-                      <button
-                        onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();"
-                        class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500 ml-2 threed"
-                        aria-label="Delete Team"
-                        type="button"
-                      >
-                        ${Icons.Trash}
-                      </button>
-                    </td>
-                    <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.gamesPlayed}</td>
-                    <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.winPercent}%</td>
-                    <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.avgBid}</td>
-                    <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.bidSuccessPct}%</td>
-                    <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.handsWonPct}%</td>
-                  </tr>`;
-                  })
-                  .join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-    }
-    content = `${topRow}${teamStatsTable}`;
+    // Dropdown selector for the additional stat.
+    let dropdown = `
+      <div class="mb-4">
+        <label for="additionalStatSelector" class="block text-sm font-medium text-gray-700 dark:text-white">
+          Select Additional Stat
+        </label>
+        <select id="additionalStatSelector" class="mt-1 block w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          <option value="games">Games</option>
+          <option value="avgBid">Avg Bid</option>
+          <option value="bidSuccessPct">Bid Success %</option>
+          <option value="handsWonPct">Hands Won %</option>
+        </select>
+      </div>
+    `;
+    // Render the table with an initial additional stat (e.g. "games")
+    let teamStatsTable = renderTeamStatsTable(stats.teamsData, "games");
+
+    content = `${topRow}${dropdown}<div id="teamStatsTableWrapper">${teamStatsTable}</div>`;
   }
   document.getElementById("statisticsModalContent").innerHTML = content;
   document.getElementById("statisticsModal").classList.remove("hidden");
+
+  // Attach event listener to the dropdown so that the table updates when selection changes.
+  const selector = document.getElementById("additionalStatSelector");
+  if (selector) {
+    selector.addEventListener("change", function () {
+      const selectedStat = this.value;
+      const updatedTable = renderTeamStatsTable(getStatistics().teamsData, selectedStat);
+      document.getElementById("teamStatsTableWrapper").innerHTML = updatedTable;
+    });
+  }
 }
 
       function closeStatisticsModal() {
@@ -3254,7 +3311,7 @@ if ('serviceWorker' in navigator) {
     })
     .catch(error => console.log('SW registration failed:', error));
 
-  // Check for updates every hour
+  // Check for updates every minute
   setInterval(() => {
     navigator.serviceWorker.ready.then(registration => {
       registration.update();
