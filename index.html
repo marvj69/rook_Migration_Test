@@ -851,6 +851,15 @@
         </div>
       </div>
     </div>
+    <!-- Request Update Button -->
+<div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+  <button
+    id="requestUpdateButton"
+    class="px-4 py-2 bg-red-600 text-white rounded shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+  >
+    Request Update
+  </button>
+</div>
 
     <script>
       "use strict";
@@ -858,7 +867,7 @@
       // =========================
       // DATA MIGRATION
       // =========================
-      const CURRENT_MIGRATION_VERSION = 7;
+      const CURRENT_MIGRATION_VERSION = 1;
       const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
       function performDataMigration() {
@@ -3148,6 +3157,22 @@ function handleDeleteTeam(teamName) {
         state = { ...state, ...newState };
         renderApp();
       }
+      document.getElementById("requestUpdateButton").addEventListener("click", function () {
+  // Unregister any service workers (if present)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      registrations.forEach(function(registration) {
+        registration.unregister();
+      });
+    }).finally(function() {
+      // Force reload by adding a cache-busting query param
+      window.location.href = window.location.href.split('?')[0] + '?cacheBuster=' + Date.now();
+    });
+  } else {
+    // If no service worker, just force a reload bypassing cache
+    window.location.href = window.location.href.split('?')[0] + '?cacheBuster=' + Date.now();
+  }
+});
     </script>
   </body>
 </html>
