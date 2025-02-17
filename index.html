@@ -854,84 +854,40 @@
 
     <script>
       "use strict";
-      function fixOldRounds() {
-  let changed = false;
-  const savedGames = JSON.parse(localStorage.getItem("savedGames") || "[]");
-  savedGames.forEach((game) => {
-    // Use either the new fields or fall back to old ones
-    const team1Name = game.usTeamName || game.player1 || "Us";
-    const team2Name = game.demTeamName || game.player2 || "Dem";
+    /**
+ * The overall version of your migrations
+ */
+const CURRENT_MIGRATION_VERSION = 11;
+const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
-    if (Array.isArray(game.rounds)) {
-      game.rounds.forEach((round) => {
-        // Ensure that if the round still uses "DemPoints", it gets renamed.
-        if (typeof round.DemPoints !== "undefined" && typeof round.demPoints === "undefined") {
-          round.demPoints = round.DemPoints;
-          delete round.DemPoints;
-          changed = true;
-        }
-        // Map biddingTeam from "us" to the actual team1 name.
-        if (round.biddingTeam === "us") {
-          round.biddingTeam = team1Name;
-          changed = true;
-        } else if (
-          typeof round.biddingTeam === "string" &&
-          round.biddingTeam.toLowerCase() === "dem"
-        ) {
-          round.biddingTeam = team2Name;
-          changed = true;
-        }
-        // Rename runningTotals.Dem if needed.
-        if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
-          round.runningTotals.dem = round.runningTotals.Dem;
-          delete round.runningTotals.Dem;
-          changed = true;
-        }
-      });
-    }
-    // Also update game.winner if still "us"/"Dem"
-    if (game.winner === "us") {
-      game.winner = team1Name;
-      changed = true;
-    } else if (typeof game.winner === "string" && game.winner.toLowerCase() === "dem") {
-      game.winner = team2Name;
-      changed = true;
-    }
-    if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
-      game.finalScore.dem = game.finalScore.Dem;
-      delete game.finalScore.Dem;
-      changed = true;
-    }
-  });
-  if (changed) {
-    localStorage.setItem("savedGames", JSON.stringify(savedGames));
-  }
+/**
+ * Helper: Safe JSON load from localStorage
+ */
+function getLocalStorage(key) {
+  return JSON.parse(localStorage.getItem(key)) || [];
 }
-      // =========================
-      // DATA MIGRATION
-      // =========================
-      const CURRENT_MIGRATION_VERSION = 9;
-      const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
-      function performDataMigration() {
+/**
+ * Helper: Safe JSON save to localStorage
+ */
+function setLocalStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+/**
+ * Perform all needed migrations to unify old data into your new format.
+ */
+ function performDataMigration() {
   const currentVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
-  if (currentVersion && parseInt(currentVersion) >= CURRENT_MIGRATION_VERSION) {
+  if (currentVersion && parseInt(currentVersion, 10) >= CURRENT_MIGRATION_VERSION) {
     return; // Already migrated
   }
 
-  // Helper functions for localStorage arrays
-  function getLocalStorage(key) {
-    return JSON.parse(localStorage.getItem(key)) || [];
-  }
-  function setLocalStorage(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-
-  // --- Migrate savedGames ---
+  // --- 1) Migrate savedGames ---
   let savedGames = getLocalStorage("savedGames");
   if (savedGames.length) {
     savedGames = savedGames.map((game) => {
-      // Map old player1/player2 to usTeamName/demTeamName if missing.
+      // Migrate team names if needed
       if (!game.usTeamName && game.player1) {
         game.usTeamName = game.player1;
       }
@@ -947,41 +903,62 @@
         delete game.finalScore.Dem;
       }
 
-      // Migrate each round in the game:
+      // Migrate each round in the game
       if (Array.isArray(game.rounds)) {
-        game.rounds.forEach((r) => {
-          // Rename DemPoints → demPoints
-          if (typeof r.DemPoints !== "undefined") {
-            r.demPoints = r.DemPoints;
-            delete r.DemPoints;
+        game.rounds.forEach((round) => {
+          if (typeof round.DemPoints !== "undefined") {
+            round.demPoints = round.DemPoints;
+            delete round.DemPoints;
           }
-          // Rename runningTotals.Dem → runningTotals.dem
-          if (r.runningTotals && typeof r.runningTotals.Dem !== "undefined") {
-            r.runningTotals.dem = r.runningTotals.Dem;
-            delete r.runningTotals.Dem;
+          if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
+            round.runningTotals.dem = round.runningTotals.Dem;
+            delete round.runningTotals.Dem;
           }
-          // Migrate an old "bid" property to "bidAmount" if needed.
-          if (typeof r.bid !== "undefined" && (typeof r.bidAmount === "undefined" || r.bidAmount === null)) {
-            r.bidAmount = r.bid;
-            delete r.bid;
+          if (
+            typeof round.bid !== "undefined" &&
+            (typeof round.bidAmount === "undefined" || round.bidAmount === null)
+          ) {
+            round.bidAmount = round.bid;
+            delete round.bid;
           }
         });
       }
 
-      // Normalize the game winner from "us"/"Dem" to the actual team names.
+      // Normalize the "winner" field so it is either "us" or "dem"
       if (typeof game.winner === "string") {
-        if (game.winner === "us") {
-          game.winner = game.usTeamName;
-        } else if (game.winner.toLowerCase() === "dem") {
-          game.winner = game.demTeamName;
+        const w = game.winner.toLowerCase();
+        if (w === "us" || w === "dem") {
+          game.winner = w;
+        } else if (w.includes("us")) {
+          game.winner = "us";
+        } else if (w.includes("dem")) {
+          game.winner = "dem";
+        } else {
+          game.winner = null;
         }
       }
+      // --- NEW FALLBACK: Determine winner based on finalScore ---
+      if (
+        (!game.winner || game.winner === null) &&
+        game.finalScore &&
+        typeof game.finalScore.us === "number" &&
+        typeof game.finalScore.dem === "number"
+      ) {
+        if (game.finalScore.us > game.finalScore.dem) {
+          game.winner = "us";
+        } else if (game.finalScore.dem > game.finalScore.us) {
+          game.winner = "dem";
+        } else {
+          game.winner = null; // tie or unable to decide
+        }
+      }
+
       return game;
     });
     setLocalStorage("savedGames", savedGames);
   }
 
-  // --- Migrate freezerGames ---
+  // --- 2) Migrate freezerGames ---
   let freezerGames = getLocalStorage("freezerGames");
   if (freezerGames.length) {
     freezerGames = freezerGames.map((game) => {
@@ -996,26 +973,50 @@
         delete game.finalScore.Dem;
       }
       if (Array.isArray(game.rounds)) {
-        game.rounds.forEach((r) => {
-          if (typeof r.DemPoints !== "undefined") {
-            r.demPoints = r.DemPoints;
-            delete r.DemPoints;
+        game.rounds.forEach((round) => {
+          if (typeof round.DemPoints !== "undefined") {
+            round.demPoints = round.DemPoints;
+            delete round.DemPoints;
           }
-          if (r.runningTotals && typeof r.runningTotals.Dem !== "undefined") {
-            r.runningTotals.dem = r.runningTotals.Dem;
-            delete r.runningTotals.Dem;
+          if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
+            round.runningTotals.dem = round.runningTotals.Dem;
+            delete round.runningTotals.Dem;
           }
-          if (typeof r.bid !== "undefined" && (typeof r.bidAmount === "undefined" || r.bidAmount === null)) {
-            r.bidAmount = r.bid;
-            delete r.bid;
+          if (
+            typeof round.bid !== "undefined" &&
+            (typeof round.bidAmount === "undefined" || round.bidAmount === null)
+          ) {
+            round.bidAmount = round.bid;
+            delete round.bid;
           }
         });
       }
+
       if (typeof game.winner === "string") {
-        if (game.winner.toLowerCase() === "us") {
-          game.winner = game.usName;
-        } else if (game.winner.toLowerCase() === "dem") {
-          game.winner = game.demName;
+        const w = game.winner.toLowerCase();
+        if (w === "us" || w === "dem") {
+          game.winner = w;
+        } else if (w.includes("us")) {
+          game.winner = "us";
+        } else if (w.includes("dem")) {
+          game.winner = "dem";
+        } else {
+          game.winner = null;
+        }
+      }
+      // --- NEW FALLBACK: Determine winner based on finalScore ---
+      if (
+        (!game.winner || game.winner === null) &&
+        game.finalScore &&
+        typeof game.finalScore.us === "number" &&
+        typeof game.finalScore.dem === "number"
+      ) {
+        if (game.finalScore.us > game.finalScore.dem) {
+          game.winner = "us";
+        } else if (game.finalScore.dem > game.finalScore.us) {
+          game.winner = "dem";
+        } else {
+          game.winner = null;
         }
       }
       return game;
@@ -1023,12 +1024,8 @@
     setLocalStorage("freezerGames", freezerGames);
   }
 
-  // --- Fix Old Rounds ---
-  // This helper rewrites rounds that still use "us" or "Dem" as the biddingTeam
-  fixOldRounds();
-
   // Mark migration as complete
-  localStorage.setItem(MIGRATION_VERSION_KEY, CURRENT_MIGRATION_VERSION.toString());
+  localStorage.setItem(MIGRATION_VERSION_KEY, String(CURRENT_MIGRATION_VERSION));
 }
       /*
         ====================================================
@@ -1160,9 +1157,6 @@
           metaThemeColor.setAttribute("content", isDark ? "#1a202c" : "#ffffff");
         }
       }
-
-      const getLocalStorage = (key) => JSON.parse(localStorage.getItem(key)) || [];
-      const setLocalStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 
       function getTeamsObject() {
         return JSON.parse(localStorage.getItem("teams")) || {};
