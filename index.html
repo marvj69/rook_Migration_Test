@@ -637,7 +637,7 @@
             id="aboutModalTitle"
             class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
           >
-            About Rook!!! Game Scoring
+            About Rook Game Scoring
           </h2>
           <p class="text-gray-700 dark:text-white mb-4">
             <strong>How to Use:</strong> Tap a team to begin bidding, enter the bid and the points,
@@ -1027,6 +1027,21 @@ function setLocalStorage(key, value) {
   // Mark migration as complete
   localStorage.setItem(MIGRATION_VERSION_KEY, String(CURRENT_MIGRATION_VERSION));
 }
+
+function cleanDefaultTeams() {
+  const teams = getTeamsObject();
+  let changed = false;
+  Object.keys(teams).forEach((teamName) => {
+    if (teamName === "Us" || teamName === "Dem") {
+      delete teams[teamName];
+      changed = true;
+    }
+  });
+  if (changed) {
+    setTeamsObject(teams);
+  }
+}
+
       /*
         ====================================================
         THEME SELECTION LOGIC
@@ -2842,6 +2857,7 @@ function deleteGame(storageKey, index, descriptor) {
         themeModal = document.getElementById("themeModal");
 
         performDataMigration();
+        cleanDefaultTeams();
         loadCurrentGameState();
         initializeDarkMode();
         initializeTheme();
@@ -3216,41 +3232,14 @@ function handleDeleteTeam(teamName) {
   );
 }
 
-// Service Worker update handling
-let refreshing = false;
-
-// Detect when new SW is available
-navigator.serviceWorker.addEventListener('controllerchange', () => {
-  if (refreshing) return;
-  refreshing = true;
-  window.location.reload();
-});
-
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(registration => {
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'activated') {
-            // Show update notification
-            if (window.confirm('New version available! Reload to update?')) {
-              newWorker.postMessage('skipWaiting');
-            }
-          }
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("service-worker.js")
+            .then((registration) => {})
+            .catch((err) => {});
         });
-      });
-    })
-    .catch(error => console.log('SW registration failed:', error));
-
-  // Check for updates every hour
-  setInterval(() => {
-    navigator.serviceWorker.ready.then(registration => {
-      registration.update();
-    });
-  }, 60 * 60 * 1000);
-}
+      }
 
       function updateState(newState) {
         state = { ...state, ...newState };
