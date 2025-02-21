@@ -21,6 +21,34 @@
       src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
     ></script>
     <style>
+    input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 2px solid #ccc;
+  width: 80px;
+  height: 50px;
+  padding: 0;
+  border-radius: 6px; /* Feel free to adjust; 0 for square, 50% for circle */
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Remove default inner padding in WebKit browsers */
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+/* Highlight on hover and focus to indicate clickability */
+input[type="color"]:hover,
+input[type="color"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
       /* Accessibility: keyboard focus outline with better contrast */
       .focus-outline:focus {
         outline: 2px dashed #3182ce;
@@ -760,55 +788,84 @@
     </div>
 
     <!-- CUSTOM THEME SELECTION MODAL -->
-<div
-id="themeModal"
-class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
-role="dialog"
-aria-modal="true"
-aria-labelledby="themeModalTitle"
+    <div
+  id="themeModal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="themeModalTitle"
 >
-<div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6">
-  <h2 id="themeModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
-    Choose Your Colors
-  </h2>
-  <div class="space-y-4">
-    <div>
-      <label for="usColorPicker" class="block text-gray-700 dark:text-white mb-1">
-        Us Block Color:
-      </label>
-      <input type="color" id="usColorPicker" value="#3b82f6" class="w-full h-10">
+  <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6 text-center">
+    <h2
+      id="themeModalTitle"
+      class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
+    >
+      Choose Your Colors
+    </h2>
+
+    <!-- New: Randomize button placed below the header -->
+    <div class="mb-4">
+      <button
+        type="button"
+        onclick="randomizeThemeColors()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
+      >
+        Randomize
+      </button>
     </div>
-    <div>
-      <label for="demColorPicker" class="block text-gray-700 dark:text-white mb-1">
-        Dem Block Color:
-      </label>
-      <input type="color" id="demColorPicker" value="#ef4444" class="w-full h-10">
-    </div>
+
+    <!-- Color picker container -->
+    <!-- Color picker container, side by side -->
+<div class="flex justify-center items-center space-x-12 my-4">
+  <div class="text-center">
+    <label for="usColorPicker" class="block text-gray-700 dark:text-white mb-2">
+      Us Color:
+    </label>
+    <input
+      type="color"
+      id="usColorPicker"
+      value="#3b82f6"
+      class="mx-auto w-12 h-12 cursor-pointer"
+    />
   </div>
-  <div class="flex justify-end space-x-2 mt-4">
-    <button
-      type="button"
-      onclick="applyCustomThemeColors()"
-      class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
-    >
-      Apply
-    </button>
-    <button
-    type="button"
-    onclick="resetThemeColors()"
-    class="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
-  >
-    Reset Colors
-  </button>
-    <button
-      type="button"
-      onclick="closeThemeModal()"
-      class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
-    >
-      Close
-    </button>
+  <div class="text-center">
+    <label for="demColorPicker" class="block text-gray-700 dark:text-white mb-2">
+      Dem Color:
+    </label>
+    <input
+      type="color"
+      id="demColorPicker"
+      value="#ef4444"
+      class="mx-auto w-12 h-12 cursor-pointer"
+    />
   </div>
 </div>
+
+    <!-- Button row at the bottom -->
+    <div class="flex justify-center space-x-2 mt-6">
+      <button
+        type="button"
+        onclick="applyCustomThemeColors()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
+      >
+        Apply
+      </button>
+      <button
+        type="button"
+        onclick="resetThemeColors()"
+        class="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
+      >
+        Reset Colors
+      </button>
+      <button
+        type="button"
+        onclick="closeThemeModal()"
+        class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
+      >
+        Close
+      </button>
+    </div>
+  </div>
 </div>
 
     <script>
@@ -1077,6 +1134,44 @@ function resetThemeColors() {
   const demPicker = document.getElementById('demColorPicker');
   if (usPicker) usPicker.value = defaultUsColor;
   if (demPicker) demPicker.value = defaultDemColor;
+}
+// Helper function to convert HSL to HEX
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  let r, g, b;
+  if (h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b)
+    .toString(16)
+    .slice(1);
+}
+
+// Updated randomizeThemeColors: generates complementary colors
+function randomizeThemeColors() {
+  const randomHue = Math.floor(Math.random() * 360);
+  const complementaryHue = (randomHue + 180) % 360;
+  const saturation = 80; // Adjust as needed
+  const lightness = 50;  // Adjust as needed
+  
+  const randomUs = hslToHex(randomHue, saturation, lightness);
+  const randomDem = hslToHex(complementaryHue, saturation, lightness);
+  
+  // Update the color pickers with these complementary colors
+  const usPicker = document.getElementById('usColorPicker');
+  const demPicker = document.getElementById('demColorPicker');
+  if (usPicker) usPicker.value = randomUs;
+  if (demPicker) demPicker.value = randomDem;
 }
 
       /*
