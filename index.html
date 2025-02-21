@@ -309,26 +309,6 @@
         --primary-color: #3b82f6;
         --accent-color: #ef4444;
       }
-      .theme-blue-red {
-        --primary-color: #3b82f6;
-        --accent-color: #ef4444;
-      }
-      .theme-teal-purple {
-        --primary-color: #14b8a6;
-        --accent-color: #9333ea;
-      }
-      .theme-orange-green {
-        --primary-color: #f97316;
-        --accent-color: #10b981;
-      }
-      .theme-pink-yellow {
-        --primary-color: #ec4899;
-        --accent-color: #facc15;
-      }
-      .theme-gray-amber {
-        --primary-color: #6b7280;
-        --accent-color: #f59e0b;
-      }
       .bg-primary {
         background-color: var(--primary-color) !important;
         transition:
@@ -403,7 +383,7 @@
       <ul>
         <li>
           <a href="#" onclick="openSavedGamesModal();toggleMenu(event)">
-            View Saved Games
+            View Games
           </a>
         </li>
         <li>
@@ -427,7 +407,7 @@
         <li>
           <label
             for="darkModeToggle"
-            class="px-5 py-[15px] border-b border-gray-200 dark:border-gray-600 flex items-center justify-between w-full cursor-pointer text-[20px] hover:bg-gray-100 dark:hover:bg-gray-600"
+            class="px-5 py-[15px] border-b-[0.3px] border-gray-200 dark:border-gray-600 flex items-center justify-between w-full cursor-pointer text-[20px] hover:bg-gray-100 dark:hover:bg-gray-600"
           >
             <span class="text-gray-700 dark:text-white">
               Dark Mode
@@ -779,71 +759,57 @@
       </div>
     </div>
 
-    <!-- THEME SELECTION MODAL -->
-    <div
-      id="themeModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="themeModalTitle"
-    >
-      <div
-        class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6"
-      >
-        <h2
-          id="themeModalTitle"
-          class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
-        >
-          Choose a Theme
-        </h2>
-        <div class="space-y-2">
-          <button
-            class="block w-full text-left threed bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl"
-            onclick="applyTheme('theme-blue-red')"
-            type="button"
-          >
-            Blue / Red
-          </button>
-          <button
-            class="block w-full text-left threed bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl"
-            onclick="applyTheme('theme-teal-purple')"
-            type="button"
-          >
-            Teal / Purple
-          </button>
-          <button
-            class="block w-full text-left threed bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl"
-            onclick="applyTheme('theme-orange-green')"
-            type="button"
-          >
-            Orange / Green
-          </button>
-          <button
-            class="block w-full text-left threed bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl"
-            onclick="applyTheme('theme-pink-yellow')"
-            type="button"
-          >
-            Pink / Yellow
-          </button>
-          <button
-            class="block w-full text-left threed bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl"
-            onclick="applyTheme('theme-gray-amber')"
-            type="button"
-          >
-            Gray / Amber
-          </button>
-        </div>
-        <div class="flex justify-end space-x-2 mt-4">
-          <button
-            type="button"
-            onclick="closeThemeModal()"
-            class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
-          >
-            Close
-          </button>
-        </div>
-      </div>
+    <!-- CUSTOM THEME SELECTION MODAL -->
+<div
+id="themeModal"
+class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+role="dialog"
+aria-modal="true"
+aria-labelledby="themeModalTitle"
+>
+<div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6">
+  <h2 id="themeModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+    Choose Your Colors
+  </h2>
+  <div class="space-y-4">
+    <div>
+      <label for="usColorPicker" class="block text-gray-700 dark:text-white mb-1">
+        Us Block Color:
+      </label>
+      <input type="color" id="usColorPicker" value="#3b82f6" class="w-full h-10">
     </div>
+    <div>
+      <label for="demColorPicker" class="block text-gray-700 dark:text-white mb-1">
+        Dem Block Color:
+      </label>
+      <input type="color" id="demColorPicker" value="#ef4444" class="w-full h-10">
+    </div>
+  </div>
+  <div class="flex justify-end space-x-2 mt-4">
+    <button
+      type="button"
+      onclick="applyCustomThemeColors()"
+      class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
+    >
+      Apply
+    </button>
+    <button
+    type="button"
+    onclick="resetThemeColors()"
+    class="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
+  >
+    Reset Colors
+  </button>
+    <button
+      type="button"
+      onclick="closeThemeModal()"
+      class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
+    >
+      Close
+    </button>
+  </div>
+</div>
+</div>
 
     <script>
       "use strict";
@@ -1064,6 +1030,54 @@ function setLocalStorage(key, value) {
           applyTheme(savedTheme);
         }
       }
+
+// Applies the custom colors chosen by the user to the body element
+function applyCustomThemeColors() {
+  const usColor = document.getElementById('usColorPicker').value;
+  const demColor = document.getElementById('demColorPicker').value;
+  const body = document.getElementById('bodyRoot');
+  body.style.setProperty('--primary-color', usColor);
+  body.style.setProperty('--accent-color', demColor);
+  localStorage.setItem('customUsColor', usColor);
+  localStorage.setItem('customDemColor', demColor);
+  closeThemeModal();
+}
+
+// On page load, check if custom colors have been set and apply them to the body element
+function initializeCustomThemeColors() {
+  const customUsColor = localStorage.getItem('customUsColor');
+  const customDemColor = localStorage.getItem('customDemColor');
+  if (customUsColor && customDemColor) {
+    const body = document.getElementById('bodyRoot');
+    body.style.setProperty('--primary-color', customUsColor);
+    body.style.setProperty('--accent-color', customDemColor);
+    // Also update the color pickers in the theme modal (if it is opened)
+    const usPicker = document.getElementById('usColorPicker');
+    const demPicker = document.getElementById('demColorPicker');
+    if (usPicker) usPicker.value = customUsColor;
+    if (demPicker) demPicker.value = customDemColor;
+  }
+}
+function resetThemeColors() {
+  // Default colors for blue and red
+  const defaultUsColor = "#3b82f6";
+  const defaultDemColor = "#ef4444";
+  const body = document.getElementById('bodyRoot');
+  
+  // Reset the CSS custom properties
+  body.style.setProperty('--primary-color', defaultUsColor);
+  body.style.setProperty('--accent-color', defaultDemColor);
+  
+  // Remove the custom color entries from localStorage
+  localStorage.removeItem('customUsColor');
+  localStorage.removeItem('customDemColor');
+  
+  // Update the color picker values so they show the defaults
+  const usPicker = document.getElementById('usColorPicker');
+  const demPicker = document.getElementById('demColorPicker');
+  if (usPicker) usPicker.value = defaultUsColor;
+  if (demPicker) demPicker.value = defaultDemColor;
+}
 
       /*
         ====================================================
@@ -2647,7 +2661,6 @@ function deleteGame(storageKey, index, descriptor) {
                         class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
                         aria-label="Custom Bid Amount"
                       />
-                      <span class="text-sm text-gray-500 dark:text-white">Must be divisible by 5 (≤180 or 360)</span>
                     </div>
                   `
                       : ""
@@ -2858,6 +2871,7 @@ function deleteGame(storageKey, index, descriptor) {
         loadCurrentGameState();
         initializeDarkMode();
         initializeTheme();
+        initializeCustomThemeColors();
         renderApp();
 
         // NEW EVENT LISTENER FOR THE SLIDER SWITCH
