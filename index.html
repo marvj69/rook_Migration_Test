@@ -10,7 +10,6 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="icon" href="icons/icon-192x192.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -3408,6 +3407,16 @@ function handleDeleteTeam(teamName) {
     }
   );
 }
+
+  // Listen for touchstart on the entire document body.
+  // Use passive: false so we can call preventDefault().
+  document.body.addEventListener('touchstart', function(e) {
+    // Only act if the touch is near the left edge (within 20px)
+    if (e.pageX <= 20) {
+      e.preventDefault(); // Prevent the default navigation gesture
+      toggleMenu(e);      // Open the hamburger menu
+    }
+  }, { passive: false });
 
  // Service Worker update handling
 let refreshing = false;
