@@ -3408,6 +3408,33 @@ function handleDeleteTeam(teamName) {
   );
 }
 
+document.addEventListener("click", function(e) {
+    // Saved Games Modal
+    const savedGamesModal = document.getElementById("savedGamesModal");
+    if (savedGamesModal && !savedGamesModal.classList.contains("hidden") &&
+        !savedGamesModal.contains(e.target) &&
+        !e.target.closest("#closeSavedGamesModalBtn")) {
+      closeSavedGamesModal();
+    }
+
+    // About Modal
+    const aboutModal = document.getElementById("aboutModal");
+    if (aboutModal && !aboutModal.classList.contains("hidden") &&
+        !aboutModal.contains(e.target)) {
+      closeAboutModal();
+    }
+
+    // Themes Modal
+    const themeModal = document.getElementById("themeModal");
+    if (themeModal && !themeModal.classList.contains("hidden") &&
+        !themeModal.contains(e.target)) {
+      closeThemeModal();
+    }
+
+    // Add similar blocks for any other modals you want to close on outside click.
+    // (For example, you might not want to close team selection modals automatically.)
+  });
+
   // Listen for touchstart on the entire document body.
   // Use passive: false so we can call preventDefault().
   document.body.addEventListener('touchstart', function(e) {
