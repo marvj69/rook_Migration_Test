@@ -3408,6 +3408,14 @@ function handleDeleteTeam(teamName) {
   );
 }
 
+ // Push the current state into history
+ history.pushState(null, null, location.href);
+  // Listen for the popstate event which is fired when the user navigates back/forward
+  window.addEventListener('popstate', function (event) {
+    // Re-push the current state, effectively preventing backward/forward navigation
+    history.pushState(null, null, location.href);
+  });
+      
  // Service Worker update handling
 let refreshing = false;
 
