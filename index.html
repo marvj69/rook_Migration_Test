@@ -501,9 +501,10 @@ input[type="color"]:focus {
       aria-modal="true"
       aria-labelledby="savedGamesTitle"
     >
-      <div
-        class="bg-white w-full max-w-4xl rounded-xl shadow-lg overflow-y-auto max-h-full dark:bg-gray-800"
-      >
+     <div
+      class="bg-white w-full max-w-4xl rounded-xl shadow-lg overflow-y-auto dark:bg-gray-800 z-50"
+      style="max-height: 85vh;"
+    >
         <div
           class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700"
         >
@@ -1963,119 +1964,62 @@ function deleteGame(storageKey, index, descriptor) {
         openTeamSelectionModal();
       }
 
-      function handleManualSaveGame() {
-        if (!state.usTeamName || !state.demTeamName) {
-          pendingGameAction = "save";
-          openTeamSelectionModal();
-          return;
-        }
-        if (!state.rounds.length) return;
-
-        // If game is over and we have a winner, finalize the time
-        if (state.gameOver && state.winner) {
-          let finalAccumulated = state.accumulatedTime;
-          if (state.startTime !== null) {
-            finalAccumulated += Date.now() - state.startTime;
-          }
-          updateTeamsStatsOnGameEnd(state.winner);
-
-          // Grab final score
-          const lastRound = state.rounds[state.rounds.length - 1];
-          const finalScore =
-            lastRound && lastRound.runningTotals
-              ? lastRound.runningTotals
-              : { us: 0, dem: 0 };
-
-          // Save to "savedGames"
-          const savedGames = getLocalStorage("savedGames");
-          savedGames.push({
-            player1: state.usTeamName || "Us",
-            player2: state.demTeamName || "Dem",
-            rounds: state.rounds,
-            finalScore,
-            winner: state.winner,
-            victoryMethod: state.victoryMethod,
-            timestamp: new Date().toISOString(),
-            playerStats: {
-              player1: {
-                totalPoints: finalScore.us,
-                bids: [],
-                wins: state.winner === "us" ? 1 : 0,
-              },
-              player2: {
-                totalPoints: finalScore.dem,
-                bids: [],
-                wins: state.winner === "dem" ? 1 : 0,
-              },
-            },
-            usTeamName: state.usTeamName || "Us",
-            demTeamName: state.demTeamName || "Dem",
-            // Add the final duration in ms
-            durationMs: finalAccumulated,
-          });
-          setLocalStorage("savedGames", savedGames);
-          showSaveIndicator();
-
-          // Clear active game
-          localStorage.removeItem(ACTIVE_GAME_KEY);
-          ephemeralCustomBid = "";
-          ephemeralPoints = "";
-          updateState({ ...DEFAULT_STATE });
-          confettiTriggered = false;
-        } else {
-          // If the game isn't over but user forcibly saves,
-          // we still record it as a 'completed' game with no winner.
-          let finalAccumulated = state.accumulatedTime;
-          if (state.startTime !== null) {
-            finalAccumulated += Date.now() - state.startTime;
-          }
-
-          const lastRound = state.rounds[state.rounds.length - 1] || {};
-          const finalScore = lastRound.runningTotals || { us: 0, dem: 0 };
-          const savedGames = getLocalStorage("savedGames");
-          savedGames.push({
-            player1: state.usTeamName || "Us",
-            player2: state.demTeamName || "Dem",
-            rounds: state.rounds,
-            finalScore,
-            winner: state.winner,
-            victoryMethod: state.victoryMethod,
-            timestamp: new Date().toISOString(),
-            playerStats: {
-              player1: {
-                totalPoints: finalScore.us,
-                bids: [],
-                wins: state.winner === "us" ? 1 : 0,
-              },
-              player2: {
-                totalPoints: finalScore.dem,
-                bids: [],
-                wins: state.winner === "dem" ? 1 : 0,
-              },
-            },
-            usTeamName: state.usTeamName || "Us",
-            demTeamName: state.demTeamName || "Dem",
-            durationMs: finalAccumulated,
-          });
-          setLocalStorage("savedGames", savedGames);
-          showSaveIndicator();
-
-          localStorage.removeItem(ACTIVE_GAME_KEY);
-          ephemeralCustomBid = "";
-          ephemeralPoints = "";
-          updateState({ ...DEFAULT_STATE });
-          confettiTriggered = false;
-        }
-      }
-
-      function handleFreezerGame() {
-  if (!state.rounds.length) {
-    alert("No game in progress to freeze.");
+function handleManualSaveGame() {
+  if (!state.usTeamName || !state.demTeamName) {
+    pendingGameAction = "save";
+    openTeamSelectionModal();
     return;
   }
-  // Always prompt for team names before freezing the game.
-  pendingGameAction = "freeze";
-  openTeamSelectionModal();
+  if (!state.rounds.length) return;
+
+  // 1) Finalize accumulated game time
+  let finalAccumulated = state.accumulatedTime;
+  if (state.startTime !== null) {
+    finalAccumulated += Date.now() - state.startTime;
+  }
+  
+  // 2) Calculate final score from the last round’s running totals
+  const lastRound = state.rounds[state.rounds.length - 1] || {};
+  const finalScore = lastRound.runningTotals || { us: 0, dem: 0 };
+
+  // 3) Construct the game object
+  const gameObj = {
+    player1: state.usTeamName || "Us",
+    player2: state.demTeamName || "Dem",
+    rounds: state.rounds,
+    finalScore: finalScore,
+    winner: state.winner,
+    victoryMethod: state.victoryMethod,
+    timestamp: new Date().toISOString(),
+    playerStats: {
+      player1: {
+        totalPoints: finalScore.us,
+        bids: [],
+        wins: state.winner === "us" ? 1 : 0,
+      },
+      player2: {
+        totalPoints: finalScore.dem,
+        bids: [],
+        wins: state.winner === "dem" ? 1 : 0,
+      },
+    },
+    usTeamName: state.usTeamName || "Us",
+    demTeamName: state.demTeamName || "Dem",
+    durationMs: finalAccumulated,
+  };
+
+  // 5) Save the game object to localStorage
+  const savedGames = getLocalStorage("savedGames");
+  savedGames.push(gameObj);
+  setLocalStorage("savedGames", savedGames);
+  showSaveIndicator();
+
+  // 6) Clean up current game state
+  localStorage.removeItem(ACTIVE_GAME_KEY);
+  ephemeralCustomBid = "";
+  ephemeralPoints = "";
+  updateState({ ...DEFAULT_STATE });
+  confettiTriggered = false;
 }
 
       function freezeCurrentGame() {
@@ -2260,69 +2204,137 @@ function deleteGame(storageKey, index, descriptor) {
       }
 
       function renderReadOnlyGameDetails(game) {
-        const {
-          finalScore,
-          rounds,
-          winner,
-          victoryMethod,
-          timestamp,
-          usTeamName,
-          demTeamName,
-          durationMs,
-        } = game;
-        const roundHtml = rounds
-          .map((r, index) => {
-            const arrow = r.biddingTeam === "us" ? `← (${r.bidAmount})` : `(${r.bidAmount}) →`;
-            return `
-              <div class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
-                <div class="text-left text-gray-800 dark:text-white font-semibold">${r.runningTotals.us}</div>
-                <div class="text-center">${arrow}</div>
-                <div class="text-right text-gray-800 dark:text-white font-semibold">${r.runningTotals.dem}</div>
-              </div>`;
-          })
-          .join("");
+  const {
+    rounds,
+    timestamp,
+    usTeamName,
+    demTeamName,
+    durationMs,
+    winner,
+  } = game;
 
-        return `
-          <div class="space-y-4">
-            <div>
-              <h4 class="text-xl font-bold text-gray-800 dark:text-white">${usTeamName || "Us"} vs ${demTeamName || "Dem"}</h4>
-              <p class="text-gray-600 dark:text-white mt-1">Date Played: ${new Date(timestamp).toLocaleString()}</p>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800 dark:text-white">Final Score:</p>
-              <p class="text-gray-700 dark:text-white mt-1">
-                Us: ${finalScore.us} | Dem: ${finalScore.dem}
-              </p>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800 dark:text-white">Winner:</p>
-              <p class="text-gray-700 dark:text-white mt-1">${
-                winner === "us" ? (usTeamName || "Us") : winner === "dem" ? (demTeamName || "Dem") : "N/A"
-              }</p>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800 dark:text-white">Victory Method:</p>
-              <p class="text-gray-700 dark:text-white mt-1">${victoryMethod || "N/A"}</p>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800 dark:text-white">Duration:</p>
-              <p class="text-gray-700 dark:text-white mt-1">
-                ${durationMs ? formatDuration(durationMs) : "N/A"}
-              </p>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800 dark:text-white mb-2">Round-by-Round History:</p>
-              <div class="grid grid-cols-3 gap-2 font-semibold text-gray-800 dark:text-white mb-2">
-                <div class="text-left">Us</div>
-                <div class="text-center">Bid</div>
-                <div class="text-right">Dem</div>
-              </div>
-              <div class="space-y-2">
-                ${roundHtml || "<p>No rounds recorded.</p>"}
-              </div>
-            </div>
-          </div>`;
+  // Compute the sandbag detection on the fly.
+  // (This is essentially our detectSandbag logic embedded here.)
+  let usSandbagCount = 0;
+  let demSandbagCount = 0;
+  if (rounds && rounds.length) {
+    rounds.forEach((round, index) => {
+      // Try to obtain individual round points.
+      let roundUsPoints = round.usPoints;
+      let roundDemPoints = round.demPoints;
+      
+      // If not defined, compute the difference from running totals.
+      if (roundUsPoints === undefined || roundDemPoints === undefined) {
+        if (index === 0) {
+          roundUsPoints = round.runningTotals.us;
+          roundDemPoints = round.runningTotals.dem;
+        } else {
+          const prevTotals = rounds[index - 1].runningTotals;
+          roundUsPoints = round.runningTotals.us - prevTotals.us;
+          roundDemPoints = round.runningTotals.dem - prevTotals.dem;
+        }
       }
+      
+      const { biddingTeam, bidAmount } = round;
+      
+      // If US bid but failed, credit Dem’s sandbag count.
+      if (biddingTeam === "us" && roundUsPoints < 0) {
+        if (roundDemPoints >= 80 || roundDemPoints >= bidAmount) {
+          demSandbagCount++;
+        }
+      }
+      // If DEM bid but failed, credit Us’s sandbag count.
+      if (biddingTeam === "dem" && roundDemPoints < 0) {
+        if (roundUsPoints >= 80 || roundUsPoints >= bidAmount) {
+          usSandbagCount++;
+        }
+      }
+    });
+  }
+  
+  // Only the winning team's sandbag events matter.
+  // Here we assume a threshold of at least 2 sandbag events.
+  let sandbagNote = "No";
+  if (winner === "us" && usSandbagCount >= 2) {
+    sandbagNote = "Yes";
+  } else if (winner === "dem" && demSandbagCount >= 2) {
+    sandbagNote = "Yes";
+  }
+
+  const roundHtml = rounds
+    .map((r, index) => {
+      const arrow =
+        r.biddingTeam === "us"
+          ? `← (${r.bidAmount})`
+          : `(${r.bidAmount}) →`;
+      return `
+        <div class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
+          <div class="text-left text-gray-800 dark:text-white font-semibold">${r.runningTotals.us}</div>
+          <div class="text-center">${arrow}</div>
+          <div class="text-right text-gray-800 dark:text-white font-semibold">${r.runningTotals.dem}</div>
+        </div>`;
+    })
+    .join("");
+
+  return `
+    <div class="space-y-4">
+      <!-- Header -->
+      <div>
+        <h4 class="text-xl font-bold text-gray-800 dark:text-white">
+          Winner: ${
+            winner === "us"
+              ? (usTeamName || "Us")
+              : winner === "dem"
+              ? (demTeamName || "Dem")
+              : "N/A"
+          }
+        </h4>
+        <p class="text-lg text-gray-600 dark:text-white mt-1">
+          ${usTeamName || "Us"} vs ${demTeamName || "Dem"}
+        </p>
+        <p class="text-gray-600 dark:text-white mt-1">
+          Date Played: ${new Date(timestamp).toLocaleString([], {
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      </div>
+
+      <!-- Duration -->
+      <div>
+        <p class="font-semibold text-gray-800 dark:text-white">Duration:</p>
+        <p class="text-gray-700 dark:text-white mt-1">
+          ${durationMs ? formatDuration(durationMs) : "N/A"}
+        </p>
+      </div>
+
+      <!-- Sandbag Info computed from rounds -->
+      <div>
+        <p class="font-semibold text-gray-800 dark:text-white">Sandbag?</p>
+        <p class="text-gray-700 dark:text-white mt-1">
+          ${sandbagNote}
+        </p>
+      </div>
+
+      <!-- Round-by-Round History -->
+      <div>
+        <p class="font-semibold text-gray-800 dark:text-white mb-2">
+          Round-by-Round History:
+        </p>
+        <div class="grid grid-cols-3 gap-2 font-semibold text-gray-800 dark:text-white mb-2">
+          <div class="text-left">Us</div>
+          <div class="text-center">Bid</div>
+          <div class="text-right">Dem</div>
+        </div>
+        <div class="space-y-2">
+          ${roundHtml || "<p>No rounds recorded.</p>"}
+        </div>
+      </div>
+    </div>`;
+}
 
       function renderSavedGames() {
         const savedGames = getLocalStorage("savedGames");
