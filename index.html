@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="icon" href="icons/icon-192x192.png" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="winprobcalc.js"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -483,7 +484,7 @@ input[type="color"]:focus {
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.3.2</p>
+      <p>version 1.3.3</p>
     </div>
 
     <!-- Main App Container -->
@@ -659,9 +660,9 @@ aria-labelledby="savedGamesTitle"
             dark mode, and change the theme from the menu.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.3.2:</strong>
+            <strong>What's New in 1.3.3:</strong>
             <p>
-              version 1.3.2 introduces a better way to handle team names and statistics.
+              version 1.3.3 introduces a better way to handle team names and statistics.
             </p>
             - Sandbagger. Are you a sandbagger? Check the team stats to find out.<br />
             - Select teams: Team statistics save per team once team names are entered.<br />
@@ -1348,15 +1349,6 @@ function randomizeThemeColors() {
           renderApp();
         }
       }
-
-      function saveCurrentGameState() {
-        if (state.gameOver) {
-          localStorage.removeItem(ACTIVE_GAME_KEY);
-        } else {
-          localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
-          showSaveIndicator();
-        }
-      }
       
       function recalcTeamsStats() {
   const savedGames = getLocalStorage("savedGames");
@@ -1559,71 +1551,66 @@ function deleteGame(storageKey, index, descriptor) {
   };
 }
 
-      function handleTeamSelectionSubmit(e) {
-        e.preventDefault();
-        const usVal = document.getElementById("selectUsTeam").value;
-        const newUsVal = document.getElementById("newUsTeamName").value.trim();
-        const demVal = document.getElementById("selectDemTeam").value;
-        const newDemVal = document.getElementById("newDemTeamName").value.trim();
-        let finalUs = "";
-        let finalDem = "";
-        if (usVal === "NEW_TEAM") {
-          if (!newUsVal) {
-            alert("Please enter a new team name for 'Us' or select an existing team.");
-            return;
-          }
-          finalUs = newUsVal;
-          addTeamIfNotExists(newUsVal);
-        } else {
-          if (!usVal) {
-            alert("Please select a team for 'Us' or create a new one.");
-            return;
-          }
-          finalUs = usVal;
-        }
-        if (demVal === "NEW_TEAM") {
-          if (!newDemVal) {
-            alert("Please enter a new team name for 'Dem' or select an existing team.");
-            return;
-          }
-          finalDem = newDemVal;
-          addTeamIfNotExists(newDemVal);
-        } else {
-          if (!demVal) {
-            alert("Please select a team for 'Dem' or create a new one.");
-            return;
-          }
-          finalDem = demVal;
-        }
-        if (finalUs === finalDem) {
-          alert("Team 'Us' and 'Dem' cannot be the same.");
-          return;
-        }
-        // Update state with chosen names
-        updateState({
-          usTeamName: finalUs,
-          demTeamName: finalDem,
-        });
-        saveCurrentGameState();
-        closeTeamSelectionModal();
+function handleTeamSelectionSubmit(e) {
+  e.preventDefault();
+  const usVal = document.getElementById("selectUsTeam").value;
+  const newUsVal = document.getElementById("newUsTeamName").value.trim();
+  const demVal = document.getElementById("selectDemTeam").value;
+  const newDemVal = document.getElementById("newDemTeamName").value.trim();
+  let finalUs = "";
+  let finalDem = "";
 
-        // If we were in a 'freeze' or 'save' flow, proceed:
-        if (pendingGameAction === "freeze") {
-          openConfirmationModal(
-            "Are you sure you want to freeze this game?",
-            () => {
-              freezeCurrentGame();
-              closeConfirmationModal();
-            },
-            () => {
-              closeConfirmationModal();
-            }
-          );
-        } else if (pendingGameAction === "save") {
-          handleManualSaveGame();
-        }
-        pendingGameAction = null;
-      }
+  if (usVal === "NEW_TEAM") {
+    if (!newUsVal) {
+      alert("Please enter a new team name for 'Us' or select an existing team.");
+      return;
+    }
+    finalUs = newUsVal;
+    addTeamIfNotExists(newUsVal);
+  } else {
+    if (!usVal) {
+      alert("Please select a team for 'Us' or create a new one.");
+      return;
+    }
+    finalUs = usVal;
+  }
+
+  if (demVal === "NEW_TEAM") {
+    if (!newDemVal) {
+      alert("Please enter a new team name for 'Dem' or select an existing team.");
+      return;
+    }
+    finalDem = newDemVal;
+    addTeamIfNotExists(newDemVal);
+  } else {
+    if (!demVal) {
+      alert("Please select a team for 'Dem' or create a new one.");
+      return;
+    }
+    finalDem = demVal;
+  }
+
+  if (finalUs === finalDem) {
+    alert("Team 'Us' and 'Dem' cannot be the same.");
+    return;
+  }
+
+  // Update state with chosen names
+  updateState({
+    usTeamName: finalUs,
+    demTeamName: finalDem,
+  });
+  saveCurrentGameState();
+  closeTeamSelectionModal();
+
+  // Handle pending actions
+  if (pendingGameAction === "freeze") {
+    confirmFreeze(); // Directly proceed to confirmation
+  } else if (pendingGameAction === "save") {
+    handleManualSaveGame();
+  }
+  pendingGameAction = null;
+}
 
       function addTeamIfNotExists(teamName) {
         const teams = getTeamsObject();
@@ -1883,6 +1870,7 @@ function deleteGame(storageKey, index, descriptor) {
           // Update teams stats
           updateTeamsStatsOnGameEnd(theWinner);
           saveCurrentGameState();
+       
         } else {
           updateState({
             rounds: updatedRounds,
@@ -1893,6 +1881,11 @@ function deleteGame(storageKey, index, descriptor) {
             enterBidderPoints: false,
             error: "",
           });
+             // After updating state and saving the round
+          const historicalGames = getLocalStorage("savedGames"); // Retrieve historical game data
+          const winProb = calculateWinProbability(state, historicalGames);
+
+          updateWinProbabilityDisplay();
           saveCurrentGameState();
         }
       }
@@ -2023,44 +2016,86 @@ function handleManualSaveGame() {
   confettiTriggered = false;
 }
 
-      function freezeCurrentGame() {
-        // Pause timer if running
-        let finalAccumulated = state.accumulatedTime;
-        if (state.startTime !== null) {
-          finalAccumulated += Date.now() - state.startTime;
-        }
+function handleFreezerGame() {
+  // Check if we have anything to freeze (at least one round)
+  if (!state.rounds || state.rounds.length === 0) {
+    alert("No game data to freeze. Play at least one round first.");
+    return;
+  }
 
-        const freezerGames = getLocalStorage("freezerGames");
-        const finalScore = state.rounds.reduce(
-          (acc, r) => ({
-            us: acc.us + r.usPoints,
-            dem: acc.dem + r.demPoints,
-          }),
-          { us: 0, dem: 0 }
-        );
-        const lastRound = state.rounds[state.rounds.length - 1];
-        freezerGames.push({
-          name: `FROZEN-${Date.now()}`,
-          usName: state.usTeamName || "Us",
-          demName: state.demTeamName || "Dem",
-          finalScore,
-          lastBid: lastRound ? lastRound.bidAmount : null,
-          winner: state.winner,
-          victoryMethod: state.victoryMethod,
-          rounds: state.rounds,
-          timestamp: new Date().toISOString(),
-          // Store the accumulated time so we can resume later
-          accumulatedTime: finalAccumulated,
-        });
-        setLocalStorage("freezerGames", freezerGames);
+  // If team names are not set, prompt for them
+  if (!state.usTeamName || !state.demTeamName) {
+    pendingGameAction = "freeze";
+    openTeamSelectionModal();
+    return;
+  }
 
-        // Clear active game
-        localStorage.removeItem(ACTIVE_GAME_KEY);
-        ephemeralCustomBid = "";
-        ephemeralPoints = "";
-        updateState({ ...DEFAULT_STATE });
-        confettiTriggered = false;
-      }
+  // If team names are set, proceed directly to confirmation
+  confirmFreeze();
+}
+
+function confirmFreeze() {
+  openConfirmationModal(
+    "Are you sure you want to freeze this game?",
+    () => {
+      freezeCurrentGame();
+      closeConfirmationModal();
+      closeMenuOverlay(); // Ensure menu closes
+    },
+    () => {
+      closeConfirmationModal();
+    }
+  );
+}
+
+function freezeCurrentGame() {
+  // Pause timer if running
+  let finalAccumulated = state.accumulatedTime;
+  if (state.startTime !== null) {
+    finalAccumulated += Date.now() - state.startTime;
+  }
+
+  // Calculate final score from rounds
+  const finalScore = state.rounds.reduce(
+    (acc, r) => ({
+      us: acc.us + r.usPoints,
+      dem: acc.dem + r.demPoints,
+    }),
+    { us: 0, dem: 0 }
+  );
+
+  const lastRound = state.rounds[state.rounds.length - 1];
+  const freezerGames = getLocalStorage("freezerGames");
+
+  // Create the frozen game object
+  const frozenGame = {
+    name: `FROZEN-${Date.now()}`,
+    usName: state.usTeamName || "Us",
+    demName: state.demTeamName || "Dem",
+    finalScore,
+    lastBid: lastRound ? lastRound.bidAmount : null,
+    winner: state.winner,
+    victoryMethod: state.victoryMethod,
+    rounds: state.rounds,
+    timestamp: new Date().toISOString(),
+    accumulatedTime: finalAccumulated,
+  };
+
+  // Save to freezerGames
+  freezerGames.push(frozenGame);
+  setLocalStorage("freezerGames", freezerGames);
+
+  // Clear active game state
+  localStorage.removeItem(ACTIVE_GAME_KEY);
+  ephemeralCustomBid = "";
+  ephemeralPoints = "";
+  updateState({ ...DEFAULT_STATE });
+  confettiTriggered = false;
+
+  // Clear pending action and refresh UI
+  pendingGameAction = null;
+  renderApp();
+}
 
       function loadFreezerGame(index) {
         const freezerGames = getLocalStorage("freezerGames");
@@ -2834,39 +2869,42 @@ function renderReadOnlyGameDetails(game) {
       }
 
       function renderHistoryCard() {
-        const { rounds, usTeamName, demTeamName } = state;
-        const labelUs = usTeamName || "Us";
-        const labelDem = demTeamName || "Dem";
-        return `
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
-            <div class="border-b border-gray-200 p-4 dark:border-gray-700">
-              <h2 class="text-lg font-bold text-gray-800 dark:text-white">History</h2>
-              <div class="grid grid-cols-3 gap-2 pt-3 font-medium text-gray-600 dark:text-white text-sm sm:text-base">
-                <div class="text-left">${labelUs}</div>
-                <div class="text-center">Bid</div>
-                <div class="text-right">${labelDem}</div>
-              </div>
-            </div>
-            <div class="p-4">
-              <div class="space-y-2">
-                ${rounds
-                  .map((round, idx) => {
-                    const arrow =
-                      round.biddingTeam === "us"
-                        ? `<span class="text-gray-800 dark:text-white">←</span><span class="ml-1">${round.bidAmount}</span>`
-                        : `<span class="mr-1">${round.bidAmount}</span><span class="text-gray-800 dark:text-white">→</span>`;
-                    return `
-                      <div key="${idx}" class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
-                        <div class="text-left text-gray-800 dark:text-white font-semibold">${round.runningTotals.us}</div>
-                        <div class="text-center">${arrow}</div>
-                        <div class="text-right text-gray-800 dark:text-white font-semibold">${round.runningTotals.dem}</div>
-                      </div>`;
-                  })
-                  .join("")}
-              </div>
-            </div>
-          </div>`;
-      }
+  const { rounds, usTeamName, demTeamName } = state;
+  const labelUs = usTeamName || "Us";
+  const labelDem = demTeamName || "Dem";
+
+  return `
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
+      <div class="border-b border-gray-200 p-4 dark:border-gray-700">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-white">History</h2>
+        <div class="grid grid-cols-3 gap-2 pt-3 font-medium text-gray-600 dark:text-white text-sm sm:text-base">
+          <div class="text-left">${labelUs}</div>
+          <div class="text-center">Bid</div>
+          <div class="text-right">${labelDem}</div>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="space-y-2">
+          ${rounds
+            .map((round, idx) => {
+              const arrow =
+                round.biddingTeam === "us"
+                  ? `<span class="text-gray-800 dark:text-white">←</span><span class="ml-1">${round.bidAmount}</span>`
+                  : `<span class="mr-1">${round.bidAmount}</span><span class="text-gray-800 dark:text-white">→</span>`;
+              return `
+                <div key="${idx}" class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
+                  <div class="text-left text-gray-800 dark:text-white font-semibold">${round.runningTotals.us}</div>
+                  <div class="text-center">${arrow}</div>
+                  <div class="text-right text-gray-800 dark:text-white font-semibold">${round.runningTotals.dem}</div>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
 
       function renderGameOverOverlay() {
         if (!state.gameOver) return "";
@@ -2908,59 +2946,60 @@ function renderReadOnlyGameDetails(game) {
       }
 
       function renderApp() {
-        const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
-        const totals = rounds.reduce(
-          (acc, r) => ({
-            us: acc.us + r.usPoints,
-            dem: acc.dem + r.demPoints,
-          }),
-          { us: 0, dem: 0 }
-        );
-        const roundNumber = rounds.length + 1;
-        let lastBidHtml = "";
-        if (lastBidAmount && lastBidTeam) {
-          const arrow = lastBidTeam === "us" ? "←" : "→";
-          lastBidHtml = `
-            <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
-              <span class="font-medium">Bid:</span>
-              <span>${lastBidAmount}</span>
-              <span>${arrow}</span>
-            </div>
-          `;
-        }
+  const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
+  const totals = rounds.reduce(
+    (acc, r) => ({
+      us: acc.us + r.usPoints,
+      dem: acc.dem + r.demPoints,
+    }),
+    { us: 0, dem: 0 }
+  );
+  const roundNumber = rounds.length + 1;
+  let lastBidHtml = "";
+  if (lastBidAmount && lastBidTeam) {
+    const arrow = lastBidTeam === "us" ? "←" : "→";
+    lastBidHtml = `
+      <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
+        <span class="font-medium">Bid:</span>
+        <span>${lastBidAmount}</span>
+        <span>${arrow}</span>
+      </div>
+    `;
+  }
 
-        document.getElementById("app").innerHTML = `
-          <div class="text-center space-y-2">
-            <div class="flex flex-col items-center">
-              <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">
-                Rook!
-              </h1>
-            </div>
-            <p class="text-md sm:text-lg text-gray-600 dark:text-white">
-              Tap a team to start a bid!
-            </p>
-          </div>
-          <div class="flex flex-row space-x-4 flex-wrap justify-center">
-            ${renderTeamCard("us", totals.us)}
-            ${renderRoundCard(roundNumber, lastBidHtml)}
-            ${renderTeamCard("dem", totals.dem)}
-          </div>
-          ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
-          ${renderScoreInputCard()}
-          ${renderHistoryCard()}
-          ${renderGameOverOverlay()}
-        `;
+  document.getElementById("app").innerHTML = `
+    <div class="text-center space-y-2">
+      <div class="flex flex-col items-center">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">
+          Rook!
+        </h1>
+      </div>
+      <p class="text-md sm:text-lg text-gray-600 dark:text-white">
+        Tap a team to start a bid!
+      </p>
+      ${renderWinProbability()}
+    </div>
+    <div class="flex flex-row space-x-4 flex-wrap justify-center">
+      ${renderTeamCard("us", totals.us)}
+      ${renderRoundCard(roundNumber, lastBidHtml)}
+      ${renderTeamCard("dem", totals.dem)}
+    </div>
+    ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
+    ${renderScoreInputCard()}
+    ${renderHistoryCard()}
+    ${renderGameOverOverlay()}
+  `;
 
-        // Trigger confetti once if gameOver
-        if (gameOver && !confettiTriggered) {
-          confettiTriggered = true;
-          confetti({
-            particleCount: 200,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        }
-      }
+  // Trigger confetti once if gameOver
+  if (gameOver && !confettiTriggered) {
+    confettiTriggered = true;
+    confetti({
+      particleCount: 200,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  }
+}
 
       function validateBid(bidStr) {
         const bidVal = Number(bidStr);
@@ -2982,7 +3021,7 @@ function renderReadOnlyGameDetails(game) {
 
       function showVersionNum() {
         alert(
-          "version 1.3.2 adds a fully customizeable color selector & various UI improvements."
+          "version 1.3.3 adds a fully customizeable color selector & various UI improvements."
         );
       }
 
@@ -3539,10 +3578,14 @@ if ('serviceWorker' in navigator) {
   }, 60 * 1000);
 }
 
-      function updateState(newState) {
-        state = { ...state, ...newState };
-        renderApp();
-      }
+function updateState(newState) {
+  state = { ...state, ...newState };
+  renderApp();
+  // Save the current game state if the game isn’t over
+  if (!state.gameOver) {
+    localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
+  }
+}
     </script>
   </body>
 </html>
