@@ -462,7 +462,31 @@ input[type="color"]:focus {
           </label>
         </li>
         <!-- END SLIDER SWITCH -->
-
+        <li>
+          <label
+            for="proModeToggle"
+            class="px-5 py-[15px] border-b-[0.3px] border-gray-200 dark:border-gray-600 flex items-center justify-between w-full cursor-pointer text-[20px] hover:bg-gray-100 dark:hover:bg-gray-600"
+          >
+            <span class="text-gray-700 dark:text-white">
+              Pro Mode
+            </span>
+            <div class="relative">
+              <input type="checkbox" id="proModeToggle" class="sr-only peer" />
+              <div
+                class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
+                       peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
+                       peer-checked:bg-gray-1000
+                       after:content-['✗'] peer-checked:after:content-['✓']
+                       after:absolute after:top-1/2 after:left-0
+                       after:bg-white after:border after:border-gray-300 after:rounded-full
+                       after:h-7 after:w-7 after:flex after:items-center after:justify-center after:text-xl after:font-sans
+                       after:text-black
+                       after:transition-transform after:-translate-y-1/2
+                       peer-checked:after:translate-x-[36px]"
+              ></div>
+            </div>
+          </label>
+        </li>
         <!-- NEW Themes Menu Item -->
         <li>
           <a href="#" onclick="openThemeModal(); toggleMenu(event)">
@@ -484,7 +508,7 @@ input[type="color"]:focus {
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.3.3</p>
+      <p>version 1.3.2</p>
     </div>
 
     <!-- Main App Container -->
@@ -660,9 +684,9 @@ aria-labelledby="savedGamesTitle"
             dark mode, and change the theme from the menu.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.3.3:</strong>
+            <strong>What's New in 1.3.2:</strong>
             <p>
-              version 1.3.3 introduces a better way to handle team names and statistics.
+              version 1.3.2 introduces a better way to handle team names and statistics.
             </p>
             - Sandbagger. Are you a sandbagger? Check the team stats to find out.<br />
             - Select teams: Team statistics save per team once team names are entered.<br />
@@ -1236,11 +1260,9 @@ function randomizeThemeColors() {
         lastBidTeam: null,
         usTeamName: "",
         demTeamName: "",
-        // ----------------------------
-        // Added for timing logic:
-        startTime: null, // timestamp when the first round started or resumed
-        accumulatedTime: 0, // total ms so far (excluding any freeze periods)
-        // ----------------------------
+        startTime: null, 
+        accumulatedTime: 0,
+        showWinProbability: false, 
       };
 
       let state = { ...DEFAULT_STATE };
@@ -1249,6 +1271,7 @@ function randomizeThemeColors() {
       let ephemeralPoints = "";
       const ACTIVE_GAME_KEY = "activeGameState";
       const DARK_MODE_KEY = "darkModeEnabled";
+      const PRO_MODE_KEY = "proModeEnabled";
       let confirmationCallback = null;
       let noCallback = null;
       let pendingGameAction = null;
@@ -1327,26 +1350,38 @@ function randomizeThemeColors() {
       }
 
       function loadCurrentGameState() {
-        const saved = localStorage.getItem(ACTIVE_GAME_KEY);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            state = {
-              ...DEFAULT_STATE,
-              ...parsed,
-              usTeamName: parsed.usTeamName || "Us",
-              demTeamName: parsed.demTeamName || "Dem",
-            };
-            renderApp();
-          } catch (err) {
-            console.error("Error parsing saved game state:", err);
-            localStorage.removeItem(ACTIVE_GAME_KEY);
-            state = { ...DEFAULT_STATE };
-            renderApp();
-          }
+  const saved = localStorage.getItem(ACTIVE_GAME_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      state = {
+        ...DEFAULT_STATE,
+        ...parsed,
+        usTeamName: parsed.usTeamName || "Us",
+        demTeamName: parsed.demTeamName || "Dem",
+      };
+    } catch (err) {
+      console.error("Error parsing saved game state:", err);
+      localStorage.removeItem(ACTIVE_GAME_KEY);
+      state = { ...DEFAULT_STATE };
+    }
+  } else {
+    state = { ...DEFAULT_STATE };
+  }
+  // Load Pro Mode setting from localStorage and apply it
+  const isProMode = JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false;
+  state.showWinProbability = isProMode;
+  const proModeToggleCheckbox = document.getElementById("proModeToggle");
+  if (proModeToggleCheckbox) proModeToggleCheckbox.checked = isProMode;
+  renderApp();
+}
+
+      function saveCurrentGameState() {
+        if (state.gameOver) {
+          localStorage.removeItem(ACTIVE_GAME_KEY);
         } else {
-          state = { ...DEFAULT_STATE };
-          renderApp();
+          localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
+          showSaveIndicator();
         }
       }
       
@@ -1870,7 +1905,6 @@ function handleTeamSelectionSubmit(e) {
           // Update teams stats
           updateTeamsStatsOnGameEnd(theWinner);
           saveCurrentGameState();
-       
         } else {
           updateState({
             rounds: updatedRounds,
@@ -1881,11 +1915,6 @@ function handleTeamSelectionSubmit(e) {
             enterBidderPoints: false,
             error: "",
           });
-             // After updating state and saving the round
-          const historicalGames = getLocalStorage("savedGames"); // Retrieve historical game data
-          const winProb = calculateWinProbability(state, historicalGames);
-
-          updateWinProbabilityDisplay();
           saveCurrentGameState();
         }
       }
@@ -1935,21 +1964,22 @@ function handleTeamSelectionSubmit(e) {
       }
 
       function handleNewGame() {
-        openConfirmationModal(
-          "Starting a new game will erase all current game data",
-          () => {
-            closeConfirmationModal();
-            localStorage.removeItem(ACTIVE_GAME_KEY);
-            ephemeralCustomBid = "";
-            ephemeralPoints = "";
-            updateState({ ...DEFAULT_STATE });
-            confettiTriggered = false;
-          },
-          () => {
-            closeConfirmationModal();
-          }
-        );
-      }
+  openConfirmationModal(
+    "Are you sure you want to start a new game? Any unsaved progress will be lost.",
+    () => {
+      const isProMode = JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false;
+      state = {
+        ...DEFAULT_STATE,
+        showWinProbability: isProMode, // Preserve Pro Mode setting
+      };
+      localStorage.removeItem(ACTIVE_GAME_KEY);
+      confettiTriggered = false;
+      closeConfirmationModal();
+      renderApp();
+    },
+    () => closeConfirmationModal()
+  );
+}
 
       function handleGameOverSaveClick(e) {
         if (e) e.preventDefault();
@@ -2669,26 +2699,49 @@ function renderReadOnlyGameDetails(game) {
       }
 
       function renderTeamCard(teamKey, score) {
-        const isSelected = state.biddingTeam === teamKey;
-        const teamLabel = teamKey === "us" ? "Us" : "Dem";
-        const colorClass = teamKey === "us" ? "bg-primary" : "bg-accent";
-        const selectedEffect = isSelected ? "sunken-selected" : "";
-        return `
-          <div
-            class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-colors rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-0 w-32 h-32"
-            onclick="handleTeamClick('${teamKey}')"
-            tabindex="0"
-            role="button"
-            aria-pressed="${isSelected}"
-            aria-label="Select ${teamLabel}"
-          >
-            <div class="flex flex-col items-center">
-              <h2 class="text-base sm:text-xl font-semibold">${teamLabel}</h2>
-              <p class="text-2xl font-bold">${score}</p>
-            </div>
-          </div>
-        `;
-      }
+  const isSelected = state.biddingTeam === teamKey;
+  const teamLabel = teamKey === "us" ? (state.usTeamName || "Us") : (state.demTeamName || "Dem");
+  const colorClass = teamKey === "us" ? "bg-primary" : "bg-accent";
+  const selectedEffect = isSelected ? "sunken-selected" : "";
+
+  // Calculate win probability if Pro Mode is on
+  let winProbDisplay = "";
+  if (state.showWinProbability && !state.gameOver && state.rounds.length > 0) {
+    const historicalGames = getLocalStorage("savedGames");
+    const winProb = calculateWinProbability(state, historicalGames);
+    const prob = teamKey === "us" ? winProb.us : winProb.dem;
+    // Base team color
+    const teamColor = teamKey === "us" ? "var(--primary-color)" : "var(--accent-color)";
+    // Adjust brightness: 0.8 normally, 0.65 when selected to match sunken effect
+    const brightness = isSelected ? "brightness(0.75)" : "brightness(0.85)";
+    winProbDisplay = `
+      <div class="mt-1 text-sm rounded-full px-2 py-1 relative" 
+           style="background-color: ${teamColor}; filter: ${brightness};">
+        <span class="relative text-white font-medium" style="z-index: 1;">
+          Win: ${prob.toFixed(1)}%
+        </span>
+        ${isSelected ? '<div class="absolute inset-0 rounded-full" style="background: rgba(0, 0, 0, 0.414); pointer-events: none; z-index: 0;"></div>' : ""}
+      </div>
+    `;
+  }
+
+  return `
+    <div
+      class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-colors rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-0 w-32 h-32"
+      onclick="handleTeamClick('${teamKey}')"
+      tabindex="0"
+      role="button"
+      aria-pressed="${isSelected}"
+      aria-label="Select ${teamLabel}"
+    >
+      <div class="flex flex-col items-center">
+        <h2 class="text-base sm:text-xl font-semibold">${teamLabel}</h2>
+        <p class="text-2xl font-bold">${score}</p>
+        ${winProbDisplay}
+      </div>
+    </div>
+  `;
+}
 
       function renderRoundCard(roundNumber, lastBidDisplay) {
         return `
@@ -2869,42 +2922,39 @@ function renderReadOnlyGameDetails(game) {
       }
 
       function renderHistoryCard() {
-  const { rounds, usTeamName, demTeamName } = state;
-  const labelUs = usTeamName || "Us";
-  const labelDem = demTeamName || "Dem";
-
-  return `
-    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
-      <div class="border-b border-gray-200 p-4 dark:border-gray-700">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-white">History</h2>
-        <div class="grid grid-cols-3 gap-2 pt-3 font-medium text-gray-600 dark:text-white text-sm sm:text-base">
-          <div class="text-left">${labelUs}</div>
-          <div class="text-center">Bid</div>
-          <div class="text-right">${labelDem}</div>
-        </div>
-      </div>
-      <div class="p-4">
-        <div class="space-y-2">
-          ${rounds
-            .map((round, idx) => {
-              const arrow =
-                round.biddingTeam === "us"
-                  ? `<span class="text-gray-800 dark:text-white">←</span><span class="ml-1">${round.bidAmount}</span>`
-                  : `<span class="mr-1">${round.bidAmount}</span><span class="text-gray-800 dark:text-white">→</span>`;
-              return `
-                <div key="${idx}" class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
-                  <div class="text-left text-gray-800 dark:text-white font-semibold">${round.runningTotals.us}</div>
-                  <div class="text-center">${arrow}</div>
-                  <div class="text-right text-gray-800 dark:text-white font-semibold">${round.runningTotals.dem}</div>
-                </div>
-              `;
-            })
-            .join("")}
-        </div>
-      </div>
-    </div>
-  `;
-}
+        const { rounds, usTeamName, demTeamName } = state;
+        const labelUs = usTeamName || "Us";
+        const labelDem = demTeamName || "Dem";
+        return `
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
+            <div class="border-b border-gray-200 p-4 dark:border-gray-700">
+              <h2 class="text-lg font-bold text-gray-800 dark:text-white">History</h2>
+              <div class="grid grid-cols-3 gap-2 pt-3 font-medium text-gray-600 dark:text-white text-sm sm:text-base">
+                <div class="text-left">${labelUs}</div>
+                <div class="text-center">Bid</div>
+                <div class="text-right">${labelDem}</div>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="space-y-2">
+                ${rounds
+                  .map((round, idx) => {
+                    const arrow =
+                      round.biddingTeam === "us"
+                        ? `<span class="text-gray-800 dark:text-white">←</span><span class="ml-1">${round.bidAmount}</span>`
+                        : `<span class="mr-1">${round.bidAmount}</span><span class="text-gray-800 dark:text-white">→</span>`;
+                    return `
+                      <div key="${idx}" class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
+                        <div class="text-left text-gray-800 dark:text-white font-semibold">${round.runningTotals.us}</div>
+                        <div class="text-center">${arrow}</div>
+                        <div class="text-right text-gray-800 dark:text-white font-semibold">${round.runningTotals.dem}</div>
+                      </div>`;
+                  })
+                  .join("")}
+              </div>
+            </div>
+          </div>`;
+      }
 
       function renderGameOverOverlay() {
         if (!state.gameOver) return "";
@@ -2946,60 +2996,59 @@ function renderReadOnlyGameDetails(game) {
       }
 
       function renderApp() {
-  const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
-  const totals = rounds.reduce(
-    (acc, r) => ({
-      us: acc.us + r.usPoints,
-      dem: acc.dem + r.demPoints,
-    }),
-    { us: 0, dem: 0 }
-  );
-  const roundNumber = rounds.length + 1;
-  let lastBidHtml = "";
-  if (lastBidAmount && lastBidTeam) {
-    const arrow = lastBidTeam === "us" ? "←" : "→";
-    lastBidHtml = `
-      <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
-        <span class="font-medium">Bid:</span>
-        <span>${lastBidAmount}</span>
-        <span>${arrow}</span>
-      </div>
-    `;
-  }
+        const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
+        const totals = rounds.reduce(
+          (acc, r) => ({
+            us: acc.us + r.usPoints,
+            dem: acc.dem + r.demPoints,
+          }),
+          { us: 0, dem: 0 }
+        );
+        const roundNumber = rounds.length + 1;
+        let lastBidHtml = "";
+        if (lastBidAmount && lastBidTeam) {
+          const arrow = lastBidTeam === "us" ? "←" : "→";
+          lastBidHtml = `
+            <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
+              <span class="font-medium">Bid:</span>
+              <span>${lastBidAmount}</span>
+              <span>${arrow}</span>
+            </div>
+          `;
+        }
 
-  document.getElementById("app").innerHTML = `
-    <div class="text-center space-y-2">
-      <div class="flex flex-col items-center">
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">
-          Rook!
-        </h1>
-      </div>
-      <p class="text-md sm:text-lg text-gray-600 dark:text-white">
-        Tap a team to start a bid!
-      </p>
-      ${renderWinProbability()}
-    </div>
-    <div class="flex flex-row space-x-4 flex-wrap justify-center">
-      ${renderTeamCard("us", totals.us)}
-      ${renderRoundCard(roundNumber, lastBidHtml)}
-      ${renderTeamCard("dem", totals.dem)}
-    </div>
-    ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
-    ${renderScoreInputCard()}
-    ${renderHistoryCard()}
-    ${renderGameOverOverlay()}
-  `;
+        document.getElementById("app").innerHTML = `
+          <div class="text-center space-y-2">
+            <div class="flex flex-col items-center">
+              <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">
+                Rook!
+              </h1>
+            </div>
+            <p class="text-md sm:text-lg text-gray-600 dark:text-white">
+              Tap a team to start a bid!
+            </p>
+          </div>
+          <div class="flex flex-row space-x-4 flex-wrap justify-center">
+            ${renderTeamCard("us", totals.us)}
+            ${renderRoundCard(roundNumber, lastBidHtml)}
+            ${renderTeamCard("dem", totals.dem)}
+          </div>
+          ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
+          ${renderScoreInputCard()}
+          ${renderHistoryCard()}
+          ${renderGameOverOverlay()}
+        `;
 
-  // Trigger confetti once if gameOver
-  if (gameOver && !confettiTriggered) {
-    confettiTriggered = true;
-    confetti({
-      particleCount: 200,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
-  }
-}
+        // Trigger confetti once if gameOver
+        if (gameOver && !confettiTriggered) {
+          confettiTriggered = true;
+          confetti({
+            particleCount: 200,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }
+      }
 
       function validateBid(bidStr) {
         const bidVal = Number(bidStr);
@@ -3021,7 +3070,7 @@ function renderReadOnlyGameDetails(game) {
 
       function showVersionNum() {
         alert(
-          "version 1.3.3 adds a fully customizeable color selector & various UI improvements."
+          "version 1.3.2 adds a fully customizeable color selector & various UI improvements."
         );
       }
 
@@ -3086,6 +3135,16 @@ function closeAboutModal() {
             updateMetaThemeColor(isDark);
           });
         }
+        const proModeToggleCheckbox = document.getElementById("proModeToggle");
+  if (proModeToggleCheckbox) {
+    proModeToggleCheckbox.addEventListener("change", (e) => {
+      const isProMode = e.target.checked;
+      state.showWinProbability = isProMode;
+      localStorage.setItem(PRO_MODE_KEY, isProMode);
+      saveCurrentGameState();
+      renderApp();
+    });
+  }
       });
 
       document.addEventListener("click", function (e) {
@@ -3578,14 +3637,10 @@ if ('serviceWorker' in navigator) {
   }, 60 * 1000);
 }
 
-function updateState(newState) {
-  state = { ...state, ...newState };
-  renderApp();
-  // Save the current game state if the game isn’t over
-  if (!state.gameOver) {
-    localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
-  }
-}
+      function updateState(newState) {
+        state = { ...state, ...newState };
+        renderApp();
+      }
     </script>
   </body>
 </html>
