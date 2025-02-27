@@ -1,4 +1,7 @@
 function renderWinProbability() {
+  // Only show if enabled
+  if (!state.showWinProbability) return "";
+  
   const { rounds, usTeamName, demTeamName, gameOver } = state;
   if (rounds.length === 0 || gameOver) return "";
   const historicalGames = getLocalStorage("savedGames");
@@ -97,9 +100,9 @@ function calculateWinProbability(currentGame, historicalGames) {
     }
     
     if (recentUsPoints > recentDemPoints) {
-      momentumFactor = 5; // 5% boost for Us
+      momentumFactor = 2; // 5% boost for Us
     } else if (recentDemPoints > recentUsPoints) {
-      momentumFactor = -5; // 5% boost for Dem
+      momentumFactor = -2; // 5% boost for Dem
     }
   }
   
