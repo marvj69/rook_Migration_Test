@@ -21,32 +21,6 @@
     <script
       src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
     ></script>
-    <script type="module">
-      // Import Firebase core and products
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-      import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-  
-      // Your Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyB_DmalmDfoluZ4HSerI9f8vA70XMGvksY",
-        authDomain: "rookscore-dadfd.firebaseapp.com",
-        projectId: "rookscore-dadfd",
-        storageBucket: "rookscore-dadfd.firebasestorage.app",
-        messagingSenderId: "395153935926",
-        appId: "1:395153935926:web:d76dbb239473f861159297",
-        measurementId: "G-MCY1GMM4L5"
-      };
-  
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      const auth = getAuth(app);
-  
-      // Export Firebase objects to global scope for use in your script
-      window.firebaseApp = app;
-      window.firestoreDB = db;
-      window.firebaseAuth = auth;
-    </script>
     <style>
     input[type="color"] {
   -webkit-appearance: none;
@@ -924,46 +898,55 @@ aria-labelledby="savedGamesTitle"
     </div>
   </div>
 </div>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
+  import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-<script>
-  "use strict";
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_DmalmDfoluZ4HSerI9f8vA70XMGvksY",
+    authDomain: "rookscore-dadfd.firebaseapp.com",
+    projectId: "rookscore-dadfd",
+    storageBucket: "rookscore-dadfd.firebasestorage.app",
+    messagingSenderId: "395153935926",
+    appId: "1:395153935926:web:d76dbb239473f861159297",
+    measurementId: "G-MCY1GMM4L5"
+  };
 
-  // Access Firebase objects from global scope
-  const db = window.firestoreDB;
-  const auth = window.firebaseAuth;
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app); // Initialize Authentication
+  const db = getFirestore(app); // Initialize Firestore
 
-  // Replace LocalStorage helpers with Firestore sync
-  function getLocalStorage(key) {
-    const localData = JSON.parse(localStorage.getItem(key)) || [];
-    return localData; // For now, rely on LocalStorage; sync happens on write
-  }
+  // Expose Firebase objects to the global scope
+  window.firebaseAuth = auth;
+  window.firestoreDB = db;
 
-  function setLocalStorage(key, value) {
-    // Save to LocalStorage
-    localStorage.setItem(key, JSON.stringify(value));
-    // Sync to Firestore
-    syncToFirestore(key, value);
-  }
-
-  // Sync function to Firestore
-  async function syncToFirestore(key, value) {
-    const userId = auth.currentUser?.uid || "anonymous";
-    try {
-      await setDoc(doc(db, "rookData", userId), {
-        [key]: value,
-        timestamp: new Date().toISOString() // Use client-side timestamp
-      }, { merge: true });
-      console.log(`Synced ${key} to Firestore`);
-    } catch (error) {
-      console.error("Firestore sync error:", error);
+  // Handle auth state changes
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("User is signed in:", user.uid);
+      // Optionally sign in anonymously if no user is present
+      loadFromFirestore().then(() => {
+        renderApp(); // Ensure renderApp is defined or imported
+      });
+    } else {
+      console.log("No user signed in, signing in anonymously...");
+      signInAnonymously(auth).catch((error) => {
+        console.error("Anonymous sign-in error:", error);
+      });
     }
-  }
+  });
 
-  // Load initial data from Firestore
+  // Function to load data from Firestore (ensure this is defined or imported)
   async function loadFromFirestore() {
-    const userId = auth.currentUser?.uid || "anonymous";
+    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
     try {
-      const docRef = doc(db, "rookData", userId);
+      const docRef = doc(window.firestoreDB, "rookData", userId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -978,23 +961,62 @@ aria-labelledby="savedGamesTitle"
       console.error("Firestore load error:", error);
     }
   }
+</script>
+<script>
+  "use strict";
 
-  // Initialize data when auth state changes
-  auth.onAuthStateChanged((user) => {
-    if (user) {
-      loadFromFirestore().then(() => {
-        renderApp(); // Re-render after loading Firestore data
-      });
+  // Replace LocalStorage helpers with Firestore sync
+  function getLocalStorage(key) {
+    const localData = JSON.parse(localStorage.getItem(key)) || [];
+    return localData;
+  }
+
+  function setLocalStorage(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+    syncToFirestore(key, value);
+  }
+
+  async function syncToFirestore(key, value) {
+    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
+    try {
+      await setDoc(doc(window.firestoreDB, "rookData", userId), {
+        [key]: value,
+        timestamp: new Date().toISOString()
+      }, { merge: true });
+      console.log(`Synced ${key} to Firestore`);
+    } catch (error) {
+      console.error("Firestore sync error:", error);
     }
-  });
+  }
 
+  // Note: The `loadFromFirestore` function is now handled in the module script,
+  // but you can keep this here if needed for specific logic or debugging.
+  async function loadFromFirestore() {
+    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
+    try {
+      const docRef = doc(window.firestoreDB, "rookData", userId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        for (const [key, value] of Object.entries(data)) {
+          if (key !== "timestamp") {
+            localStorage.setItem(key, JSON.stringify(value));
+          }
+        }
+        console.log("Loaded data from Firestore");
+      }
+    } catch (error) {
+      console.error("Firestore load error:", error);
+    }
+  }
+  
   // -------------------------------
   // Editable Bid Presets Logic
   // -------------------------------
   let presetBids = JSON.parse(localStorage.getItem('customPresetBids')) || [120, 125, 130, 135, 140, 145, "other"];
   const PRESET_BIDS_KEY = 'customPresetBids';
 
-  // Function to save presets to localStorage (and Firestore)
+  // Function to save presets to localStorage
   function savePresetBids() {
     localStorage.setItem(PRESET_BIDS_KEY, JSON.stringify(presetBids));
   }
@@ -1093,14 +1115,14 @@ aria-labelledby="savedGamesTitle"
   /**
    * Helper: Safe JSON load from localStorage
    */
-  function getLocalStorageOld(key) {
+  function getLocalStorage(key) {
     return JSON.parse(localStorage.getItem(key)) || [];
   }
 
   /**
    * Helper: Safe JSON save to localStorage
    */
-  function setLocalStorageOld(key, value) {
+  function setLocalStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   }
 
@@ -1114,9 +1136,10 @@ aria-labelledby="savedGamesTitle"
     }
 
     // --- 1) Migrate savedGames ---
-    let savedGames = getLocalStorageOld("savedGames");
+    let savedGames = getLocalStorage("savedGames");
     if (savedGames.length) {
       savedGames = savedGames.map((game) => {
+        // Migrate team names if needed
         if (!game.usTeamName && game.player1) {
           game.usTeamName = game.player1;
         }
@@ -1126,6 +1149,7 @@ aria-labelledby="savedGamesTitle"
         game.usTeamName = game.usTeamName || "Us";
         game.demTeamName = game.demTeamName || "Dem";
 
+        // Rename finalScore.Dem -> finalScore.dem
         if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
           game.finalScore.dem = game.finalScore.Dem;
           delete game.finalScore.Dem;
@@ -1148,18 +1172,21 @@ aria-labelledby="savedGamesTitle"
         round.bidAmount = round.bid;
         delete round.bid;
       }
+      // If biddingTeam is missing, infer it from the points.
       if (!round.biddingTeam) {
         if (typeof round.usPoints === "number" && round.usPoints < 0) {
           round.biddingTeam = "us";
         } else if (typeof round.demPoints === "number" && round.demPoints < 0) {
           round.biddingTeam = "dem";
         } else {
+          // Fallback: if both teams have positive points, assume the team with the lower score was bidding.
           round.biddingTeam = round.usPoints <= round.demPoints ? "us" : "dem";
         }
       }
     });
   }
 
+        // Normalize the "winner" field so it is either "us" or "dem"
         if (typeof game.winner === "string") {
           const w = game.winner.toLowerCase();
           if (w === "us" || w === "dem") {
@@ -1172,6 +1199,7 @@ aria-labelledby="savedGamesTitle"
             game.winner = null;
           }
         }
+        // --- NEW FALLBACK: Determine winner based on finalScore ---
         if (
           (!game.winner || game.winner === null) &&
           game.finalScore &&
@@ -1183,17 +1211,17 @@ aria-labelledby="savedGamesTitle"
           } else if (game.finalScore.dem > game.finalScore.us) {
             game.winner = "dem";
           } else {
-            game.winner = null;
+            game.winner = null; // tie or unable to decide
           }
         }
 
         return game;
       });
-      setLocalStorageOld("savedGames", savedGames);
+      setLocalStorage("savedGames", savedGames);
     }
 
     // --- 2) Migrate freezerGames ---
-    let freezerGames = getLocalStorageOld("freezerGames");
+    let freezerGames = getLocalStorage("freezerGames");
     if (freezerGames.length) {
       freezerGames = freezerGames.map((game) => {
         if (!game.usName) {
@@ -1238,6 +1266,7 @@ aria-labelledby="savedGamesTitle"
             game.winner = null;
           }
         }
+        // --- NEW FALLBACK: Determine winner based on finalScore ---
         if (
           (!game.winner || game.winner === null) &&
           game.finalScore &&
@@ -1254,9 +1283,10 @@ aria-labelledby="savedGamesTitle"
         }
         return game;
       });
-      setLocalStorageOld("freezerGames", freezerGames);
+      setLocalStorage("freezerGames", freezerGames);
     }
     recalcTeamsStats();
+    // Mark migration as complete
     localStorage.setItem(MIGRATION_VERSION_KEY, String(CURRENT_MIGRATION_VERSION));
   }
   
@@ -1297,6 +1327,7 @@ aria-labelledby="savedGamesTitle"
     }
   }
 
+  // Applies the custom colors chosen by the user to the body element
   function applyCustomThemeColors() {
     const usColor = document.getElementById('usColorPicker').value;
     const demColor = document.getElementById('demColorPicker').value;
@@ -1308,6 +1339,7 @@ aria-labelledby="savedGamesTitle"
     closeThemeModal();
   }
 
+  // On page load, check if custom colors have been set and apply them to the body element
   function initializeCustomThemeColors() {
     const customUsColor = localStorage.getItem('customUsColor');
     const customDemColor = localStorage.getItem('customDemColor');
@@ -1315,6 +1347,7 @@ aria-labelledby="savedGamesTitle"
       const body = document.getElementById('bodyRoot');
       body.style.setProperty('--primary-color', customUsColor);
       body.style.setProperty('--accent-color', customDemColor);
+      // Also update the color pickers in the theme modal (if it is opened)
       const usPicker = document.getElementById('usColorPicker');
       const demPicker = document.getElementById('demColorPicker');
       if (usPicker) usPicker.value = customUsColor;
@@ -1322,18 +1355,26 @@ aria-labelledby="savedGamesTitle"
     }
   }
   function resetThemeColors() {
+    // Default colors for blue and red
     const defaultUsColor = "#3b82f6";
     const defaultDemColor = "#ef4444";
     const body = document.getElementById('bodyRoot');
+    
+    // Reset the CSS custom properties
     body.style.setProperty('--primary-color', defaultUsColor);
     body.style.setProperty('--accent-color', defaultDemColor);
+    
+    // Remove the custom color entries from localStorage
     localStorage.removeItem('customUsColor');
     localStorage.removeItem('customDemColor');
+    
+    // Update the color picker values so they show the defaults
     const usPicker = document.getElementById('usColorPicker');
     const demPicker = document.getElementById('demColorPicker');
     if (usPicker) usPicker.value = defaultUsColor;
     if (demPicker) demPicker.value = defaultDemColor;
   }
+  // Helper function to convert HSL to HEX
   function hslToHex(h, s, l) {
     s /= 100;
     l /= 100;
@@ -1356,13 +1397,20 @@ aria-labelledby="savedGamesTitle"
   }
 
   function randomizeThemeColors() {
+    // Generate a truly random hue between 0 and 359 degrees
     const randomHue = Math.floor(Math.random() * 360);
-    const variation = Math.floor(Math.random() * 41) - 20;
+    // Add a random offset (e.g., ±20 degrees) to the ideal complementary 180° for variation
+    const variation = Math.floor(Math.random() * 41) - 20; // -20 to +20
     const complementaryHue = (randomHue + 180 + variation) % 360;
-    const saturation = Math.floor(Math.random() * 51) + 50;
-    const lightness = Math.floor(Math.random() * 41) + 20;
+    
+    // Use a wider range for saturation and lightness to cover a broader palette.
+    const saturation = Math.floor(Math.random() * 51) + 50; // random between 50 and 100
+    const lightness = Math.floor(Math.random() * 41) + 20;  // random between 30 and 70
+    
     const randomUs = hslToHex(randomHue, saturation, lightness);
     const randomDem = hslToHex(complementaryHue, saturation, lightness);
+    
+    // Update the color pickers with these values
     const usPicker = document.getElementById('usColorPicker');
     const demPicker = document.getElementById('demColorPicker');
     if (usPicker) usPicker.value = randomUs;
@@ -2858,6 +2906,9 @@ aria-labelledby="savedGamesTitle"
         </div>`;
   }
 
+  // -------------------------------
+  // Score Input Card using Dynamic Presets
+  // -------------------------------
   function renderScoreInputCard() {
     const { biddingTeam, bidAmount, showCustomBid, customBidValue, rounds, gameOver } = state;
     if (gameOver || !biddingTeam) return "";
@@ -3444,6 +3495,9 @@ aria-labelledby="savedGamesTitle"
     );
   }
 
+  // -------------------------------
+  // New: Update Pro Mode UI to Toggle "Edit Bid Presets" Menu Item
+  // -------------------------------
   function updateProModeUI(isProMode) {
     const editPresetsItem = document.getElementById('editPresetsMenuItem');
     if (editPresetsItem) {
@@ -3453,6 +3507,10 @@ aria-labelledby="savedGamesTitle"
     renderApp();
   }
 
+  // -------------------------------
+  // Team Card, Round Card, Error Alert, Points Input & Score Input Card
+  // (Rendered as before, with renderScoreInputCard now using dynamic presetBids)
+  // -------------------------------
   function renderPointsInput() {
     const { biddingTeam, enterBidderPoints } = state;
     const labelText =
@@ -3531,11 +3589,17 @@ aria-labelledby="savedGamesTitle"
         </div>`;
   }
 
+  // -------------------------------
+  // Render App & Update State
+  // -------------------------------
   function updateState(newState) {
     state = { ...state, ...newState };
     renderApp();
   }
 
+  // -------------------------------
+  // Add "Edit Bid Presets" Menu Item & Initialize Pro Mode Toggle
+  // -------------------------------
   document.addEventListener("DOMContentLoaded", () => {
     const closeViewSavedBtn = document.getElementById("closeViewSavedGameModalBtn");
     if (closeViewSavedBtn) {
@@ -3598,6 +3662,7 @@ aria-labelledby="savedGamesTitle"
         saveCurrentGameState();
       });
     }
+    // Initial call to set Pro Mode UI visibility
     updateProModeUI(JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false);
   });
 
