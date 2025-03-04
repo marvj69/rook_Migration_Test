@@ -414,6 +414,15 @@ input[type="color"]:focus {
     <nav id="menu">
       <ul>
         <li>
+          <button 
+            onclick="syncToServer()" 
+            class="text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
+            aria-label="Sync Data to Server"
+          >
+            Sync to Server
+          </button>
+        </li>
+        <li>
           <a href="#" onclick="openSavedGamesModal();toggleMenu(event)">
             View Games
           </a>
@@ -899,129 +908,225 @@ aria-labelledby="savedGamesTitle"
   </div>
 </div>
 <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
-  import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+ // Replace the current Firebase initialization module script with this improved version
+// This should be placed in the same location as your current Firebase module script
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyB_DmalmDfoluZ4HSerI9f8vA70XMGvksY",
-    authDomain: "rookscore-dadfd.firebaseapp.com",
-    projectId: "rookscore-dadfd",
-    storageBucket: "rookscore-dadfd.firebasestorage.app",
-    messagingSenderId: "395153935926",
-    appId: "1:395153935926:web:d76dbb239473f861159297",
-    measurementId: "G-MCY1GMM4L5"
-  };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app); // Initialize Authentication
-  const db = getFirestore(app); // Initialize Firestore
+console.log("Firebase SDKs loading...");
 
-  // Expose Firebase objects to the global scope
-  window.firebaseAuth = auth;
-  window.firestoreDB = db;
+const firebaseConfig = {
+  apiKey: "AIzaSyB_DmalmDfoluZ4HSerI9f8vA70XMGvksY",
+  authDomain: "rookscore-dadfd.firebaseapp.com",
+  projectId: "rookscore-dadfd",
+  storageBucket: "rookscore-dadfd.firebasestorage.app",
+  messagingSenderId: "395153935926",
+  appId: "1:395153935926:web:d76dbb239473f861159297",
+};
 
-  // Handle auth state changes
-  onAuthStateChanged(auth, (user) => {
+// Initialize Firebase app first
+const app = initializeApp(firebaseConfig);
+// Then initialize auth and firestore
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Make these objects globally available
+window.firebaseApp = app;
+window.firebaseAuth = auth;
+window.firestoreDB = db;
+window.firestoreDoc = doc;
+window.firestoreSetDoc = setDoc;
+window.firestoreGetDoc = getDoc;
+
+console.log("Firebase initialization complete");
+
+// Wait for DOM to be fully loaded before proceeding with auth
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("DOM loaded, initializing Firebase auth");
+  initializeFirebaseAuth();
+});
+
+// Function to initialize Firebase auth
+function initializeFirebaseAuth() {
+  console.log("Starting Firebase auth initialization");
+
+  if (auth.currentUser) {
+    console.log("User already signed in:", auth.currentUser.uid);
+    window.firebaseReady = true; // Set flag if user exists initially
+    loadFirestoreData(auth.currentUser);
+    return;
+  }
+
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    console.log("Auth state changed:", user ? `User ${user.uid} signed in` : "No user");
     if (user) {
-      console.log("User is signed in:", user.uid);
-      // Optionally sign in anonymously if no user is present
-      loadFromFirestore().then(() => {
-        renderApp(); // Ensure renderApp is defined or imported
-      });
-    } else {
-      console.log("No user signed in, signing in anonymously...");
-      signInAnonymously(auth).catch((error) => {
-        console.error("Anonymous sign-in error:", error);
-      });
+      unsubscribe();
+      window.firebaseReady = true; // Set flag when user is detected
+      loadFirestoreData(user);
     }
   });
 
-  // Function to load data from Firestore (ensure this is defined or imported)
-  async function loadFromFirestore() {
-    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
-    try {
-      const docRef = doc(window.firestoreDB, "rookData", userId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        for (const [key, value] of Object.entries(data)) {
-          if (key !== "timestamp") {
-            localStorage.setItem(key, JSON.stringify(value));
-          }
+  console.log("Attempting anonymous sign-in...");
+  signInAnonymously(auth)
+    .then((userCredential) => {
+      console.log("Anonymous sign-in successful:", userCredential.user.uid);
+      window.firebaseReady = true; // Set flag on successful sign-in
+    })
+    .catch((error) => {
+      console.error("Anonymous sign-in failed:", error.code, error.message);
+      renderApp(); // Render app offline if sign-in fails
+    });
+}
+
+// Function to load data from Firestore
+async function loadFirestoreData(user) {
+  console.log("Loading data from Firestore for user:", user.uid);
+  try {
+    const docRef = doc(db, "rookData", user.uid);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      console.log("Found data in Firestore");
+      const data = docSnap.data();
+      for (const [key, value] of Object.entries(data)) {
+        if (key !== "timestamp") {
+          localStorage.setItem(key, JSON.stringify(value));
         }
-        console.log("Loaded data from Firestore");
       }
-    } catch (error) {
-      console.error("Firestore load error:", error);
+    } else {
+      console.log("No data found in Firestore");
     }
+  } catch (error) {
+    console.error("Error loading from Firestore:", error);
   }
+  
+  // Always render the app, regardless of Firestore success
+  renderApp();
+}
+
+// Fix the syncToFirestore function that's causing the error
+window.syncToFirestore = async function(key, value) {
+  console.log(`Attempting to sync ${key} to Firestore`);
+  
+  // Safety check - if Firebase auth isn't initialized yet
+  if (!window.firebaseAuth) {
+    console.error("Firebase Auth not initialized");
+    return;
+  }
+  
+  try {
+    // Check if we have a signed-in user
+    if (!window.firebaseAuth.currentUser) {
+      console.log("No user signed in, attempting anonymous sign-in");
+      try {
+        const userCredential = await signInAnonymously(window.firebaseAuth);
+        console.log("Anonymous sign-in successful:", userCredential.user.uid);
+      } catch (authError) {
+        console.error("Anonymous sign-in failed:", authError);
+        return; // Exit if we can't sign in
+      }
+    }
+    
+    // Now we should have a user
+    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
+    console.log(`Syncing to Firestore for user: ${userId}`);
+    
+    await window.firestoreSetDoc(
+      window.firestoreDoc(window.firestoreDB, "rookData", userId),
+      { [key]: value, timestamp: new Date().toISOString() },
+      { merge: true }
+    );
+    
+    console.log(`Successfully synced ${key} to Firestore`);
+  } catch (error) {
+    console.error("Firestore sync error:", error);
+  }
+};
 </script>
 <script>
   "use strict";
 
-  // Replace LocalStorage helpers with Firestore sync
-  function getLocalStorage(key) {
-    const localData = JSON.parse(localStorage.getItem(key)) || [];
-    return localData;
-  }
+  // -------------------------------
+  // Firebase Initialization and Firestore Sync Functions
+  // -------------------------------
+  // (Assuming the module script above already imported Firebase functions and initialized app,
+  // we rely on window.firebaseAuth and window.firestoreDB for Authentication and Firestore.)
 
+  // Custom setLocalStorage function that logs and syncs data to Firestore
+  // Replace your current setLocalStorage function with this improved version
   function setLocalStorage(key, value) {
+  console.log(`setLocalStorage called with key: ${key}`);
+  try {
     localStorage.setItem(key, JSON.stringify(value));
-    syncToFirestore(key, value);
+    if (window.syncToFirestore && window.firebaseReady) {
+      setTimeout(() => {
+        window.syncToFirestore(key, value).catch(err => {
+          console.warn(`Firestore sync failed for ${key}, but data is saved locally:`, err);
+        });
+      }, 0);
+    } else {
+      console.log(`Firebase not ready yet. ${key} saved locally only.`);
+    }
+  } catch (error) {
+    console.error(`Error in setLocalStorage for key ${key}:`, error);
   }
+}
+
+function getLocalStorage(key) {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return [];
+    return JSON.parse(item);
+  } catch (error) {
+    console.error(`Error parsing localStorage item ${key}:`, error);
+    return [];
+  }
+}
 
   async function syncToFirestore(key, value) {
-    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
-    try {
-      await setDoc(doc(window.firestoreDB, "rookData", userId), {
-        [key]: value,
-        timestamp: new Date().toISOString()
-      }, { merge: true });
-      console.log(`Synced ${key} to Firestore`);
-    } catch (error) {
-      console.error("Firestore sync error:", error);
+  try {
+    // Check if Firebase is properly initialized
+    if (!window.firebaseAuth || !window.firestoreDB) {
+      console.warn("Firebase not fully initialized. Data will be saved locally only.");
+      return;
     }
-  }
-
-  // Note: The `loadFromFirestore` function is now handled in the module script,
-  // but you can keep this here if needed for specific logic or debugging.
-  async function loadFromFirestore() {
-    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
-    try {
-      const docRef = doc(window.firestoreDB, "rookData", userId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        for (const [key, value] of Object.entries(data)) {
-          if (key !== "timestamp") {
-            localStorage.setItem(key, JSON.stringify(value));
-          }
-        }
-        console.log("Loaded data from Firestore");
+    
+    // Check if user is logged in
+    if (!window.firebaseAuth.currentUser) {
+      try {
+        // Try to sign in anonymously
+        await signInAnonymously(window.firebaseAuth);
+      } catch (authError) {
+        console.warn("Could not authenticate to Firebase:", authError.message);
+        return;
       }
-    } catch (error) {
-      console.error("Firestore load error:", error);
     }
+    
+    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
+    await window.setDoc(window.doc(window.firestoreDB, "rookData", userId), {
+      [key]: value,
+      timestamp: new Date().toISOString()
+    }, { merge: true });
+    
+    console.log(`Successfully synced ${key} to Firestore`);
+  } catch (error) {
+    console.error("Firestore sync error:", error.message);
+    // Don't throw - just log the error and continue
   }
-  
+}
   // -------------------------------
   // Editable Bid Presets Logic
   // -------------------------------
   let presetBids = JSON.parse(localStorage.getItem('customPresetBids')) || [120, 125, 130, 135, 140, 145, "other"];
   const PRESET_BIDS_KEY = 'customPresetBids';
 
-  // Function to save presets to localStorage
+  // Function to save presets to localStorage using our custom setLocalStorage
   function savePresetBids() {
-    localStorage.setItem(PRESET_BIDS_KEY, JSON.stringify(presetBids));
+    setLocalStorage(PRESET_BIDS_KEY, presetBids);
   }
 
-  // Function to open preset editor modal
   function openPresetEditorModal() {
     if (!JSON.parse(localStorage.getItem(PRO_MODE_KEY))) return; // Only allow in Pro Mode
     
@@ -1050,7 +1155,6 @@ aria-labelledby="savedGamesTitle"
     document.body.classList.add('modal-open');
   }
 
-  // Function to close preset editor modal
   function closePresetEditorModal() {
     const modal = document.getElementById('presetEditorModal');
     if (modal) {
@@ -1059,7 +1163,6 @@ aria-labelledby="savedGamesTitle"
     }
   }
 
-  // Function to add a new preset
   function addPreset() {
     const presetInputs = document.getElementById('presetInputs');
     const newIndex = presetBids.filter(b => b !== "other").length;
@@ -1071,13 +1174,11 @@ aria-labelledby="savedGamesTitle"
     `);
   }
 
-  // Function to remove a preset
   function removePreset(index) {
     const inputs = document.querySelectorAll('#presetInputs input');
-    if (inputs.length > 1) { // Ensure at least one preset remains
+    if (inputs.length > 1) { 
       const inputDiv = inputs[index].parentElement;
       inputDiv.remove();
-      // Re-index remaining inputs
       document.querySelectorAll('#presetInputs input').forEach((input, i) => {
         input.setAttribute('data-index', i);
         input.nextElementSibling.setAttribute('onclick', `removePreset(${i})`);
@@ -1085,7 +1186,6 @@ aria-labelledby="savedGamesTitle"
     }
   }
 
-  // Function to save presets
   function savePresets() {
     const inputs = document.querySelectorAll('#presetInputs input');
     const newPresets = Array.from(inputs)
@@ -1102,44 +1202,139 @@ aria-labelledby="savedGamesTitle"
       alert("Please ensure at least one valid preset (multiple of 5, ≤ 360) is entered.");
     }
   }
+  // Replace your syncToServer function with this improved version
+function syncToServer() {
+  console.log("Sync to Server button clicked");
+  
+  // Show a sync in progress indicator
+  const indicator = document.getElementById('saveIndicator');
+  if (indicator) {
+    indicator.textContent = 'Syncing to server...';
+    indicator.classList.remove('hidden');
+    indicator.classList.add('show');
+  }
+  
+  // Check if Firebase is initialized
+  if (!window.firebaseAuth || !window.firestoreDB) {
+    console.error("Firebase not initialized yet");
+    showErrorIndicator("Firebase not initialized. Please try again later.");
+    return;
+  }
+
+  // Check if we have a user
+  if (!window.firebaseAuth.currentUser) {
+    console.log("No user signed in, attempting sign-in before sync");
+    
+    signInAnonymously(window.firebaseAuth)
+      .then(() => {
+        // Now that we're signed in, continue with sync
+        performSync();
+      })
+      .catch(error => {
+        console.error("Failed to sign in:", error);
+        showErrorIndicator("Failed to sign in. Please try again.");
+      });
+  } else {
+    // Already signed in, proceed with sync
+    performSync();
+  }
+  
+  function performSync() {
+  let successCount = 0;
+  let failCount = 0;
+  let totalItems = 0;
+  let syncPromises = [];
+  
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    
+    if (key === 'firebase:host:rookscore-dadfd.firebaseapp.com' || 
+        key === 'rookMigrationVersion' || 
+        key.startsWith('firebase')) {
+      continue;
+    }
+    
+    totalItems++;
+    let value;
+    
+    try {
+      value = JSON.parse(localStorage.getItem(key));
+    } catch (e) {
+      console.error(`Skipping sync for key '${key}' due to invalid JSON:`, e.message);
+      failCount++;
+      continue;
+    }
+
+    const syncPromise = window.syncToFirestore(key, value)
+      .then(() => {
+        successCount++;
+        console.log(`Synced ${key} (${successCount}/${totalItems})`);
+      })
+      .catch(error => {
+        failCount++;
+        console.error(`Failed to sync ${key}:`, error);
+      });
+    
+    syncPromises.push(syncPromise);
+  }
+  
+  Promise.allSettled(syncPromises).then(() => {
+    if (failCount > 0) {
+      showErrorIndicator(`Sync completed with errors: ${successCount}/${totalItems} items synced`);
+    } else if (successCount > 0) {
+      showSyncIndicator(`Successfully synced ${successCount} items`);
+    } else {
+      showSyncIndicator("No data to sync");
+    }
+  });
+}
+}
+
+// Helper function to show a sync success indicator (similar to #saveIndicator)
+function showSyncIndicator() {
+  const indicator = document.getElementById('saveIndicator');
+  if (indicator) {
+    indicator.textContent = 'Synced to Server';
+    indicator.classList.remove('hidden');
+    indicator.classList.add('show');
+    setTimeout(() => {
+      indicator.classList.remove('show');
+      indicator.classList.add('hidden');
+    }, 3000); // Hide after 3 seconds
+  }
+}
+
+// Helper function to show an error indicator
+function showErrorIndicator(message) {
+  const indicator = document.getElementById('saveIndicator');
+  if (indicator) {
+    indicator.textContent = message;
+    indicator.classList.remove('hidden');
+    indicator.classList.add('show', 'bg-red-600');
+    setTimeout(() => {
+      indicator.classList.remove('show', 'bg-red-600');
+      indicator.classList.add('hidden');
+    }, 5000); // Hide after 5 seconds
+  }
+}
   
   // -------------------------------
   // Migrations, Theme & Utility Logic
   // -------------------------------
-  /**
-   * The overall version of your migrations
-   */
   const CURRENT_MIGRATION_VERSION = 4;
   const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
-  /**
-   * Helper: Safe JSON load from localStorage
-   */
-  function getLocalStorage(key) {
-    return JSON.parse(localStorage.getItem(key)) || [];
-  }
-
-  /**
-   * Helper: Safe JSON save to localStorage
-   */
-  function setLocalStorage(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-
-  /**
-   * Perform all needed migrations to unify old data into your new format.
-   */
-   function performDataMigration() {
+  // Reuse our getLocalStorage and setLocalStorage functions
+  function performDataMigration() {
     const currentVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
     if (currentVersion && parseInt(currentVersion, 10) >= CURRENT_MIGRATION_VERSION) {
       return; // Already migrated
     }
 
-    // --- 1) Migrate savedGames ---
+    // Migrate savedGames
     let savedGames = getLocalStorage("savedGames");
     if (savedGames.length) {
       savedGames = savedGames.map((game) => {
-        // Migrate team names if needed
         if (!game.usTeamName && game.player1) {
           game.usTeamName = game.player1;
         }
@@ -1148,45 +1343,36 @@ aria-labelledby="savedGamesTitle"
         }
         game.usTeamName = game.usTeamName || "Us";
         game.demTeamName = game.demTeamName || "Dem";
-
-        // Rename finalScore.Dem -> finalScore.dem
         if (game.finalScore && typeof game.finalScore.Dem !== "undefined") {
           game.finalScore.dem = game.finalScore.Dem;
           delete game.finalScore.Dem;
         }
-
         if (Array.isArray(game.rounds)) {
-        game.rounds.forEach((round) => {
-      if (typeof round.DemPoints !== "undefined") {
-        round.demPoints = round.DemPoints;
-        delete round.DemPoints;
-      }
-      if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
-        round.runningTotals.dem = round.runningTotals.Dem;
-        delete round.runningTotals.Dem;
-      }
-      if (
-        typeof round.bid !== "undefined" &&
-        (typeof round.bidAmount === "undefined" || round.bidAmount === null)
-      ) {
-        round.bidAmount = round.bid;
-        delete round.bid;
-      }
-      // If biddingTeam is missing, infer it from the points.
-      if (!round.biddingTeam) {
-        if (typeof round.usPoints === "number" && round.usPoints < 0) {
-          round.biddingTeam = "us";
-        } else if (typeof round.demPoints === "number" && round.demPoints < 0) {
-          round.biddingTeam = "dem";
-        } else {
-          // Fallback: if both teams have positive points, assume the team with the lower score was bidding.
-          round.biddingTeam = round.usPoints <= round.demPoints ? "us" : "dem";
+          game.rounds.forEach((round) => {
+            if (typeof round.DemPoints !== "undefined") {
+              round.demPoints = round.DemPoints;
+              delete round.DemPoints;
+            }
+            if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
+              round.runningTotals.dem = round.runningTotals.Dem;
+              delete round.runningTotals.Dem;
+            }
+            if (typeof round.bid !== "undefined" &&
+                (typeof round.bidAmount === "undefined" || round.bidAmount === null)) {
+              round.bidAmount = round.bid;
+              delete round.bid;
+            }
+            if (!round.biddingTeam) {
+              if (typeof round.usPoints === "number" && round.usPoints < 0) {
+                round.biddingTeam = "us";
+              } else if (typeof round.demPoints === "number" && round.demPoints < 0) {
+                round.biddingTeam = "dem";
+              } else {
+                round.biddingTeam = round.usPoints <= round.demPoints ? "us" : "dem";
+              }
+            }
+          });
         }
-      }
-    });
-  }
-
-        // Normalize the "winner" field so it is either "us" or "dem"
         if (typeof game.winner === "string") {
           const w = game.winner.toLowerCase();
           if (w === "us" || w === "dem") {
@@ -1199,28 +1385,24 @@ aria-labelledby="savedGamesTitle"
             game.winner = null;
           }
         }
-        // --- NEW FALLBACK: Determine winner based on finalScore ---
-        if (
-          (!game.winner || game.winner === null) &&
-          game.finalScore &&
-          typeof game.finalScore.us === "number" &&
-          typeof game.finalScore.dem === "number"
-        ) {
+        if ((!game.winner || game.winner === null) &&
+            game.finalScore &&
+            typeof game.finalScore.us === "number" &&
+            typeof game.finalScore.dem === "number") {
           if (game.finalScore.us > game.finalScore.dem) {
             game.winner = "us";
           } else if (game.finalScore.dem > game.finalScore.us) {
             game.winner = "dem";
           } else {
-            game.winner = null; // tie or unable to decide
+            game.winner = null;
           }
         }
-
         return game;
       });
       setLocalStorage("savedGames", savedGames);
     }
 
-    // --- 2) Migrate freezerGames ---
+    // Migrate freezerGames
     let freezerGames = getLocalStorage("freezerGames");
     if (freezerGames.length) {
       freezerGames = freezerGames.map((game) => {
@@ -1238,22 +1420,19 @@ aria-labelledby="savedGamesTitle"
           game.rounds.forEach((round) => {
             if (typeof round.DemPoints !== "undefined") {
               round.demPoints = round.DemPoints;
-              delete round.DemPoints;
+              delete round.demPoints;
             }
             if (round.runningTotals && typeof round.runningTotals.Dem !== "undefined") {
               round.runningTotals.dem = round.runningTotals.Dem;
               delete round.runningTotals.Dem;
             }
-            if (
-              typeof round.bid !== "undefined" &&
-              (typeof round.bidAmount === "undefined" || round.bidAmount === null)
-            ) {
+            if (typeof round.bid !== "undefined" &&
+                (typeof round.bidAmount === "undefined" || round.bidAmount === null)) {
               round.bidAmount = round.bid;
               delete round.bid;
             }
           });
         }
-
         if (typeof game.winner === "string") {
           const w = game.winner.toLowerCase();
           if (w === "us" || w === "dem") {
@@ -1266,13 +1445,10 @@ aria-labelledby="savedGamesTitle"
             game.winner = null;
           }
         }
-        // --- NEW FALLBACK: Determine winner based on finalScore ---
-        if (
-          (!game.winner || game.winner === null) &&
-          game.finalScore &&
-          typeof game.finalScore.us === "number" &&
-          typeof game.finalScore.dem === "number"
-        ) {
+        if ((!game.winner || game.winner === null) &&
+            game.finalScore &&
+            typeof game.finalScore.us === "number" &&
+            typeof game.finalScore.dem === "number") {
           if (game.finalScore.us > game.finalScore.dem) {
             game.winner = "us";
           } else if (game.finalScore.dem > game.finalScore.us) {
@@ -1286,15 +1462,12 @@ aria-labelledby="savedGamesTitle"
       setLocalStorage("freezerGames", freezerGames);
     }
     recalcTeamsStats();
-    // Mark migration as complete
     localStorage.setItem(MIGRATION_VERSION_KEY, String(CURRENT_MIGRATION_VERSION));
   }
   
-  /*
-    ====================================================
-    THEME SELECTION LOGIC
-    ====================================================
-  */
+  // -------------------------------
+  // Theme Selection Logic
+  // -------------------------------
   const THEME_KEY = "rookSelectedTheme";
 
   function openThemeModal() {
@@ -1327,7 +1500,6 @@ aria-labelledby="savedGamesTitle"
     }
   }
 
-  // Applies the custom colors chosen by the user to the body element
   function applyCustomThemeColors() {
     const usColor = document.getElementById('usColorPicker').value;
     const demColor = document.getElementById('demColorPicker').value;
@@ -1339,7 +1511,6 @@ aria-labelledby="savedGamesTitle"
     closeThemeModal();
   }
 
-  // On page load, check if custom colors have been set and apply them to the body element
   function initializeCustomThemeColors() {
     const customUsColor = localStorage.getItem('customUsColor');
     const customDemColor = localStorage.getItem('customDemColor');
@@ -1347,34 +1518,27 @@ aria-labelledby="savedGamesTitle"
       const body = document.getElementById('bodyRoot');
       body.style.setProperty('--primary-color', customUsColor);
       body.style.setProperty('--accent-color', customDemColor);
-      // Also update the color pickers in the theme modal (if it is opened)
       const usPicker = document.getElementById('usColorPicker');
       const demPicker = document.getElementById('demColorPicker');
       if (usPicker) usPicker.value = customUsColor;
       if (demPicker) demPicker.value = customDemColor;
     }
   }
+
   function resetThemeColors() {
-    // Default colors for blue and red
     const defaultUsColor = "#3b82f6";
     const defaultDemColor = "#ef4444";
     const body = document.getElementById('bodyRoot');
-    
-    // Reset the CSS custom properties
     body.style.setProperty('--primary-color', defaultUsColor);
     body.style.setProperty('--accent-color', defaultDemColor);
-    
-    // Remove the custom color entries from localStorage
     localStorage.removeItem('customUsColor');
     localStorage.removeItem('customDemColor');
-    
-    // Update the color picker values so they show the defaults
     const usPicker = document.getElementById('usColorPicker');
     const demPicker = document.getElementById('demColorPicker');
     if (usPicker) usPicker.value = defaultUsColor;
     if (demPicker) demPicker.value = defaultDemColor;
   }
-  // Helper function to convert HSL to HEX
+
   function hslToHex(h, s, l) {
     s /= 100;
     l /= 100;
@@ -1397,31 +1561,22 @@ aria-labelledby="savedGamesTitle"
   }
 
   function randomizeThemeColors() {
-    // Generate a truly random hue between 0 and 359 degrees
     const randomHue = Math.floor(Math.random() * 360);
-    // Add a random offset (e.g., ±20 degrees) to the ideal complementary 180° for variation
-    const variation = Math.floor(Math.random() * 41) - 20; // -20 to +20
+    const variation = Math.floor(Math.random() * 41) - 20;
     const complementaryHue = (randomHue + 180 + variation) % 360;
-    
-    // Use a wider range for saturation and lightness to cover a broader palette.
-    const saturation = Math.floor(Math.random() * 51) + 50; // random between 50 and 100
-    const lightness = Math.floor(Math.random() * 41) + 20;  // random between 30 and 70
-    
+    const saturation = Math.floor(Math.random() * 51) + 50;
+    const lightness = Math.floor(Math.random() * 41) + 20;
     const randomUs = hslToHex(randomHue, saturation, lightness);
     const randomDem = hslToHex(complementaryHue, saturation, lightness);
-    
-    // Update the color pickers with these values
     const usPicker = document.getElementById('usColorPicker');
     const demPicker = document.getElementById('demColorPicker');
     if (usPicker) usPicker.value = randomUs;
     if (demPicker) demPicker.value = randomDem;
   }
 
-  /*
-    ====================================================
-    ICONS + DARK MODE + UTILITY
-    ====================================================
-  */
+  // -------------------------------
+  // Icons, Dark Mode, and Utility Functions
+  // -------------------------------
   const Icons = {
     AlertCircle:
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4m0 4h.01"></path></svg>',
@@ -1439,9 +1594,6 @@ aria-labelledby="savedGamesTitle"
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 10V4h10v6M7 10l-1 12h12 l-1-12M7 10h10m-5 12v-6"/></svg>',
   };
 
-  // -------------------------------
-  // DEFAULT GAME STATE
-  // -------------------------------
   const DEFAULT_STATE = {
     rounds: [],
     biddingTeam: "",
@@ -1453,10 +1605,7 @@ aria-labelledby="savedGamesTitle"
     gameOver: false,
     winner: null,
     victoryMethod: null,
-    savedScoreInputStates: {
-      us: null,
-      dem: null,
-    },
+    savedScoreInputStates: { us: null, dem: null },
     lastBidAmount: null,
     lastBidTeam: null,
     usTeamName: "",
@@ -1477,9 +1626,6 @@ aria-labelledby="savedGamesTitle"
   let noCallback = null;
   let pendingGameAction = null;
 
-  // -------------------------------
-  // DARK MODE & TEAM STATS FUNCTIONS
-  // -------------------------------
   function updateDarkModeLabel(isDark) {
     const labelEl = document.getElementById("darkModeLabel");
     if (labelEl) {
@@ -1490,12 +1636,10 @@ aria-labelledby="savedGamesTitle"
   function initializeDarkMode() {
     const isDark = JSON.parse(localStorage.getItem(DARK_MODE_KEY));
     document.documentElement.classList.toggle("dark", isDark);
-
     const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
     if (darkModeToggleCheckbox) {
       darkModeToggleCheckbox.checked = isDark;
     }
-
     updateDarkModeLabel(isDark);
     updateMetaThemeColor(isDark);
   }
@@ -1510,8 +1654,9 @@ aria-labelledby="savedGamesTitle"
   function getTeamsObject() {
     return JSON.parse(localStorage.getItem("teams")) || {};
   }
+
   function setTeamsObject(obj) {
-    localStorage.setItem("teams", JSON.stringify(obj));
+    setLocalStorage("teams", obj);
   }
 
   function removeTeamsStatsForGame(game) {
@@ -1519,11 +1664,9 @@ aria-labelledby="savedGamesTitle"
     const teams = getTeamsObject();
     const usKey = game.usTeamName.trim();
     const demKey = game.demTeamName.trim();
-
     if (teams[usKey] && teams[demKey]) {
       teams[usKey].gamesPlayed = Math.max(0, teams[usKey].gamesPlayed - 1);
       teams[demKey].gamesPlayed = Math.max(0, teams[demKey].gamesPlayed - 1);
-
       if (game.winner === "us") {
         teams[usKey].wins = Math.max(0, teams[usKey].wins - 1);
         teams[demKey].losses = Math.max(0, teams[demKey].losses - 1);
@@ -1562,16 +1705,10 @@ aria-labelledby="savedGamesTitle"
       } catch (err) {
         console.error("Error parsing saved game state:", err);
         localStorage.removeItem(ACTIVE_GAME_KEY);
-        state = {
-          ...DEFAULT_STATE,
-          showWinProbability: isProMode,
-        };
+        state = { ...DEFAULT_STATE, showWinProbability: isProMode };
       }
     } else {
-      state = {
-        ...DEFAULT_STATE,
-        showWinProbability: isProMode,
-      };
+      state = { ...DEFAULT_STATE, showWinProbability: isProMode };
     }
     const proModeToggleCheckbox = document.getElementById("proModeToggle");
     if (proModeToggleCheckbox) proModeToggleCheckbox.checked = isProMode;
@@ -1582,7 +1719,7 @@ aria-labelledby="savedGamesTitle"
     if (state.gameOver) {
       localStorage.removeItem(ACTIVE_GAME_KEY);
     } else {
-      localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
+      setLocalStorage(ACTIVE_GAME_KEY, state);
       showSaveIndicator();
     }
   }
@@ -1590,21 +1727,17 @@ aria-labelledby="savedGamesTitle"
   function recalcTeamsStats() {
     const savedGames = getLocalStorage("savedGames");
     const teams = {};
-
     savedGames.forEach((game) => {
       const usTeam = game.usTeamName || "Us";
       const demTeam = game.demTeamName || "Dem";
-
       if (!teams[usTeam]) {
         teams[usTeam] = { wins: 0, losses: 0, gamesPlayed: 0 };
       }
       if (!teams[demTeam]) {
         teams[demTeam] = { wins: 0, losses: 0, gamesPlayed: 0 };
       }
-
       teams[usTeam].gamesPlayed++;
       teams[demTeam].gamesPlayed++;
-
       if (game.winner === "us") {
         teams[usTeam].wins++;
         teams[demTeam].losses++;
@@ -1613,7 +1746,6 @@ aria-labelledby="savedGamesTitle"
         teams[usTeam].losses++;
       }
     });
-
     setTeamsObject(teams);
   }
 
@@ -1622,21 +1754,14 @@ aria-labelledby="savedGamesTitle"
     openConfirmationModal(
       `Are you sure you want to delete this ${descriptor}?`,
       () => {
-        if (storageKey === "savedGames") {
-          items.splice(index, 1);
-          setLocalStorage(storageKey, items);
-          recalcTeamsStats();
-        } else {
-          items.splice(index, 1);
-          setLocalStorage(storageKey, items);
-        }
+        items.splice(index, 1);
+        setLocalStorage(storageKey, items);
+        if (storageKey === "savedGames") recalcTeamsStats();
         renderSavedGames();
         renderFreezerGames();
         closeConfirmationModal();
       },
-      () => {
-        closeConfirmationModal();
-      }
+      () => closeConfirmationModal()
     );
   }
 
@@ -1689,15 +1814,11 @@ aria-labelledby="savedGamesTitle"
     noBtn.parentNode.replaceChild(newNo, noBtn);
     newYes.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (confirmationCallback) {
-        confirmationCallback();
-      }
+      if (confirmationCallback) confirmationCallback();
     });
     newNo.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (noCallback) {
-        noCallback();
-      }
+      if (noCallback) noCallback();
     });
   }
 
@@ -1729,27 +1850,21 @@ aria-labelledby="savedGamesTitle"
 
   function populateTeamSelects() {
     const teamsObj = getTeamsObject();
-    const sortedNames = Object.keys(teamsObj)
-      .filter(teamName => teamName !== "Us" && teamName !== "Dem")
-      .sort();
-
+    const sortedNames = Object.keys(teamsObj).filter(name => name !== "Us" && name !== "Dem").sort();
     const usSelect = document.getElementById("selectUsTeam");
     const demSelect = document.getElementById("selectDemTeam");
     usSelect.innerHTML = "";
     demSelect.innerHTML = "";
-
     const defaultUsOption = new Option("-- Select or Add Team --", "", true, false);
     const defaultDemOption = new Option("-- Select or Add Team --", "", true, false);
     usSelect.appendChild(defaultUsOption);
     demSelect.appendChild(defaultDemOption);
-
     sortedNames.forEach((teamName) => {
       const opt = new Option(teamName, teamName, false, teamName === state.usTeamName);
       usSelect.appendChild(opt);
       const opt2 = new Option(teamName, teamName, false, teamName === state.demTeamName);
       demSelect.appendChild(opt2);
     });
-
     const newUsOption = document.createElement("option");
     newUsOption.value = "NEW_TEAM";
     newUsOption.textContent = "Add New Team...";
@@ -1758,10 +1873,8 @@ aria-labelledby="savedGamesTitle"
     newDemOption.textContent = "Add New Team...";
     usSelect.appendChild(newUsOption);
     demSelect.appendChild(newDemOption);
-
     document.getElementById("newUsTeamName").classList.add("hidden");
     document.getElementById("newDemTeamName").classList.add("hidden");
-
     usSelect.onchange = () => {
       if (usSelect.value === "NEW_TEAM") {
         document.getElementById("newUsTeamName").classList.remove("hidden");
@@ -1769,7 +1882,6 @@ aria-labelledby="savedGamesTitle"
         document.getElementById("newUsTeamName").classList.add("hidden");
       }
     };
-
     demSelect.onchange = () => {
       if (demSelect.value === "NEW_TEAM") {
         document.getElementById("newDemTeamName").classList.remove("hidden");
@@ -1787,7 +1899,6 @@ aria-labelledby="savedGamesTitle"
     const newDemVal = document.getElementById("newDemTeamName").value.trim();
     let finalUs = "";
     let finalDem = "";
-
     if (usVal === "NEW_TEAM") {
       if (!newUsVal) {
         alert("Please enter a new team name for 'Us' or select an existing team.");
@@ -1802,7 +1913,6 @@ aria-labelledby="savedGamesTitle"
       }
       finalUs = usVal;
     }
-
     if (demVal === "NEW_TEAM") {
       if (!newDemVal) {
         alert("Please enter a new team name for 'Dem' or select an existing team.");
@@ -1817,19 +1927,13 @@ aria-labelledby="savedGamesTitle"
       }
       finalDem = demVal;
     }
-
     if (finalUs === finalDem) {
       alert("Team 'Us' and 'Dem' cannot be the same.");
       return;
     }
-
-    updateState({
-      usTeamName: finalUs,
-      demTeamName: finalDem,
-    });
+    updateState({ usTeamName: finalUs, demTeamName: finalDem });
     saveCurrentGameState();
     closeTeamSelectionModal();
-
     if (pendingGameAction === "freeze") {
       confirmFreeze();
     } else if (pendingGameAction === "save") {
@@ -1841,11 +1945,7 @@ aria-labelledby="savedGamesTitle"
   function addTeamIfNotExists(teamName) {
     const teams = getTeamsObject();
     if (!teams[teamName]) {
-      teams[teamName] = {
-        wins: 0,
-        losses: 0,
-        gamesPlayed: 0,
-      };
+      teams[teamName] = { wins: 0, losses: 0, gamesPlayed: 0 };
     }
     setTeamsObject(teams);
   }
@@ -1872,15 +1972,7 @@ aria-labelledby="savedGamesTitle"
     } else {
       const otherTeam = team === "us" ? "dem" : "us";
       state.savedScoreInputStates[otherTeam] = null;
-      let newState = {
-        biddingTeam: team,
-        bidAmount: "",
-        showCustomBid: false,
-        customBidValue: "",
-        enterBidderPoints: false,
-        error: "",
-        showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
-      };
+      let newState = { biddingTeam: team, bidAmount: "", showCustomBid: false, customBidValue: "", enterBidderPoints: false, error: "", showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false };
       const saved = state.savedScoreInputStates[team];
       if (saved) {
         newState = { ...newState, ...saved };
@@ -1894,29 +1986,15 @@ aria-labelledby="savedGamesTitle"
   function handleBidSelect(bid) {
     if (bid === "other") {
       ephemeralCustomBid = "";
-      updateState({
-        showCustomBid: true,
-        bidAmount: "",
-        customBidValue: "",
-      });
+      updateState({ showCustomBid: true, bidAmount: "", customBidValue: "" });
     } else {
       ephemeralCustomBid = "";
-      updateState({
-        showCustomBid: false,
-        bidAmount: bid.toString(),
-        customBidValue: "",
-      });
+      updateState({ showCustomBid: false, bidAmount: bid.toString(), customBidValue: "" });
     }
     if (bid !== "other") {
-      updateState({
-        lastBidAmount: bid.toString(),
-        lastBidTeam: state.biddingTeam,
-      });
+      updateState({ lastBidAmount: bid.toString(), lastBidTeam: state.biddingTeam });
     } else {
-      updateState({
-        lastBidAmount: null,
-        lastBidTeam: null,
-      });
+      updateState({ lastBidAmount: null, lastBidTeam: null });
     }
   }
 
@@ -1924,27 +2002,15 @@ aria-labelledby="savedGamesTitle"
     ephemeralCustomBid = e.target.value;
     const errorMsg = validateBid(ephemeralCustomBid);
     if (errorMsg) {
-      updateState({
-        customBidValue: ephemeralCustomBid,
-        bidAmount: "",
-        lastBidAmount: null,
-        lastBidTeam: null,
-      });
+      updateState({ customBidValue: ephemeralCustomBid, bidAmount: "", lastBidAmount: null, lastBidTeam: null });
     } else {
-      updateState({
-        customBidValue: ephemeralCustomBid,
-        bidAmount: ephemeralCustomBid,
-        lastBidAmount: ephemeralCustomBid,
-        lastBidTeam: state.biddingTeam,
-      });
+      updateState({ customBidValue: ephemeralCustomBid, bidAmount: ephemeralCustomBid, lastBidAmount: ephemeralCustomBid, lastBidTeam: state.biddingTeam });
     }
   }
 
   function handleBiddingPointsToggle(isBidding) {
     ephemeralPoints = "";
-    updateState({
-      enterBidderPoints: isBidding,
-    });
+    updateState({ enterBidderPoints: isBidding });
   }
 
   function handleFormSubmit(e) {
@@ -1968,104 +2034,44 @@ aria-labelledby="savedGamesTitle"
     }
     const numericBid = Number(bidAmount);
     const numericPoints = Number(pointsVal);
-
     if (rounds.length === 0 && state.startTime === null) {
       updateState({ startTime: Date.now() });
     }
-
-    let usEarned = 0;
-    let demEarned = 0;
-
+    let usEarned = 0, demEarned = 0;
     if (numericPoints === 360) {
       if (enterBidderPoints) {
-        if (biddingTeam === "us") {
-          usEarned = 360;
-          demEarned = 0;
-        } else {
-          demEarned = 360;
-          usEarned = 0;
-        }
+        biddingTeam === "us" ? (usEarned = 360, demEarned = 0) : (demEarned = 360, usEarned = 0);
       } else {
-        if (biddingTeam === "us") {
-          usEarned = -numericBid;
-          demEarned = 360;
-        } else {
-          demEarned = -numericBid;
-          usEarned = 360;
-        }
+        biddingTeam === "us" ? (usEarned = -numericBid, demEarned = 360) : (demEarned = -numericBid, usEarned = 360);
       }
     } else {
       if (enterBidderPoints) {
-        if (biddingTeam === "us") {
-          usEarned = numericPoints;
-          demEarned = 180 - numericPoints;
-        } else {
-          demEarned = numericPoints;
-          usEarned = 180 - numericPoints;
-        }
+        biddingTeam === "us" ? (usEarned = numericPoints, demEarned = 180 - numericPoints) : (demEarned = numericPoints, usEarned = 180 - numericPoints);
       } else {
-        if (biddingTeam === "us") {
-          demEarned = numericPoints;
-          usEarned = 180 - numericPoints;
-        } else {
-          usEarned = numericPoints;
-          demEarned = 180 - numericPoints;
-        }
+        biddingTeam === "us" ? (demEarned = numericPoints, usEarned = 180 - numericPoints) : (usEarned = numericPoints, demEarned = 180 - numericPoints);
       }
-      if (biddingTeam === "us") {
-        if (usEarned < numericBid) {
-          usEarned = -numericBid;
-        }
-      } else {
-        if (demEarned < numericBid) {
-          demEarned = -numericBid;
-        }
-      }
+      if (biddingTeam === "us" && usEarned < numericBid) usEarned = -numericBid;
+      else if (biddingTeam === "dem" && demEarned < numericBid) demEarned = -numericBid;
     }
-
-    const lastTotals = rounds.length
-      ? rounds[rounds.length - 1].runningTotals
-      : { us: 0, dem: 0 };
-    const newTotals = {
-      us: lastTotals.us + usEarned,
-      dem: lastTotals.dem + demEarned,
-    };
-
-    const newRound = {
-      biddingTeam,
-      bidAmount: numericBid,
-      usPoints: usEarned,
-      demPoints: demEarned,
-      runningTotals: newTotals,
-    };
+    const lastTotals = rounds.length ? rounds[rounds.length - 1].runningTotals : { us: 0, dem: 0 };
+    const newTotals = { us: lastTotals.us + usEarned, dem: lastTotals.dem + demEarned };
+    const newRound = { biddingTeam, bidAmount: numericBid, usPoints: usEarned, demPoints: demEarned, runningTotals: newTotals };
     const updatedRounds = [...rounds, newRound];
-
-    let gameFinished = false;
-    let theWinner = null;
-    let victoryMethod = "Won on Bid";
-
+    let gameFinished = false, theWinner = null, victoryMethod = "Won on Bid";
     if (Math.abs(newTotals.us - newTotals.dem) >= 1000) {
       gameFinished = true;
       theWinner = newTotals.us > newTotals.dem ? "us" : "dem";
       victoryMethod = "1000 Point Spread";
-    } else if (
-      (biddingTeam === "us" && usEarned < 0 && newTotals.dem >= 500) ||
-      (biddingTeam === "dem" && demEarned < 0 && newTotals.us >= 500)
-    ) {
+    } else if ((biddingTeam === "us" && usEarned < 0 && newTotals.dem >= 500) || (biddingTeam === "dem" && demEarned < 0 && newTotals.us >= 500)) {
       gameFinished = true;
       theWinner = biddingTeam === "us" ? "dem" : "us";
       victoryMethod = "Set Other Team";
-    } else if (
-      (biddingTeam === "us" && newTotals.us >= 500 && usEarned >= numericBid) ||
-      (biddingTeam === "dem" && newTotals.dem >= 500 && demEarned >= numericBid)
-    ) {
+    } else if ((biddingTeam === "us" && newTotals.us >= 500 && usEarned >= numericBid) || (biddingTeam === "dem" && newTotals.dem >= 500 && demEarned >= numericBid)) {
       gameFinished = true;
       theWinner = newTotals.us > newTotals.dem ? "us" : "dem";
     }
-
     ephemeralCustomBid = "";
     ephemeralPoints = "";
-
     if (gameFinished) {
       let finalAccumulated = state.accumulatedTime;
       if (state.startTime !== null) {
@@ -2088,15 +2094,7 @@ aria-labelledby="savedGamesTitle"
       updateTeamsStatsOnGameEnd(theWinner);
       saveCurrentGameState();
     } else {
-      updateState({
-        rounds: updatedRounds,
-        biddingTeam: "",
-        bidAmount: "",
-        showCustomBid: false,
-        customBidValue: "",
-        enterBidderPoints: false,
-        error: "",
-      });
+      updateState({ rounds: updatedRounds, biddingTeam: "", bidAmount: "", showCustomBid: false, customBidValue: "", enterBidderPoints: false, error: "" });
       saveCurrentGameState();
     }
   }
@@ -2106,42 +2104,25 @@ aria-labelledby="savedGamesTitle"
     const usKey = state.usTeamName.trim();
     const demKey = state.demTeamName.trim();
     const teams = getTeamsObject();
-    if (!teams[usKey]) {
-      teams[usKey] = { wins: 0, losses: 0, gamesPlayed: 0 };
-    }
-    if (!teams[demKey]) {
-      teams[demKey] = { wins: 0, losses: 0, gamesPlayed: 0 };
-    }
+    if (!teams[usKey]) teams[usKey] = { wins: 0, losses: 0, gamesPlayed: 0 };
+    if (!teams[demKey]) teams[demKey] = { wins: 0, losses: 0, gamesPlayed: 0 };
     teams[usKey].gamesPlayed++;
     teams[demKey].gamesPlayed++;
-    if (winner === "us") {
-      teams[usKey].wins++;
-      teams[demKey].losses++;
-    } else if (winner === "dem") {
-      teams[demKey].wins++;
-      teams[usKey].losses++;
-    }
+    if (winner === "us") { teams[usKey].wins++; teams[demKey].losses++; }
+    else if (winner === "dem") { teams[demKey].wins++; teams[usKey].losses++; }
     setTeamsObject(teams);
   }
 
   function handleUndo() {
     if (!state.rounds.length) return;
     const newRounds = state.rounds.slice(0, -1);
-    let newLastBidAmount = null;
-    let newLastBidTeam = null;
+    let newLastBidAmount = null, newLastBidTeam = null;
     if (newRounds.length > 0) {
       const lastRound = newRounds[newRounds.length - 1];
       newLastBidAmount = lastRound.bidAmount.toString();
       newLastBidTeam = lastRound.biddingTeam;
     }
-    updateState({
-      rounds: newRounds,
-      gameOver: false,
-      winner: null,
-      victoryMethod: null,
-      lastBidAmount: newLastBidAmount,
-      lastBidTeam: newLastBidTeam,
-    });
+    updateState({ rounds: newRounds, gameOver: false, winner: null, victoryMethod: null, lastBidAmount: newLastBidAmount, lastBidTeam: newLastBidTeam });
     saveCurrentGameState();
   }
 
@@ -2150,10 +2131,7 @@ aria-labelledby="savedGamesTitle"
       "Are you sure you want to start a new game? Any unsaved progress will be lost.",
       () => {
         const isProMode = JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false;
-        state = {
-          ...DEFAULT_STATE,
-          showWinProbability: isProMode,
-        };
+        state = { ...DEFAULT_STATE, showWinProbability: isProMode };
         localStorage.removeItem(ACTIVE_GAME_KEY);
         confettiTriggered = false;
         closeConfirmationModal();
@@ -2176,15 +2154,12 @@ aria-labelledby="savedGamesTitle"
       return;
     }
     if (!state.rounds.length) return;
-
     let finalAccumulated = state.accumulatedTime;
     if (state.startTime !== null) {
       finalAccumulated += Date.now() - state.startTime;
     }
-    
     const lastRound = state.rounds[state.rounds.length - 1] || {};
     const finalScore = lastRound.runningTotals || { us: 0, dem: 0 };
-
     const gameObj = {
       player1: state.usTeamName || "Us",
       player2: state.demTeamName || "Dem",
@@ -2194,27 +2169,17 @@ aria-labelledby="savedGamesTitle"
       victoryMethod: state.victoryMethod,
       timestamp: new Date().toISOString(),
       playerStats: {
-        player1: {
-          totalPoints: finalScore.us,
-          bids: [],
-          wins: state.winner === "us" ? 1 : 0,
-        },
-        player2: {
-          totalPoints: finalScore.dem,
-          bids: [],
-          wins: state.winner === "dem" ? 1 : 0,
-        },
+        player1: { totalPoints: finalScore.us, bids: [], wins: state.winner === "us" ? 1 : 0 },
+        player2: { totalPoints: finalScore.dem, bids: [], wins: state.winner === "dem" ? 1 : 0 },
       },
       usTeamName: state.usTeamName || "Us",
       demTeamName: state.demTeamName || "Dem",
       durationMs: finalAccumulated,
     };
-
     const savedGames = getLocalStorage("savedGames");
     savedGames.push(gameObj);
     setLocalStorage("savedGames", savedGames);
     showSaveIndicator();
-
     localStorage.removeItem(ACTIVE_GAME_KEY);
     ephemeralCustomBid = "";
     ephemeralPoints = "";
@@ -2227,27 +2192,19 @@ aria-labelledby="savedGamesTitle"
       alert("No game data to freeze. Play at least one round first.");
       return;
     }
-
     if (!state.usTeamName || !state.demTeamName) {
       pendingGameAction = "freeze";
       openTeamSelectionModal();
       return;
     }
-
     confirmFreeze();
   }
 
   function confirmFreeze() {
     openConfirmationModal(
       "Are you sure you want to freeze this game?",
-      () => {
-        freezeCurrentGame();
-        closeConfirmationModal();
-        closeMenuOverlay();
-      },
-      () => {
-        closeConfirmationModal();
-      }
+      () => { freezeCurrentGame(); closeConfirmationModal(); closeMenuOverlay(); },
+      () => { closeConfirmationModal(); }
     );
   }
 
@@ -2256,18 +2213,9 @@ aria-labelledby="savedGamesTitle"
     if (state.startTime !== null) {
       finalAccumulated += Date.now() - state.startTime;
     }
-
-    const finalScore = state.rounds.reduce(
-      (acc, r) => ({
-        us: acc.us + r.usPoints,
-        dem: acc.dem + r.demPoints,
-      }),
-      { us: 0, dem: 0 }
-    );
-
+    const finalScore = state.rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
     const lastRound = state.rounds[state.rounds.length - 1];
     const freezerGames = getLocalStorage("freezerGames");
-
     const frozenGame = {
       name: `FROZEN-${Date.now()}`,
       usName: state.usTeamName || "Us",
@@ -2280,16 +2228,13 @@ aria-labelledby="savedGamesTitle"
       timestamp: new Date().toISOString(),
       accumulatedTime: finalAccumulated,
     };
-
     freezerGames.push(frozenGame);
     setLocalStorage("freezerGames", freezerGames);
-
     localStorage.removeItem(ACTIVE_GAME_KEY);
     ephemeralCustomBid = "";
     ephemeralPoints = "";
     updateState({ ...DEFAULT_STATE });
     confettiTriggered = false;
-
     pendingGameAction = null;
     renderApp();
   }
@@ -2298,28 +2243,18 @@ aria-labelledby="savedGamesTitle"
     const freezerGames = getLocalStorage("freezerGames");
     const chosen = freezerGames[index];
     if (!chosen) return;
-
     if (chosen.usName === "Us" && chosen.demName === "Dem") {
-      const newUsName = prompt(
-        "No team names defined for this frozen game. Enter the name for the 'Us' team:",
-        "Team A"
-      );
-      const newDemName = prompt(
-        "Enter the name for the 'Dem' team:",
-        "Team B"
-      );
+      const newUsName = prompt("No team names defined for this frozen game. Enter the name for the 'Us' team:", "Team A");
+      const newDemName = prompt("Enter the name for the 'Dem' team:", "Team B");
       if (newUsName) chosen.usName = newUsName;
       if (newDemName) chosen.demName = newDemName;
-
       freezerGames[index] = chosen;
       setLocalStorage("freezerGames", freezerGames);
     }
-
     openConfirmationModal(
       `Load the freezer game "${chosen.name}"? This will overwrite the current game.`,
       () => {
         closeConfirmationModal();
-
         const isOver = !!chosen.winner;
         updateState({
           rounds: chosen.rounds,
@@ -2340,10 +2275,8 @@ aria-labelledby="savedGamesTitle"
           startTime: isOver ? null : Date.now(),
           showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
         });
-
         freezerGames.splice(index, 1);
         setLocalStorage("freezerGames", freezerGames);
-
         closeSavedGamesModal();
         saveCurrentGameState();
         confettiTriggered = false;
@@ -2382,9 +2315,7 @@ aria-labelledby="savedGamesTitle"
         saveCurrentGameState();
         confettiTriggered = false;
       },
-      () => {
-        closeConfirmationModal();
-      }
+      () => { closeConfirmationModal(); }
     );
   }
 
@@ -2417,15 +2348,7 @@ aria-labelledby="savedGamesTitle"
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     if (hours > 0) {
-      return (
-        hours +
-        ":" +
-        (minutes < 10 ? "0" : "") +
-        minutes +
-        ":" +
-        (seconds < 10 ? "0" : "") +
-        seconds
-      );
+      return hours + ":" + (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
     } else {
       return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
     }
@@ -2440,16 +2363,11 @@ aria-labelledby="savedGamesTitle"
       const bidAmount = Number(round.bidAmount) || 0;
       if (team === (game.usTeamName || "Us")) {
         if (round.biddingTeam === "dem" && demPoints < 0) {
-          if (usPoints >= 80 || usPoints >= bidAmount) {
-            sandbagCount++;
-          }
+          if (usPoints >= 80 || usPoints >= bidAmount) sandbagCount++;
         }
-      }
-      else if (team === (game.demTeamName || "Dem")) {
+      } else if (team === (game.demTeamName || "Dem")) {
         if (round.biddingTeam === "us" && usPoints < 0) {
-          if (demPoints >= 80 || demPoints >= bidAmount) {
-            sandbagCount++;
-          }
+          if (demPoints >= 80 || demPoints >= bidAmount) sandbagCount++;
         }
       }
     });
@@ -2457,9 +2375,7 @@ aria-labelledby="savedGamesTitle"
   }
 
   function detectSandbag(rounds, winner, threshold = 2) {
-    let usSandbagCount = 0;
-    let demSandbagCount = 0;
-
+    let usSandbagCount = 0, demSandbagCount = 0;
     if (rounds && rounds.length) {
       rounds.forEach((round, index) => {
         let roundUsPoints = round.usPoints;
@@ -2474,80 +2390,43 @@ aria-labelledby="savedGamesTitle"
             roundDemPoints = round.runningTotals.dem - prevTotals.dem;
           }
         }
-
         const { biddingTeam, bidAmount } = round;
-
         if (biddingTeam === "us" && roundUsPoints < 0) {
-          if (roundDemPoints >= 80 || roundDemPoints >= bidAmount) {
-            demSandbagCount++;
-          }
+          if (roundDemPoints >= 80 || roundDemPoints >= bidAmount) demSandbagCount++;
         }
         if (biddingTeam === "dem" && roundDemPoints < 0) {
-          if (roundUsPoints >= 80 || roundUsPoints >= bidAmount) {
-            usSandbagCount++;
-          }
+          if (roundUsPoints >= 80 || roundUsPoints >= bidAmount) usSandbagCount++;
         }
       });
     }
-
-    if (winner === "us" && usSandbagCount >= threshold) {
-      return "Yes";
-    } else if (winner === "dem" && demSandbagCount >= threshold) {
-      return "Yes";
-    }
+    if (winner === "us" && usSandbagCount >= threshold) return "Yes";
+    else if (winner === "dem" && demSandbagCount >= threshold) return "Yes";
     return "No";
   }
 
   function renderReadOnlyGameDetails(game) {
-    const {
-      rounds,
-      timestamp,
-      usTeamName,
-      demTeamName,
-      durationMs,
-      winner,
-    } = game;
-
+    const { rounds, timestamp, usTeamName, demTeamName, durationMs, winner } = game;
     const sandbagNote = detectSandbag(rounds, winner);
-
-    const roundHtml = rounds
-      .map((r, index) => {
-        const arrow =
-          r.biddingTeam === "us"
-            ? `← (${r.bidAmount})`
-            : `(${r.bidAmount}) →`;
-        return `
+    const roundHtml = rounds.map((r, index) => {
+      const arrow = r.biddingTeam === "us" ? `← (${r.bidAmount})` : `(${r.bidAmount}) →`;
+      return `
         <div class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
           <div class="text-left text-gray-800 dark:text-white font-semibold">${r.runningTotals.us}</div>
           <div class="text-center">${arrow}</div>
           <div class="text-right text-gray-800 dark:text-white font-semibold">${r.runningTotals.dem}</div>
         </div>`;
-      })
-      .join("");
-
+    }).join("");
     return `
       <div class="space-y-4">
         <div>
           <h4 class="text-xl font-bold text-gray-800 dark:text-white">
-            Winner: ${
-              winner === "us"
-                ? (usTeamName || "Us")
-                : winner === "dem"
-                ? (demTeamName || "Dem")
-                : "N/A"
-            }
+            Winner: ${winner === "us" ? (usTeamName || "Us") : winner === "dem" ? (demTeamName || "Dem") : "N/A"}
           </h4>
           <p class="text-lg text-gray-600 dark:text-white mt-1">
             ${usTeamName || "Us"} vs ${demTeamName || "Dem"}
           </p>
           <p class="text-gray-600 dark:text-white mt-1">
-            Date Played: ${new Date(timestamp).toLocaleString([], {
-              year: "numeric",
-              month: "numeric",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            Date Played: ${new Date(timestamp).toLocaleString([], { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
         <div>
@@ -2581,255 +2460,153 @@ aria-labelledby="savedGamesTitle"
   function renderSavedGames() {
     const savedGames = getLocalStorage("savedGames");
     const container = document.getElementById("savedGamesList");
-
     if (!savedGames.length) {
-      container.innerHTML =
-        '<p class="text-gray-600 dark:text-white">No completed games available.</p>';
+      container.innerHTML = '<p class="text-gray-600 dark:text-white">No completed games available.</p>';
       return;
     }
-
-    container.innerHTML = savedGames
-      .map((g, i) => {
-        const usScore = g.finalScore.us;
-        const demScore = g.finalScore.dem;
-        const usIsWinner = g.winner === "us";
-        const demIsWinner = g.winner === "dem";
-
-        let topTeamHTML = "";
-        let bottomTeamHTML = "";
-
-        if (usIsWinner) {
-          topTeamHTML = `
-                <div class="flex flex-col space-y-1">
-                  <span class="font-semibold text-gray-800 dark:text-white">
-                    Winner
-                  </span>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-green-400 font-semibold">
-                      ${g.usTeamName || "Us"}
-                    </span>
-                    <span class="text-green-400 font-semibold">
-                      ${usScore} points
-                    </span>
-                  </div>
-                </div>
-              `;
-          bottomTeamHTML = `
-                <div class="flex items-center space-x-2">
-                  <span class="text-red-400 font-semibold">
-                    ${g.demTeamName || "Dem"}
-                  </span>
-                  <span class="text-red-400 font-semibold">
-                    ${demScore} points
-                  </span>
-                </div>
-              `;
-        } else if (demIsWinner) {
-          topTeamHTML = `
-                <div class="flex flex-col space-y-1">
-                  <span class="font-semibold text-gray-800 dark:text-white">
-                    Winner
-                  </span>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-green-400 font-semibold">
-                      ${g.demTeamName || "Dem"}
-                    </span>
-                    <span class="text-green-400 font-semibold">
-                      ${demScore} points
-                    </span>
-                  </div>
-                </div>
-              `;
-          bottomTeamHTML = `
-                <div class="flex items-center space-x-2">
-                  <span class="text-red-400 font-semibold">
-                    ${g.usTeamName || "Us"}
-                  </span>
-                  <span class="text-red-400 font-semibold">
-                    ${usScore} points
-                  </span>
-                </div>
-              `;
-        } else {
-          topTeamHTML = `
-                <div class="flex items-center space-x-2">
-                  <span class="text-gray-400 font-semibold">
-                    ${g.usTeamName || "Us"}
-                  </span>
-                  <span class="text-gray-400 font-semibold">
-                    ${usScore} points
-                  </span>
-                </div>
-              `;
-          bottomTeamHTML = `
-                <div class="flex items-center space-x-2">
-                  <span class="text-gray-400 font-semibold">
-                    ${g.demTeamName || "Dem"}
-                  </span>
-                  <span class="text-gray-400 font-semibold">
-                    ${demScore} points
-                  </span>
-                </div>
-              `;
-        }
-
-        const gameDate = new Date(g.timestamp).toLocaleString();
-
-        const durationMarkup = `
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Duration</p>
-                <p class="text-base">${g.durationMs ? formatDuration(g.durationMs) : "N/A"}</p>
-              </div>
-            `;
-
-        return `
-              <div
-                class="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white p-4 rounded-xl shadow-md mb-4 cursor-pointer"
-                onclick="viewSavedGame(${i})"
-              >
-                <div class="flex justify-between items-center mb-4">
-                  <div class="flex items-center">
-                    <span class="mr-2">${Icons.Trophy}</span>
-                    <h2 class="text-xl font-bold">Game Summary</h2>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button
-                      onclick="viewSavedGame(${i}); event.stopPropagation();"
-                      class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-400"
-                      aria-label="View Saved Game"
-                      type="button"
-                    >
-                      View
-                    </button>
-                    <button
-                      onclick="deleteSavedGame(${i}); event.stopPropagation();"
-                      class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500"
-                      aria-label="Delete Saved Game"
-                      type="button"
-                    >
-                      ${Icons.Trash}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Teams</p>
-                  <div class="flex flex-col space-y-2 mt-2">
-                    ${topTeamHTML}
-                    ${bottomTeamHTML}
-                  </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Victory Method</p>
-                    <p class="text-base">${g.victoryMethod || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Date</p>
-                    <p class="text-base">${gameDate}</p>
-                  </div>
-                  ${durationMarkup}
-                </div>
-              </div>
-            `;
-      })
-      .join("");
+    container.innerHTML = savedGames.map((g, i) => {
+      const usScore = g.finalScore.us;
+      const demScore = g.finalScore.dem;
+      const usIsWinner = g.winner === "us";
+      const demIsWinner = g.winner === "dem";
+      let topTeamHTML = "", bottomTeamHTML = "";
+      if (usIsWinner) {
+        topTeamHTML = `
+          <div class="flex flex-col space-y-1">
+            <span class="font-semibold text-gray-800 dark:text-white">Winner</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-green-400 font-semibold">${g.usTeamName || "Us"}</span>
+              <span class="text-green-400 font-semibold">${usScore} points</span>
+            </div>
+          </div>`;
+        bottomTeamHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-red-400 font-semibold">${g.demTeamName || "Dem"}</span>
+            <span class="text-red-400 font-semibold">${demScore} points</span>
+          </div>`;
+      } else if (demIsWinner) {
+        topTeamHTML = `
+          <div class="flex flex-col space-y-1">
+            <span class="font-semibold text-gray-800 dark:text-white">Winner</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-green-400 font-semibold">${g.demTeamName || "Dem"}</span>
+              <span class="text-green-400 font-semibold">${demScore} points</span>
+            </div>
+          </div>`;
+        bottomTeamHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-red-400 font-semibold">${g.usTeamName || "Us"}</span>
+            <span class="text-red-400 font-semibold">${usScore} points</span>
+          </div>`;
+      } else {
+        topTeamHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-gray-400 font-semibold">${g.usTeamName || "Us"}</span>
+            <span class="text-gray-400 font-semibold">${usScore} points</span>
+          </div>`;
+        bottomTeamHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-gray-400 font-semibold">${g.demTeamName || "Dem"}</span>
+            <span class="text-gray-400 font-semibold">${demScore} points</span>
+          </div>`;
+      }
+      const gameDate = new Date(g.timestamp).toLocaleString();
+      const durationMarkup = `
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Duration</p>
+          <p class="text-base">${g.durationMs ? formatDuration(g.durationMs) : "N/A"}</p>
+        </div>`;
+      return `
+        <div class="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white p-4 rounded-xl shadow-md mb-4 cursor-pointer" onclick="viewSavedGame(${i})">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center">
+              <span class="mr-2">${Icons.Trophy}</span>
+              <h2 class="text-xl font-bold">Game Summary</h2>
+            </div>
+            <div class="flex space-x-2">
+              <button onclick="viewSavedGame(${i}); event.stopPropagation();" class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-400" aria-label="View Saved Game" type="button">View</button>
+              <button onclick="deleteSavedGame(${i}); event.stopPropagation();" class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500" aria-label="Delete Saved Game" type="button">${Icons.Trash}</button>
+            </div>
+          </div>
+          <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Teams</p>
+            <div class="flex flex-col space-y-2 mt-2">
+              ${topTeamHTML}
+              ${bottomTeamHTML}
+            </div>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Victory Method</p>
+              <p class="text-base">${g.victoryMethod || "N/A"}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Date</p>
+              <p class="text-base">${gameDate}</p>
+            </div>
+            ${durationMarkup}
+          </div>
+        </div>`;
+    }).join("");
   }
 
   function renderFreezerGames() {
     const freezerGames = getLocalStorage("freezerGames");
     const container = document.getElementById("freezerGamesList");
-
     if (!freezerGames.length) {
-      container.innerHTML =
-        '<p class="text-gray-600 dark:text-white">No freezer games available.</p>';
+      container.innerHTML = '<p class="text-gray-600 dark:text-white">No freezer games available.</p>';
       return;
     }
-
-    container.innerHTML = freezerGames
-      .map((f, i) => {
-        const usScore = f.finalScore.us;
-        const demScore = f.finalScore.dem;
-
-        let usColorClass = "text-gray-400";
-        let demColorClass = "text-gray-400";
-        if (f.winner === "us") {
-          usColorClass = "text-green-400";
-          demColorClass = "text-red-400";
-        } else if (f.winner === "dem") {
-          usColorClass = "text-red-400";
-          demColorClass = "text-green-400";
-        }
-
-        const dateFrozen = new Date(f.timestamp).toLocaleString();
-
-        return `
-              <div class="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white p-4 rounded-xl shadow-md mb-4 cursor-pointer" onclick="loadFreezerGame(${i})">
-                
-                <div class="flex justify-between items-center mb-4">
-                  <div class="flex items-center">
-                    <span class="mr-2">${Icons.Trophy}</span>
-                    <h2 class="text-xl font-bold">Frozen Game Summary</h2>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button onclick="loadFreezerGame(${i}); event.stopPropagation();" 
-                            class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-400"
-                            aria-label="Load Freezer Game" type="button">
-                      Load
-                    </button>
-                    <button onclick="deleteFreezerGame(${i}); event.stopPropagation();" 
-                            class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500"
-                            aria-label="Delete Freezer Game" type="button">
-                      ${Icons.Trash}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    ${f.name ? `Name: ${f.name}` : "Frozen Game"}
-                  </p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Teams</p>
-                  <div class="flex flex-wrap sm:flex-nowrap justify-between items-center mt-2">
-                    <div class="flex items-center space-x-2">
-                      <span class="${usColorClass} font-semibold">
-                        ${f.usName || "Us"}
-                      </span>
-                      <span class="${usColorClass} font-semibold">
-                        ${usScore} points
-                      </span>
-                    </div>
-                    <span class="text-gray-400 dark:text-gray-300 mx-2">vs</span>
-                    <div class="flex items-center space-x-2">
-                      <span class="${demColorClass} font-semibold">
-                        ${f.demName || "Dem"}
-                      </span>
-                      <span class="${demColorClass} font-semibold">
-                        ${demScore} points
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Victory Method</p>
-                    <p class="text-base">${f.victoryMethod || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Last Bid</p>
-                    <p class="text-base">${f.lastBid || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Date Frozen</p>
-                    <p class="text-base">${dateFrozen}</p>
-                  </div>
-                </div>
+    container.innerHTML = freezerGames.map((f, i) => {
+      const usScore = f.finalScore.us;
+      const demScore = f.finalScore.dem;
+      let usColorClass = "text-gray-400", demColorClass = "text-gray-400";
+      if (f.winner === "us") { usColorClass = "text-green-400"; demColorClass = "text-red-400"; }
+      else if (f.winner === "dem") { usColorClass = "text-red-400"; demColorClass = "text-green-400"; }
+      const dateFrozen = new Date(f.timestamp).toLocaleString();
+      return `
+        <div class="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white p-4 rounded-xl shadow-md mb-4 cursor-pointer" onclick="loadFreezerGame(${i})">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center">
+              <span class="mr-2">${Icons.Trophy}</span>
+              <h2 class="text-xl font-bold">Frozen Game Summary</h2>
+            </div>
+            <div class="flex space-x-2">
+              <button onclick="loadFreezerGame(${i}); event.stopPropagation();" class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-400" aria-label="Load Freezer Game" type="button">Load</button>
+              <button onclick="deleteFreezerGame(${i}); event.stopPropagation();" class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500" aria-label="Delete Freezer Game" type="button">${Icons.Trash}</button>
+            </div>
+          </div>
+          <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">${f.name ? `Name: ${f.name}` : "Frozen Game"}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Teams</p>
+            <div class="flex flex-wrap sm:flex-nowrap justify-between items-center mt-2">
+              <div class="flex items-center space-x-2">
+                <span class="${usColorClass} font-semibold">${f.usName || "Us"}</span>
+                <span class="${usColorClass} font-semibold">${usScore} points</span>
               </div>
-            `;
-      })
-      .join("");
+              <span class="text-gray-400 dark:text-gray-300 mx-2">vs</span>
+              <div class="flex items-center space-x-2">
+                <span class="${demColorClass} font-semibold">${f.demName || "Dem"}</span>
+                <span class="${demColorClass} font-semibold">${demScore} points</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Victory Method</p>
+              <p class="text-base">${f.victoryMethod || "N/A"}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Last Bid</p>
+              <p class="text-base">${f.lastBid || "N/A"}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Date Frozen</p>
+              <p class="text-base">${dateFrozen}</p>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
   }
 
   function deleteSavedGame(index) {
@@ -2845,7 +2622,6 @@ aria-labelledby="savedGamesTitle"
     const teamLabel = teamKey === "us" ? (state.usTeamName || "Us") : (state.demTeamName || "Dem");
     const colorClass = teamKey === "us" ? "bg-primary" : "bg-accent";
     const selectedEffect = isSelected ? "sunken-selected" : "";
-
     let winProbDisplay = "";
     if (state.showWinProbability && !state.gameOver && state.rounds.length > 0) {
       const historicalGames = getLocalStorage("savedGames");
@@ -2854,262 +2630,253 @@ aria-labelledby="savedGamesTitle"
       const teamColor = teamKey === "us" ? "var(--primary-color)" : "var(--accent-color)";
       const brightness = isSelected ? "brightness(0.75)" : "brightness(0.85)";
       winProbDisplay = `
-      <div class="mt-1 text-sm rounded-full px-2 py-1 relative" 
-           style="background-color: ${teamColor}; filter: ${brightness};">
-        <span class="relative text-white font-medium" style="z-index: 1;">
-          Win: ${prob.toFixed(1)}%
-        </span>
+      <div class="mt-1 text-sm rounded-full px-2 py-1 relative" style="background-color: ${teamColor}; filter: ${brightness};">
+        <span class="relative text-white font-medium" style="z-index: 1;">Win: ${prob.toFixed(1)}%</span>
         ${isSelected ? '<div class="absolute inset-0 rounded-full" style="background: rgba(0, 0, 0, 0.414); pointer-events: none; z-index: 0;"></div>' : ""}
-      </div>
-    `;
+      </div>`;
     }
-
     return `
-    <div
-      class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-colors rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-0 w-32 h-32"
-      onclick="handleTeamClick('${teamKey}')"
-      tabindex="0"
-      role="button"
-      aria-pressed="${isSelected}"
-      aria-label="Select ${teamLabel}"
-    >
-      <div class="flex flex-col items-center">
-        <h2 class="text-base sm:text-xl font-semibold">${teamLabel}</h2>
-        <p class="text-2xl font-bold">${score}</p>
-        ${winProbDisplay}
-      </div>
-    </div>
-  `;
+      <div class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-colors rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-0 w-32 h-32"
+           onclick="handleTeamClick('${teamKey}')"
+           tabindex="0"
+           role="button"
+           aria-pressed="${isSelected}"
+           aria-label="Select ${teamLabel}">
+        <div class="flex flex-col items-center">
+          <h2 class="text-base sm:text-xl font-semibold">${teamLabel}</h2>
+          <p class="text-2xl font-bold">${score}</p>
+          ${winProbDisplay}
+        </div>
+      </div>`;
   }
 
   function renderRoundCard(roundNumber, lastBidDisplay) {
     return `
-        <div
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow threed flex flex-col items-center justify-center p-4 flex-1 min-w-0 w-48 h-32"
-        >
-          <div class="text-center space-y-1">
-            <h2 class="text-xl font-bold text-gray-700 dark:text-white">Round</h2>
-            <p class="text-2xl font-extrabold text-gray-900 dark:text-white">${roundNumber}</p>
-            ${lastBidDisplay}
-          </div>
-        </div>`;
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow threed flex flex-col items-center justify-center p-4 flex-1 min-w-0 w-48 h-32">
+        <div class="text-center space-y-1">
+          <h2 class="text-xl font-bold text-gray-700 dark:text-white">Round</h2>
+          <p class="text-2xl font-extrabold text-gray-900 dark:text-white">${roundNumber}</p>
+          ${lastBidDisplay}
+        </div>
+      </div>`;
   }
 
   function renderErrorAlert(errorMessage) {
     return `
-        <div
-          role="alert"
-          class="flex items-center border border-red-400 rounded-xl p-4 bg-red-50 text-red-700 space-x-3 dark:bg-red-700 dark:border-red-600 dark:text-white"
-        >
-          <div class="flex-shrink-0">${Icons.AlertCircle}</div>
-          <div class="flex-1">${errorMessage}</div>
-        </div>`;
+      <div role="alert" class="flex items-center border border-red-400 rounded-xl p-4 bg-red-50 text-red-700 space-x-3 dark:bg-red-700 dark:border-red-600 dark:text-white">
+        <div class="flex-shrink-0">${Icons.AlertCircle}</div>
+        <div class="flex-1">${errorMessage}</div>
+      </div>`;
   }
 
-  // -------------------------------
-  // Score Input Card using Dynamic Presets
-  // -------------------------------
   function renderScoreInputCard() {
     const { biddingTeam, bidAmount, showCustomBid, customBidValue, rounds, gameOver } = state;
     if (gameOver || !biddingTeam) return "";
     const hasBid = bidAmount || showCustomBid;
     return `
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
-          <div class="border-b border-gray-200 p-5 flex justify-between items-center dark:border-gray-700">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-              Score Input for ${
-                biddingTeam === "us"
-                  ? state.usTeamName || "Us"
-                  : state.demTeamName || "Dem"
-              }
-            </h2>
-            <button
-              class="flex items-center border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
-              onclick="handleUndo(event)"
-              ${!rounds.length ? "disabled" : ""}
-              title="Undo Last Round"
-              aria-label="Undo Last Round"
-              type="button"
-            >
-              ${Icons.Undo}Undo
-            </button>
-          </div>
-          <div class="p-6 score-input-container ${biddingTeam ? "show" : ""}">
-            <form onsubmit="handleFormSubmit(event)" class="space-y-6">
-              <div>
-                <label for="bidAmount" class="block text-sm font-medium mb-2 text-gray-700 dark:text-white">Bid Amount</label>
-                <div class="flex flex-wrap gap-3">
-                  ${presetBids
-                    .map((b) => {
-                      const isActive =
-                        b === "other" ? showCustomBid : state.bidAmount === String(b);
-                      const btnClasses = isActive
-                        ? `bg-blue-600 text-white shadow hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700`
-                        : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
-                      return `
-                    <button
-                      type="button"
-                      class="px-4 py-2 text-sm font-medium threed ${btnClasses} rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                      onclick="handleBidSelect('${b}')"
-                      aria-pressed="${isActive}"
-                      aria-label="Select Bid ${b === "other" ? "Other" : b}"
-                    >
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
+        <div class="border-b border-gray-200 p-5 flex justify-between items-center dark:border-gray-700">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+            Score Input for ${biddingTeam === "us" ? state.usTeamName || "Us" : state.demTeamName || "Dem"}
+          </h2>
+          <button class="flex items-center border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
+                  onclick="handleUndo(event)" ${!rounds.length ? "disabled" : ""} title="Undo Last Round" aria-label="Undo Last Round" type="button">
+            ${Icons.Undo}Undo
+          </button>
+        </div>
+        <div class="p-6 score-input-container ${biddingTeam ? "show" : ""}">
+          <form onsubmit="handleFormSubmit(event)" class="space-y-6">
+            <div>
+              <label for="bidAmount" class="block text-sm font-medium mb-2 text-gray-700 dark:text-white">Bid Amount</label>
+              <div class="flex flex-wrap gap-3">
+                ${presetBids.map((b) => {
+                  const isActive = b === "other" ? showCustomBid : state.bidAmount === String(b);
+                  const btnClasses = isActive ? `bg-blue-600 text-white shadow hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700` : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
+                  return `
+                    <button type="button" class="px-4 py-2 text-sm font-medium threed ${btnClasses} rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="handleBidSelect('${b}')" aria-pressed="${isActive}" aria-label="Select Bid ${b === "other" ? "Other" : b}">
                       ${b === "other" ? "Other" : b}
                     </button>`;
-                    })
-                    .join("")}
-                  ${
-                    showCustomBid
-                      ? `
-                    <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                      <input
-                        type="number"
-                        inputmode="numeric"
-                        pattern="[0-9]*"
-                        step="5"
-                        value="${customBidValue}"
-                        onchange="handleCustomBidChange(event)"
-                        placeholder="Enter custom bid"
-                        class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
-                        aria-label="Custom Bid Amount"
-                      />
-                    </div>
-                  `
-                      : ""
-                  }
-                </div>
+                }).join("")}
+                ${showCustomBid ? `
+                  <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                    <input type="number" inputmode="numeric" pattern="[0-9]*" step="5" value="${customBidValue}" onchange="handleCustomBidChange(event)" placeholder="Enter custom bid" class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400" aria-label="Custom Bid Amount" />
+                  </div>` : ""}
               </div>
-              ${hasBid ? renderPointsInput() : ""}
-            </form>
-          </div>
-        </div>`;
+            </div>
+            ${hasBid ? renderPointsInput() : ""}
+          </form>
+        </div>
+      </div>`;
   }
+  function renderPointsInput() {
+  const { biddingTeam, enterBidderPoints } = state;
+  
+  // Determine which label to show: "Us Points (Bidding)" or "Dem Points (Non-Bidding)", etc.
+  const labelText =
+    biddingTeam === "us"
+      ? enterBidderPoints
+        ? `${state.usTeamName || "Us"} Points (Bidding)`
+        : `${state.demTeamName || "Dem"} Points (Non-Bidding)`
+      : biddingTeam === "dem" && enterBidderPoints
+      ? `${state.demTeamName || "Dem"} Points (Bidding)`
+      : `${state.usTeamName || "Us"} Points (Non-Bidding)`;
+
+  // Tailwind color classes for the toggle buttons
+  // (Switch to 'blue' or 'red' for whichever is the bidding or non-bidding team.)
+  const biddingColor = biddingTeam === "dem" ? "red" : "blue";
+  const nonBiddingColor = biddingTeam !== "dem" ? "red" : "blue";
+
+  const biddingBtnClasses = enterBidderPoints
+    ? `bg-${biddingColor}-600 text-white shadow hover:bg-${biddingColor}-700 dark:bg-${biddingColor}-700 dark:hover:bg-${biddingColor}-800`
+    : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
+
+  const nonBiddingBtnClasses = !enterBidderPoints
+    ? `bg-${nonBiddingColor}-600 text-white shadow hover:bg-${nonBiddingColor}-700 dark:bg-${nonBiddingColor}-700 dark:hover:bg-${nonBiddingColor}-800`
+    : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
+
+  // Return the HTML markup for the "Enter Points" form
+  return `
+    <div class="space-y-6">
+      <div>
+        <label
+          for="pointsToggle"
+          class="block text-sm font-medium mb-2 text-gray-700 dark:text-white"
+          >Enter Points For</label
+        >
+        <div class="flex gap-4">
+          <button
+            type="button"
+            class="flex-1 rounded-full px-4 py-2 text-sm font-medium threed ${biddingBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-${biddingColor}-500 focus:ring-opacity-50"
+            onclick="handleBiddingPointsToggle(true)"
+            aria-pressed="${enterBidderPoints}"
+          >
+            Bidding Team
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded-full px-4 py-2 text-sm font-medium threed ${nonBiddingBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-${nonBiddingColor}-500 focus:ring-opacity-50"
+            onclick="handleBiddingPointsToggle(false)"
+            aria-pressed="${!enterBidderPoints}"
+          >
+            Non-Bidding Team
+          </button>
+        </div>
+      </div>
+      <div>
+        <label
+          for="pointsInput"
+          class="block text-sm font-medium mb-2 text-gray-700 dark:text-white"
+          >${labelText}</label
+        >
+        <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+          <input
+            id="pointsInput"
+            type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            min="0"
+            max="360"
+            placeholder="Enter points"
+            class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
+            aria-label="Enter Points"
+          />
+          <button
+            type="submit"
+            class="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-2 rounded-xl shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400 threed"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
   function renderHistoryCard() {
     const { rounds, usTeamName, demTeamName } = state;
     const labelUs = usTeamName || "Us";
     const labelDem = demTeamName || "Dem";
     return `
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
-            <div class="border-b border-gray-200 p-4 dark:border-gray-700">
-              <h2 class="text-lg font-bold text-gray-800 dark:text-white">History</h2>
-              <div class="grid grid-cols-3 gap-2 pt-3 font-medium text-gray-600 dark:text-white text-sm sm:text-base">
-                <div class="text-left">${labelUs}</div>
-                <div class="text-center">Bid</div>
-                <div class="text-right">${labelDem}</div>
-              </div>
-            </div>
-            <div class="p-4">
-              <div class="space-y-2">
-                ${rounds
-                  .map((round, idx) => {
-                    const arrow =
-                      round.biddingTeam === "us"
-                        ? `<span class="text-gray-800 dark:text-white">←</span><span class="ml-1">${round.bidAmount}</span>`
-                        : `<span class="mr-1">${round.bidAmount}</span><span class="text-gray-800 dark:text-white">→</span>`;
-                    return `
-                      <div key="${idx}" class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
-                        <div class="text-left text-gray-800 dark:text-white font-semibold">${round.runningTotals.us}</div>
-                        <div class="text-center">${arrow}</div>
-                        <div class="text-right text-gray-800 dark:text-white font-semibold">${round.runningTotals.dem}</div>
-                      </div>`;
-                  })
-                  .join("")}
-              </div>
-            </div>
-          </div>`;
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
+        <div class="border-b border-gray-200 p-4 dark:border-gray-700">
+          <h2 class="text-lg font-bold text-gray-800 dark:text-white">History</h2>
+          <div class="grid grid-cols-3 gap-2 pt-3 font-medium text-gray-600 dark:text-white text-sm sm:text-base">
+            <div class="text-left">${labelUs}</div>
+            <div class="text-center">Bid</div>
+            <div class="text-right">${labelDem}</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2">
+            ${rounds.map((round, idx) => {
+              const arrow = round.biddingTeam === "us" ? `<span class="text-gray-800 dark:text-white">←</span><span class="ml-1">${round.bidAmount}</span>` : `<span class="mr-1">${round.bidAmount}</span><span class="text-gray-800 dark:text-white">→</span>`;
+              return `
+                <div key="${idx}" class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
+                  <div class="text-left text-gray-800 dark:text-white font-semibold">${round.runningTotals.us}</div>
+                  <div class="text-center">${arrow}</div>
+                  <div class="text-right text-gray-800 dark:text-white font-semibold">${round.runningTotals.dem}</div>
+                </div>`;
+            }).join("")}
+          </div>
+        </div>
+      </div>`;
   }
 
   function renderGameOverOverlay() {
     if (!state.gameOver) return "";
     const w = state.winner;
-    const winnerLabel =
-      w === "us"
-        ? state.usTeamName || "Us"
-        : w === "dem"
-        ? state.demTeamName || "Dem"
-        : "?";
+    const winnerLabel = w === "us" ? state.usTeamName || "Us" : w === "dem" ? state.demTeamName || "Dem" : "?";
     return `
-          <div
-            class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center p-4"
-            role="alertdialog"
-            aria-labelledby="gameOverTitle"
-            aria-modal="true"
-            style="z-index: 49;"
-          >
-            <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-lg">
-              <div class="p-6 text-center">
-                <h2 id="gameOverTitle" class="text-3xl font-bold mb-4 animate-fade-in text-gray-800 dark:text-white flex items-center justify-center">
-                  Game Over!
-                </h2>
-                <p class="text-xl mb-6 animate-fade-in text-gray-700 dark:text-white">
-                  ${winnerLabel} Wins!
-                </p>
-                <div class="flex space-x-4 justify-center">
-                  <button
-                    onclick="handleGameOverSaveClick(event)"
-                    class="bg-green-600 text-white px-6 py-3 rounded-xl shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-400 threed"
-                    type="button"
-                  >
-                    Save Game
-                  </button>
-                </div>
-              </div>
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center p-4" role="alertdialog" aria-labelledby="gameOverTitle" aria-modal="true" style="z-index: 49;">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-lg">
+          <div class="p-6 text-center">
+            <h2 id="gameOverTitle" class="text-3xl font-bold mb-4 animate-fade-in text-gray-800 dark:text-white flex items-center justify-center">Game Over!</h2>
+            <p class="text-xl mb-6 animate-fade-in text-gray-700 dark:text-white">${winnerLabel} Wins!</p>
+            <div class="flex space-x-4 justify-center">
+              <button onclick="handleGameOverSaveClick(event)" class="bg-green-600 text-white px-6 py-3 rounded-xl shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-400 threed" type="button">
+                Save Game
+              </button>
             </div>
-          </div>`;
+          </div>
+        </div>
+      </div>`;
   }
 
   function renderApp() {
     const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
-    const totals = rounds.reduce(
-      (acc, r) => ({
-        us: acc.us + r.usPoints,
-        dem: acc.dem + r.demPoints,
-      }),
-      { us: 0, dem: 0 }
-    );
+    const totals = rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
     const roundNumber = rounds.length + 1;
     let lastBidHtml = "";
     if (lastBidAmount && lastBidTeam) {
       const arrow = lastBidTeam === "us" ? "←" : "→";
       lastBidHtml = `
-            <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
-              <span class="font-medium">Bid:</span>
-              <span>${lastBidAmount}</span>
-              <span>${arrow}</span>
-            </div>
-          `;
+        <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
+          <span class="font-medium">Bid:</span>
+          <span>${lastBidAmount}</span>
+          <span>${arrow}</span>
+        </div>`;
     }
-
     document.getElementById("app").innerHTML = `
-          <div class="text-center space-y-2">
-            <div class="flex flex-col items-center">
-              <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">
-                Rook!
-              </h1>
-            </div>
-            <p class="text-md sm:text-lg text-gray-600 dark:text-white">
-              Tap a team to start a bid!
-            </p>
-          </div>
-          <div class="flex flex-row space-x-4 flex-wrap justify-center">
-            ${renderTeamCard("us", totals.us)}
-            ${renderRoundCard(roundNumber, lastBidHtml)}
-            ${renderTeamCard("dem", totals.dem)}
-          </div>
-          ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
-          ${renderScoreInputCard()}
-          ${renderHistoryCard()}
-          ${renderGameOverOverlay()}
-        `;
-
+      <div class="text-center space-y-2">
+        <div class="flex flex-col items-center">
+          <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">Rook!</h1>
+        </div>
+        <p class="text-md sm:text-lg text-gray-600 dark:text-white">Tap a team to start a bid!</p>
+      </div>
+      <div class="flex flex-row space-x-4 flex-wrap justify-center">
+        ${renderTeamCard("us", totals.us)}
+        ${renderRoundCard(roundNumber, lastBidHtml)}
+        ${renderTeamCard("dem", totals.dem)}
+      </div>
+      ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
+      ${renderScoreInputCard()}
+      ${renderHistoryCard()}
+      ${renderGameOverOverlay()}
+    `;
     if (gameOver && !confettiTriggered) {
       confettiTriggered = true;
-      confetti({
-        particleCount: 200,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+      confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
     }
   }
 
@@ -3132,9 +2899,7 @@ aria-labelledby="savedGamesTitle"
   }
 
   function showVersionNum() {
-    alert(
-      "version 1.3.5 adds a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable."
-    );
+    alert("version 1.3.5 adds a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
   }
 
   function openAboutModal() {
@@ -3149,86 +2914,49 @@ aria-labelledby="savedGamesTitle"
 
   function renderTeamStatsTable(teamsData, additionalStatKey) {
     let headerText = "";
-    if (additionalStatKey === "games") {
-      headerText = "Games";
-    } else if (additionalStatKey === "avgBid") {
-      headerText = "Avg Bid";
-    } else if (additionalStatKey === "bidSuccessPct") {
-      headerText = "Bid Success %";
-    } else if (additionalStatKey === "handsWonPct") {
-      headerText = "Hands Won %";
-    } else if (additionalStatKey === "sandbagger") {
-      headerText = "Sandbagger?";
-    } else if (additionalStatKey === "360s") {
-      headerText = "360s";
-    }
-    
+    if (additionalStatKey === "games") headerText = "Games";
+    else if (additionalStatKey === "avgBid") headerText = "Avg Bid";
+    else if (additionalStatKey === "bidSuccessPct") headerText = "Bid Success %";
+    else if (additionalStatKey === "handsWonPct") headerText = "Hands Won %";
+    else if (additionalStatKey === "sandbagger") headerText = "Sandbagger?";
+    else if (additionalStatKey === "360s") headerText = "360s";
     let tableHTML = `
       <div id="teamStatsTableContainer">
         <div class="overflow-x-auto">
           <table class="min-w-full bg-gray-50 dark:bg-gray-700 rounded-xl">
             <thead>
               <tr class="border-b dark:border-gray-600">
-                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
-                  Team
-                </th>
-                <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">
-                  Win %
-                </th>
-                <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">
-                  ${headerText}
-                </th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">Team</th>
+                <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Win %</th>
+                <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">${headerText}</th>
               </tr>
             </thead>
-            <tbody>
-    `;
-    
+            <tbody>`;
     teamsData.forEach((team) => {
       tableHTML += `
-      <tr class="border-b last:border-0 dark:border-gray-700">
-        <td class="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
-          ${team.name}
-          <button
-            onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();"
-            class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500 ml-2 threed"
-            aria-label="Delete Team"
-            type="button"
-          >
-            ${Icons.Trash}
-          </button>
-        </td>
-        <td class="px-4 py-2 text-center text-gray-700 dark:text-white">
-          ${team.winPercent}%
-        </td>
-      `;
+        <tr class="border-b last:border-0 dark:border-gray-700">
+          <td class="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
+            ${team.name}
+            <button onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();" class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500 ml-2 threed" aria-label="Delete Team" type="button">
+              ${Icons.Trash}
+            </button>
+          </td>
+          <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.winPercent}%</td>`;
       let statValue = "";
-      if (additionalStatKey === "games") {
-        statValue = team.gamesPlayed;
-      } else if (additionalStatKey === "avgBid") {
-        statValue = team.avgBid;
-      } else if (additionalStatKey === "bidSuccessPct") {
-        statValue = team.bidSuccessPct + "%";
-      } else if (additionalStatKey === "handsWonPct") {
-        statValue = team.handsWonPct + "%";
-      } else if (additionalStatKey === "sandbagger") {
-        statValue = team.sandbagger;
-      } else if (additionalStatKey === "360s") {
-        statValue = team.count360;
-      }
-      tableHTML += `
-        <td class="px-4 py-2 text-center text-gray-700 dark:text-white">
-          ${statValue}
-        </td>
-      </tr>
-    `;
+      if (additionalStatKey === "games") statValue = team.gamesPlayed;
+      else if (additionalStatKey === "avgBid") statValue = team.avgBid;
+      else if (additionalStatKey === "bidSuccessPct") statValue = team.bidSuccessPct + "%";
+      else if (additionalStatKey === "handsWonPct") statValue = team.handsWonPct + "%";
+      else if (additionalStatKey === "sandbagger") statValue = team.sandbagger;
+      else if (additionalStatKey === "360s") statValue = team.count360;
+      tableHTML += `<td class="px-4 py-2 text-center text-gray-700 dark:text-white">${statValue}</td>
+        </tr>`;
     });
-    
     tableHTML += `
             </tbody>
           </table>
         </div>
-      </div>
-    `;
+      </div>`;
     return tableHTML;
   }
 
@@ -3237,52 +2965,39 @@ aria-labelledby="savedGamesTitle"
     const stats = getStatistics();
     let content = "";
     if (!stats.totalGames && !stats.teamsData.length) {
-      content =
-        '<p class="text-gray-600 dark:text-white mt-2">No completed games and no teams yet.</p>';
+      content = '<p class="text-gray-600 dark:text-white mt-2">No completed games and no teams yet.</p>';
     } else {
       let topRow = "";
       if (stats.totalGames > 0) {
         topRow = `
-        <div class="grid grid-cols-2 gap-6 mb-8">
-          <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
-            <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">
-              Overall Average Bid
-            </p>
-            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              ${stats.overallAverageBid}
-            </p>
-          </div>
-          <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
-            <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">
-              Total Time Played
-            </p>
-            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              ${formatDuration(stats.totalTimePlayedMs)}
-            </p>
-          </div>
-        </div>`;
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
+              <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">Overall Average Bid</p>
+              <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">${stats.overallAverageBid}</p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
+              <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">Total Time Played</p>
+              <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">${formatDuration(stats.totalTimePlayedMs)}</p>
+            </div>
+          </div>`;
       }
       let dropdown = `
-      <div class="mb-4">
-        <label for="additionalStatSelector" class="block text-sm font-medium text-gray-700 dark:text-white">
-          Select Additional Stat
-        </label>
-        <select id="additionalStatSelector" class="mt-1 block w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-          <option value="games">Games</option>
-          <option value="avgBid">Avg Bid</option>
-          <option value="bidSuccessPct">Bid Success %</option>
-          <option value="handsWonPct">Hands Won %</option>
-          <option value="sandbagger">Sandbagger?</option>
-          <option value="360s">360s</option>
-        </select>
-      </div>
-    `;
+        <div class="mb-4">
+          <label for="additionalStatSelector" class="block text-sm font-medium text-gray-700 dark:text-white">Select Additional Stat</label>
+          <select id="additionalStatSelector" class="mt-1 block w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <option value="games">Games</option>
+            <option value="avgBid">Avg Bid</option>
+            <option value="bidSuccessPct">Bid Success %</option>
+            <option value="handsWonPct">Hands Won %</option>
+            <option value="sandbagger">Sandbagger?</option>
+            <option value="360s">360s</option>
+          </select>
+        </div>`;
       let teamStatsTable = renderTeamStatsTable(stats.teamsData, "games");
       content = `${topRow}${dropdown}<div id="teamStatsTableWrapper">${teamStatsTable}</div>`;
     }
     document.getElementById("statisticsModalContent").innerHTML = content;
     document.getElementById("statisticsModal").classList.remove("hidden");
-    
     const selector = document.getElementById("additionalStatSelector");
     if (selector) {
       selector.addEventListener("change", function () {
@@ -3301,165 +3016,79 @@ aria-labelledby="savedGamesTitle"
 
   function getStatistics() {
     const savedGames = getLocalStorage("savedGames");
-    const validSavedGames = savedGames.filter(
-      (game) => Array.isArray(game.rounds) && game.rounds.length > 0
-    );
-    
+    const validSavedGames = savedGames.filter(game => Array.isArray(game.rounds) && game.rounds.length > 0);
     const calculatedTeamStats = {};
     const aggregator = {};
     const lastPlayedMap = {};
     const sandbagCounts = {};
-    
     validSavedGames.forEach((game) => {
       const team1 = game.usTeamName || game.player1 || "Us";
       const team2 = game.demTeamName || game.player2 || "Dem";
       const gameTimestamp = new Date(game.timestamp).getTime();
-      
-      if (!lastPlayedMap[team1] || gameTimestamp > lastPlayedMap[team1]) {
-        lastPlayedMap[team1] = gameTimestamp;
-      }
-      if (!lastPlayedMap[team2] || gameTimestamp > lastPlayedMap[team2]) {
-        lastPlayedMap[team2] = gameTimestamp;
-      }
-      
-      if (!calculatedTeamStats[team1]) {
-        calculatedTeamStats[team1] = { gamesPlayed: 0, wins: 0 };
-      }
-      if (!calculatedTeamStats[team2]) {
-        calculatedTeamStats[team2] = { gamesPlayed: 0, wins: 0 };
-      }
-      if (!aggregator[team1]) {
-        aggregator[team1] = { bidCount: 0, totalBidSum: 0, bidSuccess: 0, totalHands: 0, handsWon: 0, count360: 0 };
-      }
-      if (!aggregator[team2]) {
-        aggregator[team2] = { bidCount: 0, totalBidSum: 0, bidSuccess: 0, totalHands: 0, handsWon: 0, count360: 0 };
-      }
-      
+      if (!lastPlayedMap[team1] || gameTimestamp > lastPlayedMap[team1]) lastPlayedMap[team1] = gameTimestamp;
+      if (!lastPlayedMap[team2] || gameTimestamp > lastPlayedMap[team2]) lastPlayedMap[team2] = gameTimestamp;
+      if (!calculatedTeamStats[team1]) calculatedTeamStats[team1] = { gamesPlayed: 0, wins: 0 };
+      if (!calculatedTeamStats[team2]) calculatedTeamStats[team2] = { gamesPlayed: 0, wins: 0 };
+      if (!aggregator[team1]) aggregator[team1] = { bidCount: 0, totalBidSum: 0, bidSuccess: 0, totalHands: 0, handsWon: 0, count360: 0 };
+      if (!aggregator[team2]) aggregator[team2] = { bidCount: 0, totalBidSum: 0, bidSuccess: 0, totalHands: 0, handsWon: 0, count360: 0 };
       calculatedTeamStats[team1].gamesPlayed++;
       calculatedTeamStats[team2].gamesPlayed++;
-      
-      if (game.winner === "us") {
-        calculatedTeamStats[team1].wins++;
-      } else if (game.winner === "dem") {
-        calculatedTeamStats[team2].wins++;
-      }
-      
-      if (isGameSandbagForTeam(game, team1)) {
-        sandbagCounts[team1] = (sandbagCounts[team1] || 0) + 1;
-      }
-      if (isGameSandbagForTeam(game, team2)) {
-        sandbagCounts[team2] = (sandbagCounts[team2] || 0) + 1;
-      }
-      
+      if (game.winner === "us") calculatedTeamStats[team1].wins++;
+      else if (game.winner === "dem") calculatedTeamStats[team2].wins++;
+      if (isGameSandbagForTeam(game, team1)) sandbagCounts[team1] = (sandbagCounts[team1] || 0) + 1;
+      if (isGameSandbagForTeam(game, team2)) sandbagCounts[team2] = (sandbagCounts[team2] || 0) + 1;
       (game.rounds || []).forEach((round) => {
         let biddingTeamName = round.biddingTeam;
-        if (biddingTeamName === "us") {
-          biddingTeamName = team1;
-        } else if (biddingTeamName === "dem") {
-          biddingTeamName = team2;
-        }
-        
+        if (biddingTeamName === "us") biddingTeamName = team1;
+        else if (biddingTeamName === "dem") biddingTeamName = team2;
         const bidAmt = Number(round.bidAmount) || 0;
-        
         aggregator[team1].totalHands++;
         aggregator[team2].totalHands++;
-        
         if (biddingTeamName === team1 && bidAmt > 0) {
           aggregator[team1].bidCount++;
           aggregator[team1].totalBidSum += bidAmt;
-          if (Number(round.usPoints) >= bidAmt) {
-            aggregator[team1].bidSuccess++;
-          }
+          if (Number(round.usPoints) >= bidAmt) aggregator[team1].bidSuccess++;
         } else if (biddingTeamName === team2 && bidAmt > 0) {
           aggregator[team2].bidCount++;
           aggregator[team2].totalBidSum += bidAmt;
-          if (Number(round.demPoints) >= bidAmt) {
-            aggregator[team2].bidSuccess++;
-          }
+          if (Number(round.demPoints) >= bidAmt) aggregator[team2].bidSuccess++;
         }
-        
         const usPoints = Number(round.usPoints) || 0;
         const demPoints = Number(round.demPoints) || 0;
-        if (usPoints > demPoints) {
-          aggregator[team1].handsWon++;
-        } else if (demPoints > usPoints) {
-          aggregator[team2].handsWon++;
-        }
-        
-        if (usPoints === 360) {
-          aggregator[team1].count360++;
-        }
-        if (demPoints === 360) {
-          aggregator[team2].count360++;
-        }
+        if (usPoints > demPoints) aggregator[team1].handsWon++;
+        else if (demPoints > usPoints) aggregator[team2].handsWon++;
+        if (usPoints === 360) aggregator[team1].count360++;
+        if (demPoints === 360) aggregator[team2].count360++;
       });
     });
-    
-    let totalBidSum = 0;
-    let totalBidCount = 0;
+    let totalBidSum = 0, totalBidCount = 0;
     validSavedGames.forEach((game) => {
       (game.rounds || []).forEach((r) => {
         const amt = Number(r.bidAmount) || 0;
-        if (amt > 0) {
-          totalBidSum += amt;
-          totalBidCount++;
-        }
+        if (amt > 0) { totalBidSum += amt; totalBidCount++; }
       });
     });
     const overallAverageBid = totalBidCount > 0 ? Math.round((totalBidSum / totalBidCount) / 5) * 5 : 0;
-    
-    const allTeamNames = new Set([
-      ...Object.keys(calculatedTeamStats),
-      ...Object.keys(aggregator)
-    ]);
-    
+    const allTeamNames = new Set([...Object.keys(calculatedTeamStats), ...Object.keys(aggregator)]);
     const teamsData = Array.from(allTeamNames).map((teamName) => {
       const tStats = calculatedTeamStats[teamName] || { gamesPlayed: 0, wins: 0 };
       const agg = aggregator[teamName] || { bidCount: 0, totalBidSum: 0, bidSuccess: 0, totalHands: 0, handsWon: 0, count360: 0 };
       const gamesPlayed = tStats.gamesPlayed;
       const winPercent = gamesPlayed > 0 ? ((tStats.wins / gamesPlayed) * 100).toFixed(2) : "N/A";
       let avgBid = "N/A";
-      if (agg.bidCount > 0) {
-        avgBid = Math.round((agg.totalBidSum / agg.bidCount) / 5) * 5;
-      }
+      if (agg.bidCount > 0) avgBid = Math.round((agg.totalBidSum / agg.bidCount) / 5) * 5;
       let bidSuccessPct = "N/A";
-      if (agg.bidCount > 0) {
-        bidSuccessPct = ((agg.bidSuccess / agg.bidCount) * 100).toFixed(2);
-      }
+      if (agg.bidCount > 0) bidSuccessPct = ((agg.bidSuccess / agg.bidCount) * 100).toFixed(2);
       let handsWonPct = "N/A";
-      if (agg.totalHands > 0) {
-        handsWonPct = ((agg.handsWon / agg.totalHands) * 100).toFixed(2);
-      }
+      if (agg.totalHands > 0) handsWonPct = ((agg.handsWon / agg.totalHands) * 100).toFixed(2);
       const sbCount = sandbagCounts[teamName] || 0;
       const sandbagger = gamesPlayed > 0 && (sbCount / gamesPlayed > 0.5) ? "Yes" : "No";
       const count360 = agg.count360 || 0;
-      
-      return {
-        name: teamName,
-        gamesPlayed,
-        winPercent,
-        avgBid,
-        bidSuccessPct,
-        handsWonPct,
-        sandbagger,
-        count360,
-        lastPlayed: lastPlayedMap[teamName] || 0,
-      };
+      return { name: teamName, gamesPlayed, winPercent, avgBid, bidSuccessPct, handsWonPct, sandbagger, count360, lastPlayed: lastPlayedMap[teamName] || 0 };
     });
-    
     teamsData.sort((a, b) => b.lastPlayed - a.lastPlayed);
-    
-    const totalTimePlayedMs = validSavedGames.reduce(
-      (acc, game) => acc + (game.durationMs || 0),
-      0
-    );
-    
-    return {
-      totalGames: validSavedGames.length,
-      overallAverageBid,
-      teamsData,
-      totalTimePlayedMs,
-    };
+    const totalTimePlayedMs = validSavedGames.reduce((acc, game) => acc + (game.durationMs || 0), 0);
+    return { totalGames: validSavedGames.length, overallAverageBid, teamsData, totalTimePlayedMs };
   }
 
   function handleDeleteTeam(teamName) {
@@ -3469,7 +3098,6 @@ aria-labelledby="savedGamesTitle"
         const teams = getTeamsObject();
         delete teams[teamName];
         setTeamsObject(teams);
-
         let savedGames = getLocalStorage("savedGames");
         savedGames = savedGames.filter(game => {
           const team1 = game.usTeamName || game.player1 || "Us";
@@ -3477,7 +3105,6 @@ aria-labelledby="savedGamesTitle"
           return team1 !== teamName && team2 !== teamName;
         });
         setLocalStorage("savedGames", savedGames);
-
         let freezerGames = getLocalStorage("freezerGames");
         freezerGames = freezerGames.filter(game => {
           const team1 = game.usTeamName || game.usName || "Us";
@@ -3485,19 +3112,13 @@ aria-labelledby="savedGamesTitle"
           return team1 !== teamName && team2 !== teamName;
         });
         setLocalStorage("freezerGames", freezerGames);
-
         closeConfirmationModal();
         openStatisticsModal();
       },
-      () => {
-        closeConfirmationModal();
-      }
+      () => closeConfirmationModal()
     );
   }
 
-  // -------------------------------
-  // New: Update Pro Mode UI to Toggle "Edit Bid Presets" Menu Item
-  // -------------------------------
   function updateProModeUI(isProMode) {
     const editPresetsItem = document.getElementById('editPresetsMenuItem');
     if (editPresetsItem) {
@@ -3507,142 +3128,35 @@ aria-labelledby="savedGamesTitle"
     renderApp();
   }
 
-  // -------------------------------
-  // Team Card, Round Card, Error Alert, Points Input & Score Input Card
-  // (Rendered as before, with renderScoreInputCard now using dynamic presetBids)
-  // -------------------------------
-  function renderPointsInput() {
-    const { biddingTeam, enterBidderPoints } = state;
-    const labelText =
-      biddingTeam === "us"
-        ? enterBidderPoints
-          ? `${state.usTeamName || "Us"} Points (Bidding)`
-          : `${state.demTeamName || "Dem"} Points (Non-Bidding)`
-        : biddingTeam === "dem" && enterBidderPoints
-        ? `${state.demTeamName || "Dem"} Points (Bidding)`
-        : `${state.usTeamName || "Us"} Points (Non-Bidding)`;
-
-    const biddingColor = biddingTeam === "dem" ? "red" : "blue";
-    const nonBiddingColor = biddingTeam !== "dem" ? "red" : "blue";
-
-    const biddingBtnClasses = enterBidderPoints
-      ? `bg-${biddingColor}-600 text-white shadow hover:bg-${biddingColor}-700 dark:bg-${biddingColor}-700 dark:hover:bg-${biddingColor}-800`
-      : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
-
-    const nonBiddingBtnClasses = !enterBidderPoints
-      ? `bg-${nonBiddingColor}-600 text-white shadow hover:bg-${nonBiddingColor}-700 dark:bg-${nonBiddingColor}-700 dark:hover:bg-${nonBiddingColor}-800`
-      : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
-
-    return `
-        <div class="space-y-6">
-          <div>
-            <label
-              for="pointsToggle"
-              class="block text-sm font-medium mb-2 text-gray-700 dark:text-white"
-              >Enter Points For</label
-            >
-            <div class="flex gap-4">
-              <button
-                type="button"
-                class="flex-1 rounded-full px-4 py-2 text-sm font-medium threed ${biddingBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-${biddingColor}-500 focus:ring-opacity-50"
-                onclick="handleBiddingPointsToggle(true)"
-                aria-pressed="${enterBidderPoints}"
-              >
-                Bidding Team
-              </button>
-              <button
-                type="button"
-                class="flex-1 rounded-full px-4 py-2 text-sm font-medium threed ${nonBiddingBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-${nonBiddingColor}-500 focus:ring-opacity-50"
-                onclick="handleBiddingPointsToggle(false)"
-                aria-pressed="${!enterBidderPoints}"
-              >
-                Non-Bidding Team
-              </button>
-            </div>
-          </div>
-          <div>
-            <label
-              for="pointsInput"
-              class="block text-sm font-medium mb-2 text-gray-700 dark:text-white"
-              >${labelText}</label
-            >
-            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-              <input
-                id="pointsInput"
-                type="number"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                min="0"
-                max="360"
-                placeholder="Enter points"
-                class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
-                aria-label="Enter Points"
-              />
-              <button
-                type="submit"
-                class="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-2 rounded-xl shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400 threed"
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>`;
-  }
-
-  // -------------------------------
-  // Render App & Update State
-  // -------------------------------
-  function updateState(newState) {
-    state = { ...state, ...newState };
-    renderApp();
-  }
-
-  // -------------------------------
-  // Add "Edit Bid Presets" Menu Item & Initialize Pro Mode Toggle
-  // -------------------------------
   document.addEventListener("DOMContentLoaded", () => {
     const closeViewSavedBtn = document.getElementById("closeViewSavedGameModalBtn");
     if (closeViewSavedBtn) {
-      closeViewSavedBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        closeViewSavedGameModal();
-      });
+      closeViewSavedBtn.addEventListener("click", (e) => { e.stopPropagation(); closeViewSavedGameModal(); });
     }
     const closeSavedGamesBtn = document.getElementById("closeSavedGamesModalBtn");
     if (closeSavedGamesBtn) {
-      closeSavedGamesBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        closeSavedGamesModal();
-      });
+      closeSavedGamesBtn.addEventListener("click", (e) => { e.stopPropagation(); closeSavedGamesModal(); });
     }
     const teamSelectionForm = document.getElementById("teamSelectionForm");
     if (teamSelectionForm) {
       teamSelectionForm.addEventListener("submit", handleTeamSelectionSubmit);
     }
-
-    // Add the new Edit Bid Presets menu item (visible only in Pro Mode)
     document.querySelector('nav ul').innerHTML += `
-        <li id="editPresetsMenuItem" class="hidden">
-            <a href="#" onclick="openPresetEditorModal();toggleMenu(event)">
-                Edit Bid Presets
-            </a>
-        </li>
-    `;
-
+      <li id="editPresetsMenuItem" class="hidden">
+        <a href="#" onclick="openPresetEditorModal();toggleMenu(event)">Edit Bid Presets</a>
+      </li>`;
     savedGamesModal = document.getElementById("savedGamesModal");
     viewSavedGameModal = document.getElementById("viewSavedGameModal");
     aboutModal = document.getElementById("aboutModal");
     statisticsModal = document.getElementById("statisticsModal");
     teamSelectionModal = document.getElementById("teamSelectionModal");
     themeModal = document.getElementById("themeModal");
-
     performDataMigration();
     loadCurrentGameState();
     initializeDarkMode();
     initializeTheme();
     initializeCustomThemeColors();
     renderApp();
-
     const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
     if (darkModeToggleCheckbox) {
       darkModeToggleCheckbox.addEventListener("change", (e) => {
@@ -3662,51 +3176,24 @@ aria-labelledby="savedGamesTitle"
         saveCurrentGameState();
       });
     }
-    // Initial call to set Pro Mode UI visibility
     updateProModeUI(JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false);
   });
 
   document.addEventListener("click", function (e) {
     const confirmationModal = document.getElementById("confirmationModal");
-
-    if (
-      confirmationModal &&
-      !confirmationModal.classList.contains("hidden") &&
-      confirmationModal.contains(e.target)
-    ) {
-      return;
-    }
-
-    if (
-      !savedGamesModal.classList.contains("hidden") &&
-      !savedGamesModal.contains(e.target) &&
-      !e.target.closest("#closeSavedGamesModalBtn")
-    ) {
+    if (confirmationModal && !confirmationModal.classList.contains("hidden") && confirmationModal.contains(e.target)) return;
+    if (!savedGamesModal.classList.contains("hidden") && !savedGamesModal.contains(e.target) && !e.target.closest("#closeSavedGamesModalBtn")) {
       closeSavedGamesModal();
     }
-
-    if (
-      !viewSavedGameModal.classList.contains("hidden") &&
-      !viewSavedGameModal.contains(e.target) &&
-      !e.target.closest("#closeViewSavedGameModalBtn")
-    ) {
+    if (!viewSavedGameModal.classList.contains("hidden") && !viewSavedGameModal.contains(e.target) && !e.target.closest("#closeViewSavedGameModalBtn")) {
       closeViewSavedGameModal();
     }
-
-    if (
-      !aboutModal.classList.contains("hidden") &&
-      !aboutModal.contains(e.target)
-    ) {
+    if (!aboutModal.classList.contains("hidden") && !aboutModal.contains(e.target)) {
       closeAboutModal();
     }
-
-    if (
-      !statisticsModal.classList.contains("hidden") &&
-      !statisticsModal.contains(e.target)
-    ) {
+    if (!statisticsModal.classList.contains("hidden") && !statisticsModal.contains(e.target)) {
       closeStatisticsModal();
     }
-
     if (!themeModal.classList.contains("hidden") && !themeModal.contains(e.target)) {
       closeThemeModal();
     }
@@ -3720,33 +3207,26 @@ aria-labelledby="savedGamesTitle"
     { id: "statisticsModal", closeFn: closeStatisticsModal },
     { id: "confirmationModal", closeFn: closeConfirmationModal }
   ];
-
   modals.forEach(modalInfo => {
     const modalEl = document.getElementById(modalInfo.id);
     if (modalEl) {
       modalEl.addEventListener("click", function(e) {
-        if (e.target === modalEl) {
-          modalInfo.closeFn();
-        }
+        if (e.target === modalEl) modalInfo.closeFn();
       });
     }
   });
-
   document.body.addEventListener('touchstart', function(e) {
     if (e.pageX <= 20) {
       e.preventDefault();
       toggleMenu(e);
     }
   }, { passive: false });
-
   let refreshing = false;
-
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
     refreshing = true;
     window.location.reload();
   });
-
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
       .then(registration => {
@@ -3762,14 +3242,11 @@ aria-labelledby="savedGamesTitle"
         });
       })
       .catch(error => console.log('SW registration failed:', error));
-
     setInterval(() => {
-      navigator.serviceWorker.ready.then(registration => {
-        registration.update();
-      });
+      navigator.serviceWorker.ready.then(registration => { registration.update(); });
     }, 60 * 1000);
   }
-
+  
   function updateState(newState) {
     state = { ...state, ...newState };
     renderApp();
