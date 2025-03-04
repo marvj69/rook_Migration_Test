@@ -16,16 +16,12 @@ function renderWinProbability() {
   `;
 }
 
-/**
- * Calculate win probability based on current scores and historical data
- * @param {Object} currentGame - Current game state
- * @param {Array} historicalGames - Previously saved games
- * @returns {Object} Win probabilities for both teams
- */
 function calculateWinProbability(currentGame, historicalGames) {
-  const { rounds, usTeamName, demTeamName } = currentGame;
+  const { rounds } = currentGame;
   
   if (!rounds || rounds.length === 0) {
+    console.log("Win Probabilities: US=50%, DEM=50%");
+    console.log("Factors: None - No rounds played");
     return { us: 50, dem: 50, factors: [] };
   }
   
@@ -36,16 +32,18 @@ function calculateWinProbability(currentGame, historicalGames) {
   const roundsPlayed = rounds.length;
   
   // Base probability calculation from score difference
-  let baseProb = 50 + (scoreDiff / 20);  // Each 20 points is worth 1% advantage
+  let baseProb = 50 + (scoreDiff / 15);  // Each 12 points is worth 1% advantage
   
   // Adjust for tendency to come back from behind
   let comebackFactor = 0;
   
-  // Find similar historical games
+  // Find similar historical games based on completion status and rounds
   const relevantGames = historicalGames.filter(game => {
-    // Games with same teams or enough rounds played
-    return (game.usTeamName === usTeamName && game.demTeamName === demTeamName) || 
-           (game.rounds && game.rounds.length >= roundsPlayed);
+    return game.rounds && 
+           game.rounds.length > 0 && 
+           game.rounds.length >= roundsPlayed && 
+           game.finalScore && 
+           (game.finalScore.us !== undefined || game.finalScore.dem !== undefined);
   });
   
   // Analyze comebacks in historical games
@@ -56,21 +54,17 @@ function calculateWinProbability(currentGame, historicalGames) {
     relevantGames.forEach(game => {
       if (!game.rounds || game.rounds.length <= roundsPlayed) return;
       
-      // Get the score at the same round number as current game
       const historicalRound = game.rounds[roundsPlayed - 1];
-      const laterRound = game.rounds[game.rounds.length - 1];
+      const finalScores = game.finalScore;
       
-      if (!historicalRound || !laterRound) return;
+      if (!historicalRound || !finalScores) return;
       
       const historicalScores = historicalRound.runningTotals;
-      const finalScores = laterRound.runningTotals;
-      
-      if (!historicalScores || !finalScores) return;
+      if (!historicalScores) return;
       
       const historicalLeader = historicalScores.us > historicalScores.dem ? "us" : "dem";
       const finalWinner = finalScores.us > finalScores.dem ? "us" : "dem";
       
-      // If the leader changed, count as comeback
       if (historicalLeader !== finalWinner) {
         comebackCount++;
       }
@@ -78,20 +72,18 @@ function calculateWinProbability(currentGame, historicalGames) {
       totalSimilarSituations++;
     });
     
-    // Calculate comeback adjustment factor
     if (totalSimilarSituations > 0) {
       const comebackRate = comebackCount / totalSimilarSituations;
       comebackFactor = Math.round(comebackRate * 10); // Max 10% adjustment
     }
   }
   
-  // Momentum factor - has one team been winning more recent rounds?
+  // Momentum factor based on recent rounds
   let momentumFactor = 0;
   if (rounds.length >= 3) {
     let recentUsPoints = 0;
     let recentDemPoints = 0;
     
-    // Look at last 3 rounds for momentum
     for (let i = rounds.length - 3; i < rounds.length; i++) {
       if (i >= 0) {
         recentUsPoints += rounds[i].usPoints || 0;
@@ -100,33 +92,40 @@ function calculateWinProbability(currentGame, historicalGames) {
     }
     
     if (recentUsPoints > recentDemPoints) {
-      momentumFactor = 2; // 5% boost for Us
+      momentumFactor = 2;
     } else if (recentDemPoints > recentUsPoints) {
-      momentumFactor = -2; // 5% boost for Dem
+      momentumFactor = -2;
     }
   }
   
   // Bid strength factor
   let bidStrengthFactor = 0;
-  const usHighBids = rounds.filter(r => r.biddingTeam === "us" && r.bidAmount >= 145).length;
-  const demHighBids = rounds.filter(r => r.biddingTeam === "dem" && r.bidAmount >= 145).length;
+  const usHighBids = rounds.filter(r => r.biddingTeam === "us" && r.bidAmount >= 140).length;
+  const demHighBids = rounds.filter(r => r.biddingTeam === "dem" && r.bidAmount >= 140).length;
   
   if (usHighBids > demHighBids) {
-    bidStrengthFactor = 3; // 3% advantage to team taking stronger bids
+    bidStrengthFactor = 2;
   } else if (demHighBids > usHighBids) {
-    bidStrengthFactor = -3;
+    bidStrengthFactor = -2;
   }
   
   // Calculate final probability
   const adjustedProb = Math.min(Math.max(baseProb + momentumFactor + comebackFactor + bidStrengthFactor, 1), 99);
   
-  // Factors that influenced the calculation (for explanation)
+  // Factors for explanation
   const factors = [
     { name: "Score Difference", value: Math.round((scoreDiff / 20)), description: `${Math.abs(scoreDiff)} point difference` },
     { name: "Momentum", value: momentumFactor, description: momentumFactor !== 0 ? `Recent rounds trend` : "No clear momentum" },
-    { name: "Comeback Tendency", value: comebackFactor, description: `Based on ${relevantGames.length} similar games` },
-    { name: "Bid Strength", value: bidStrengthFactor, description: `High bids: ${usTeamName} (${usHighBids}), ${demTeamName} (${demHighBids})` }
+    { name: "Comeback Tendency", value: comebackFactor, description: `Based on ${relevantGames.length} completed games` },
+    { name: "Bid Strength", value: bidStrengthFactor, description: `High bids: us (${usHighBids}), dem (${demHighBids})` }
   ];
+  
+  // Console output
+  console.log(`Win Probabilities: US=${adjustedProb}%, DEM=${100 - adjustedProb}%`);
+  console.log("Factors:");
+  factors.forEach(factor => {
+    console.log(`${factor.name}: ${factor.value}% - ${factor.description}`);
+  });
   
   return {
     us: adjustedProb,
