@@ -998,7 +998,9 @@ function updateAuthUI(user) {
     if (user.isAnonymous) {
       authLabel.textContent = "Sign in with Google";
     } else {
-      authLabel.innerHTML = `Sign Out <img src="${user.photoURL}" alt="Profile" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-left:8px;">`;    }
+      authLabel.innerHTML = 'Sign Out <img src="' + user.photoURL + '" alt="Profile" style="display:inline-block;width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-left:8px;">';
+      authLabel.style.display = 'inline-flex';
+      authLabel.style.alignItems = 'center';    }
   } else {
     authLabel.textContent = "Sign in with Google";
   }
