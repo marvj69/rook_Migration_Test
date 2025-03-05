@@ -496,28 +496,23 @@ input[type="color"]:focus {
         <!-- Sign in with Google Button -->
         <li id="authMenuItem">
           <button 
-            onclick="window.firebaseAuth.currentUser ? signOutUser() : signInWithGoogle(); toggleMenu(event)"
+            onclick="(window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) ? signOutUser() : signInWithGoogle(); toggleMenu(event)"
             class="flex items-center text-gray-700 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
-            aria-label="Toggle Authentication"
-          >
+            aria-label="Toggle Authentication">
             <span class="bg-white p-0.5 rounded mr-2 flex items-center justify-center">
               <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
+                  fill="#4285F4"/>
                 <path
                   d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C4.01 20.07 7.77 23 12 23z"
-                  fill="#34A853"
-                />
+                  fill="#34A853"/>
                 <path
                   d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                  fill="#FBBC05"
-                />
+                  fill="#FBBC05"/>
                 <path
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.77 1 4.01 3.93 2.18 7.07L5.84 9.91c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
+                  fill="#EA4335"/>
               </svg>
             </span>
             <span id="authLabel">Sign in with Google</span>
