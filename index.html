@@ -496,8 +496,7 @@ input[type="color"]:focus {
         <!-- Sign in with Google Button -->
         <li id="authMenuItem">
           <button 
-            onclick="(window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) ? signOutUser() : signInWithGoogle(); toggleMenu(event)"
-            class="flex items-center text-gray-700 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
+          onclick="console.log('Button clicked. Current user:', window.firebaseAuth.currentUser); (window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) ? signOutUser() : signInWithGoogle(); toggleMenu(event)"            class="flex items-center text-gray-700 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
             aria-label="Toggle Authentication">
             <span class="bg-white p-0.5 rounded mr-2 flex items-center justify-center">
               <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
