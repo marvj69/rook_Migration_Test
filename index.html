@@ -414,15 +414,6 @@ input[type="color"]:focus {
     <nav id="menu">
       <ul>
         <li>
-          <button 
-            onclick="syncToServer()" 
-            class="text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
-            aria-label="Sync Data to Server"
-          >
-            Sync to Server
-          </button>
-        </li>
-        <li>
           <a href="#" onclick="openSavedGamesModal();toggleMenu(event)">
             View Games
           </a>
@@ -501,6 +492,15 @@ input[type="color"]:focus {
           <a href="#" onclick="openThemeModal(); toggleMenu(event)">
             Themes
           </a>
+        </li>
+        <li id="authMenuItem">
+          <button 
+            onclick="window.firebaseAuth.currentUser ? signOutUser() : signInWithGoogle(); toggleMenu(event)" 
+            class="text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
+            aria-label="Toggle Authentication"
+          >
+            <span id="authLabel">Sign in with Google</span>
+          </button>
         </li>
       </ul>
     </nav>
@@ -908,166 +908,243 @@ aria-labelledby="savedGamesTitle"
   </div>
 </div>
 <script type="module">
- // Replace the current Firebase initialization module script with this improved version
-// This should be placed in the same location as your current Firebase module script
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-console.log("Firebase SDKs loading...");
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB_DmalmDfoluZ4HSerI9f8vA70XMGvksY",
-  authDomain: "rookscore-dadfd.firebaseapp.com",
-  projectId: "rookscore-dadfd",
-  storageBucket: "rookscore-dadfd.firebasestorage.app",
-  messagingSenderId: "395153935926",
-  appId: "1:395153935926:web:d76dbb239473f861159297",
-};
-
-// Initialize Firebase app first
-const app = initializeApp(firebaseConfig);
-// Then initialize auth and firestore
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// Make these objects globally available
-window.firebaseApp = app;
-window.firebaseAuth = auth;
-window.firestoreDB = db;
-window.firestoreDoc = doc;
-window.firestoreSetDoc = setDoc;
-window.firestoreGetDoc = getDoc;
-
-console.log("Firebase initialization complete");
-
-// Wait for DOM to be fully loaded before proceeding with auth
-document.addEventListener('DOMContentLoaded', () => {
-  console.log("DOM loaded, initializing Firebase auth");
-  initializeFirebaseAuth();
-});
-
-// Function to initialize Firebase auth
-function initializeFirebaseAuth() {
-  console.log("Starting Firebase auth initialization");
-
-  if (auth.currentUser) {
-    console.log("User already signed in:", auth.currentUser.uid);
-    window.firebaseReady = true; // Set flag if user exists initially
-    loadFirestoreData(auth.currentUser);
-    return;
-  }
-
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    console.log("Auth state changed:", user ? `User ${user.uid} signed in` : "No user");
-    if (user) {
-      unsubscribe();
-      window.firebaseReady = true; // Set flag when user is detected
-      loadFirestoreData(user);
-    }
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+  
+  console.log("Firebase SDKs loading...");
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_DmalmDfoluZ4HSerI9f8vA70XMGvksY",
+    authDomain: "rookscore-dadfd.firebaseapp.com",
+    projectId: "rookscore-dadfd",
+    storageBucket: "rookscore-dadfd.firebasestorage.app",
+    messagingSenderId: "395153935926",
+    appId: "1:395153935926:web:d76dbb239473f861159297",
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
+  
+  window.firebaseApp = app;
+  window.firebaseAuth = auth;
+  window.firestoreDB = db;
+  window.firestoreDoc = doc;
+  window.firestoreSetDoc = setDoc;
+  window.firestoreGetDoc = getDoc;
+  window.googleProvider = googleProvider;
+  
+  console.log("Firebase initialization complete");
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM loaded, initializing Firebase auth");
+    initializeFirebaseAuth();
   });
-
-  console.log("Attempting anonymous sign-in...");
-  signInAnonymously(auth)
-    .then((userCredential) => {
-      console.log("Anonymous sign-in successful:", userCredential.user.uid);
-      window.firebaseReady = true; // Set flag on successful sign-in
-    })
-    .catch((error) => {
-      console.error("Anonymous sign-in failed:", error.code, error.message);
-      renderApp(); // Render app offline if sign-in fails
+  
+  function initializeFirebaseAuth() {
+    console.log("Starting Firebase auth initialization");
+    onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed:", user ? `User ${user.uid} signed in` : "No user");
+      if (user) {
+        window.firebaseReady = true;
+        updateAuthUI(user);
+        if (!user.isAnonymous) {
+          mergeLocalStorageWithFirestore(user);
+        } else {
+          loadFirestoreData(user);
+        }
+      } else {
+        window.firebaseReady = false;
+        updateAuthUI(null);
+        renderApp();
+      }
     });
-}
-
-// Function to load data from Firestore
-async function loadFirestoreData(user) {
-  console.log("Loading data from Firestore for user:", user.uid);
-  try {
-    const docRef = doc(db, "rookData", user.uid);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
-      console.log("Found data in Firestore");
-      const data = docSnap.data();
-      for (const [key, value] of Object.entries(data)) {
+  }
+  
+  function updateAuthUI(user) {
+    const authLabel = document.getElementById("authLabel");
+    if (user && !user.isAnonymous) {
+      authLabel.textContent = `Sign out (${user.displayName || "Google User"})`;
+    } else {
+      authLabel.textContent = "Sign in with Google";
+    }
+  }
+  
+  async function loadFirestoreData(user) {
+    if (user.isAnonymous) return;
+    console.log("Loading data from Firestore for user:", user.uid);
+    try {
+      const docRef = doc(db, "rookData", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        console.log("Found data in Firestore");
+        const data = docSnap.data();
+        for (const [key, value] of Object.entries(data)) {
+          if (key !== "timestamp") {
+            localStorage.setItem(key, JSON.stringify(value));
+          }
+        }
+      } else {
+        console.log("No data found in Firestore");
+      }
+    } catch (error) {
+      console.error("Error loading from Firestore:", error);
+    }
+    renderApp();
+  }
+  
+  async function mergeLocalStorageWithFirestore(user) {
+    console.log("Merging localStorage with Firestore for user:", user.uid);
+    try {
+      const docRef = doc(db, "rookData", user.uid);
+      const docSnap = await getDoc(docRef);
+      let firestoreData = docSnap.exists() ? docSnap.data() : {};
+      
+      // Get all localStorage data
+      const localData = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key.startsWith('firebase')) {
+          try {
+            localData[key] = JSON.parse(localStorage.getItem(key));
+          } catch (e) {
+            console.error(`Error parsing localStorage key ${key}:`, e);
+          }
+        }
+      }
+  
+      // Merge strategy: localStorage takes precedence for arrays, combine objects
+      const mergedData = {};
+      const allKeys = new Set([...Object.keys(localData), ...Object.keys(firestoreData)]);
+      
+      allKeys.forEach(key => {
+        if (key === "timestamp") return;
+        
+        const localValue = localData[key];
+        const firestoreValue = firestoreData[key];
+        
+        if (!localValue) {
+          mergedData[key] = firestoreValue;
+        } else if (!firestoreValue) {
+          mergedData[key] = localValue;
+        } else {
+          // Merge logic for specific data types
+          if (Array.isArray(localValue) && Array.isArray(firestoreValue)) {
+            // For arrays (like savedGames, freezerGames), combine and remove duplicates
+            if (key === "savedGames" || key === "freezerGames") {
+              const combined = [...localValue, ...firestoreValue];
+              // Remove duplicates based on timestamp for games
+              const uniqueMap = new Map();
+              combined.forEach(item => {
+                if (item.timestamp) {
+                  uniqueMap.set(item.timestamp, item);
+                }
+              });
+              mergedData[key] = Array.from(uniqueMap.values());
+            } else {
+              mergedData[key] = [...new Set([...localValue, ...firestoreValue])];
+            }
+          } else if (typeof localValue === 'object' && typeof firestoreValue === 'object') {
+            // For objects, merge recursively
+            mergedData[key] = { ...firestoreValue, ...localValue };
+          } else {
+            // For primitive values, local takes precedence
+            mergedData[key] = localValue;
+          }
+        }
+      });
+  
+      // Add timestamp
+      mergedData.timestamp = new Date().toISOString();
+  
+      // Update Firestore
+      await setDoc(docRef, mergedData, { merge: true });
+  
+      // Update localStorage with merged data
+      Object.entries(mergedData).forEach(([key, value]) => {
         if (key !== "timestamp") {
           localStorage.setItem(key, JSON.stringify(value));
         }
-      }
-    } else {
-      console.log("No data found in Firestore");
+      });
+  
+      console.log("Successfully merged localStorage with Firestore");
+    } catch (error) {
+      console.error("Error merging data:", error);
     }
-  } catch (error) {
-    console.error("Error loading from Firestore:", error);
+    renderApp();
   }
   
-  // Always render the app, regardless of Firestore success
-  renderApp();
-}
-
-// Fix the syncToFirestore function that's causing the error
-window.syncToFirestore = async function(key, value) {
-  console.log(`Attempting to sync ${key} to Firestore`);
-  
-  // Safety check - if Firebase auth isn't initialized yet
-  if (!window.firebaseAuth) {
-    console.error("Firebase Auth not initialized");
-    return;
-  }
-  
-  try {
-    // Check if we have a signed-in user
-    if (!window.firebaseAuth.currentUser) {
-      console.log("No user signed in, attempting anonymous sign-in");
-      try {
-        const userCredential = await signInAnonymously(window.firebaseAuth);
-        console.log("Anonymous sign-in successful:", userCredential.user.uid);
-      } catch (authError) {
-        console.error("Anonymous sign-in failed:", authError);
-        return; // Exit if we can't sign in
-      }
+  window.signInWithGoogle = async function() {
+    console.log("Attempting Google sign-in");
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const googleUser = result.user;
+      console.log("Google sign-in successful:", googleUser.uid, googleUser.displayName);
+      window.firebaseReady = true;
+      updateAuthUI(googleUser);
+      await mergeLocalStorageWithFirestore(googleUser);
+    } catch (error) {
+      console.error("Google sign-in failed:", error.code, error.message);
+      renderApp();
     }
-    
-    // Now we should have a user
-    const userId = window.firebaseAuth.currentUser?.uid || "anonymous";
-    console.log(`Syncing to Firestore for user: ${userId}`);
-    
-    await window.firestoreSetDoc(
-      window.firestoreDoc(window.firestoreDB, "rookData", userId),
-      { [key]: value, timestamp: new Date().toISOString() },
-      { merge: true }
-    );
-    
-    console.log(`Successfully synced ${key} to Firestore`);
-  } catch (error) {
-    console.error("Firestore sync error:", error);
-  }
-};
-</script>
+  };
+  
+  window.signOutUser = async function() {
+    console.log("Attempting sign out");
+    try {
+      await signOut(auth);
+      console.log("User signed out");
+      window.firebaseReady = false;
+      updateAuthUI(null);
+      renderApp();
+    } catch (error) {
+      console.error("Sign-out failed:", error.code, error.message);
+    }
+  };
+  
+  window.syncToFirestore = async function(key, value) {
+    console.log(`Attempting to sync ${key} to Firestore`);
+    if (!window.firebaseAuth || !window.firestoreDB) {
+      console.error("Firebase not initialized");
+      return false;
+    }
+    if (!window.firebaseAuth.currentUser || window.firebaseAuth.currentUser.isAnonymous) {
+      console.log("User must be signed in with Google to sync");
+      return false;
+    }
+    try {
+      const userId = window.firebaseAuth.currentUser.uid;
+      console.log(`Syncing to Firestore for user: ${userId}`);
+      await window.firestoreSetDoc(
+        window.firestoreDoc(window.firestoreDB, "rookData", userId),
+        { [key]: value, timestamp: new Date().toISOString() },
+        { merge: true }
+      );
+      console.log(`Successfully synced ${key} to Firestore`);
+      return true;
+    } catch (error) {
+      console.error("Firestore sync error:", error);
+      return false;
+    }
+  };
+  </script>
 <script>
   "use strict";
 
-  // -------------------------------
-  // Firebase Initialization and Firestore Sync Functions
-  // -------------------------------
-  // (Assuming the module script above already imported Firebase functions and initialized app,
-  // we rely on window.firebaseAuth and window.firestoreDB for Authentication and Firestore.)
-
-  // Custom setLocalStorage function that logs and syncs data to Firestore
-  // Replace your current setLocalStorage function with this improved version
   function setLocalStorage(key, value) {
   console.log(`setLocalStorage called with key: ${key}`);
   try {
     localStorage.setItem(key, JSON.stringify(value));
-    if (window.syncToFirestore && window.firebaseReady) {
+    if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
       setTimeout(() => {
         window.syncToFirestore(key, value).catch(err => {
           console.warn(`Firestore sync failed for ${key}, but data is saved locally:`, err);
         });
       }, 0);
     } else {
-      console.log(`Firebase not ready yet. ${key} saved locally only.`);
+      console.log(`Not syncing ${key} - either Firebase not ready or not Google authenticated`);
     }
   } catch (error) {
     console.error(`Error in setLocalStorage for key ${key}:`, error);
@@ -1202,93 +1279,6 @@ function getLocalStorage(key) {
       alert("Please ensure at least one valid preset (multiple of 5, ≤ 360) is entered.");
     }
   }
-  // Replace your syncToServer function with this improved version
-function syncToServer() {
-  console.log("Sync to Server button clicked");
-  
-  // Show a sync in progress indicator
-  const indicator = document.getElementById('saveIndicator');
-  if (indicator) {
-    indicator.textContent = 'Syncing to server...';
-    indicator.classList.remove('hidden');
-    indicator.classList.add('show');
-  }
-  
-  // Check if Firebase is initialized
-  if (!window.firebaseAuth || !window.firestoreDB) {
-    console.error("Firebase not initialized yet");
-    showErrorIndicator("Firebase not initialized. Please try again later.");
-    return;
-  }
-
-  // Check if we have a user
-  if (!window.firebaseAuth.currentUser) {
-    console.log("No user signed in, attempting sign-in before sync");
-    
-    signInAnonymously(window.firebaseAuth)
-      .then(() => {
-        // Now that we're signed in, continue with sync
-        performSync();
-      })
-      .catch(error => {
-        console.error("Failed to sign in:", error);
-        showErrorIndicator("Failed to sign in. Please try again.");
-      });
-  } else {
-    // Already signed in, proceed with sync
-    performSync();
-  }
-  
-  function performSync() {
-  let successCount = 0;
-  let failCount = 0;
-  let totalItems = 0;
-  let syncPromises = [];
-  
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    
-    if (key === 'firebase:host:rookscore-dadfd.firebaseapp.com' || 
-        key === 'rookMigrationVersion' || 
-        key.startsWith('firebase')) {
-      continue;
-    }
-    
-    totalItems++;
-    let value;
-    
-    try {
-      value = JSON.parse(localStorage.getItem(key));
-    } catch (e) {
-      console.error(`Skipping sync for key '${key}' due to invalid JSON:`, e.message);
-      failCount++;
-      continue;
-    }
-
-    const syncPromise = window.syncToFirestore(key, value)
-      .then(() => {
-        successCount++;
-        console.log(`Synced ${key} (${successCount}/${totalItems})`);
-      })
-      .catch(error => {
-        failCount++;
-        console.error(`Failed to sync ${key}:`, error);
-      });
-    
-    syncPromises.push(syncPromise);
-  }
-  
-  Promise.allSettled(syncPromises).then(() => {
-    if (failCount > 0) {
-      showErrorIndicator(`Sync completed with errors: ${successCount}/${totalItems} items synced`);
-    } else if (successCount > 0) {
-      showSyncIndicator(`Successfully synced ${successCount} items`);
-    } else {
-      showSyncIndicator("No data to sync");
-    }
-  });
-}
-}
 
 // Helper function to show a sync success indicator (similar to #saveIndicator)
 function showSyncIndicator() {
