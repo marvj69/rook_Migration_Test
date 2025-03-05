@@ -909,7 +909,7 @@ aria-labelledby="savedGamesTitle"
 </div>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
   
   console.log("Firebase SDKs loading...");
@@ -944,33 +944,48 @@ aria-labelledby="savedGamesTitle"
   });
   
   function initializeFirebaseAuth() {
-    console.log("Starting Firebase auth initialization");
-    onAuthStateChanged(auth, (user) => {
-      console.log("Auth state changed:", user ? `User ${user.uid} signed in` : "No user");
-      if (user) {
-        window.firebaseReady = true;
-        updateAuthUI(user);
-        if (!user.isAnonymous) {
-          mergeLocalStorageWithFirestore(user);
-        } else {
-          loadFirestoreData(user);
-        }
+  console.log("Starting Firebase auth initialization");
+  onAuthStateChanged(auth, (user) => {
+    console.log("Auth state changed:", user ? `User ${user.uid} signed in` : "No user");
+    if (user) {
+      window.firebaseReady = true;
+      updateAuthUI(user);
+      if (!user.isAnonymous) {
+        mergeLocalStorageWithFirestore(user);
       } else {
-        window.firebaseReady = false;
-        updateAuthUI(null);
-        renderApp();
+        loadFirestoreData(user);
       }
-    });
-  }
-  
-  function updateAuthUI(user) {
-    const authLabel = document.getElementById("authLabel");
-    if (user && !user.isAnonymous) {
-      authLabel.textContent = `Sign out (${user.displayName || "Google User"})`;
     } else {
-      authLabel.textContent = "Sign in with Google";
+      // No user is signed in, sign in anonymously
+      signInAnonymously(auth)
+        .then((result) => {
+          console.log("Signed in anonymously:", result.user.uid);
+          window.firebaseReady = true;
+          updateAuthUI(result.user);
+          loadFirestoreData(result.user); // Load data for anonymous user
+        })
+        .catch((error) => {
+          console.error("Anonymous sign-in failed:", error.code, error.message);
+          window.firebaseReady = false;
+          updateAuthUI(null);
+          renderApp();
+        });
     }
+  });
+}
+  
+function updateAuthUI(user) {
+  const authLabel = document.getElementById("authLabel");
+  if (user) {
+    if (user.isAnonymous) {
+      authLabel.textContent = "Sign in with Google (Anonymous)";
+    } else {
+      authLabel.textContent = `Sign out (${user.displayName || "Google User"})`;
+    }
+  } else {
+    authLabel.textContent = "Sign in with Google";
   }
+}
   
   async function loadFirestoreData(user) {
     if (user.isAnonymous) return;
@@ -1077,19 +1092,24 @@ aria-labelledby="savedGamesTitle"
   }
   
   window.signInWithGoogle = async function() {
-    console.log("Attempting Google sign-in");
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const googleUser = result.user;
-      console.log("Google sign-in successful:", googleUser.uid, googleUser.displayName);
-      window.firebaseReady = true;
-      updateAuthUI(googleUser);
+  console.log("Attempting Google sign-in");
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const googleUser = result.user;
+    console.log("Google sign-in successful:", googleUser.uid, googleUser.displayName);
+    window.firebaseReady = true;
+    updateAuthUI(googleUser);
+    if (auth.currentUser.isAnonymous) {
+      // Link anonymous account to Google account (optional)
       await mergeLocalStorageWithFirestore(googleUser);
-    } catch (error) {
-      console.error("Google sign-in failed:", error.code, error.message);
-      renderApp();
+    } else {
+      await mergeLocalStorageWithFirestore(googleUser);
     }
-  };
+  } catch (error) {
+    console.error("Google sign-in failed:", error.code, error.message);
+    renderApp();
+  }
+};
   
   window.signOutUser = async function() {
     console.log("Attempting sign out");
