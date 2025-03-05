@@ -410,7 +410,6 @@ input[type="color"]:focus {
       <div class="bar"></div>
     </div>
 
-    <!-- Nav Menu -->
     <nav id="menu">
       <ul>
         <li>
@@ -434,8 +433,6 @@ input[type="color"]:focus {
             Statistics
           </a>
         </li>
-
-        <!-- CHANGED TO SLIDER SWITCH INSTEAD OF BUTTON -->
         <li>
           <label
             for="darkModeToggle"
@@ -461,7 +458,6 @@ input[type="color"]:focus {
             </div>
           </label>
         </li>
-        <!-- END SLIDER SWITCH -->
         <li>
           <label
             for="proModeToggle"
@@ -487,18 +483,43 @@ input[type="color"]:focus {
             </div>
           </label>
         </li>
-        <!-- NEW Themes Menu Item -->
         <li>
           <a href="#" onclick="openThemeModal(); toggleMenu(event)">
             Themes
           </a>
         </li>
+        <li id="editPresetsMenuItem">
+          <a href="#" onclick="openPresetEditorModal();toggleMenu(event)">
+            Edit Bid Presets
+          </a>
+        </li>
+        <!-- Sign in with Google Button -->
         <li id="authMenuItem">
           <button 
-            onclick="window.firebaseAuth.currentUser ? signOutUser() : signInWithGoogle(); toggleMenu(event)" 
-            class="text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
+            onclick="window.firebaseAuth.currentUser ? signOutUser() : signInWithGoogle(); toggleMenu(event)"
+            class="flex items-center text-gray-700 px-5 py-[15px] w-full text-left text-[20px] border-b-[0.3px] border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 threed"
             aria-label="Toggle Authentication"
           >
+            <span class="bg-white p-0.5 rounded mr-2 flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C4.01 20.07 7.77 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.77 1 4.01 3.93 2.18 7.07L5.84 9.91c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+            </span>
             <span id="authLabel">Sign in with Google</span>
           </button>
         </li>
@@ -517,7 +538,7 @@ input[type="color"]:focus {
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.3.5</p>
+      <p>version 1.4.0</p>
     </div>
 
     <!-- Main App Container -->
@@ -690,18 +711,20 @@ aria-labelledby="savedGamesTitle"
             <strong>How to Use:</strong> Tap a team to begin bidding, enter the bid and the points,
             then press "Submit." Keep track of all round scores in the “History” section. You can
             also freeze a current game, view saved games, start a new game, view statistics, toggle
-            dark mode, and change the theme from the menu.
+            dark mode, toggle pro mode, and change the theme from the menu. Sign in with Google to preserve your games among devices.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.3.5:</strong>
+            <strong>What's New in 1.4.0:</strong>
             <p>
-              version 1.3.5 introduces a better way to handle team names and statistics.
+              version 1.4.0 introduces a Pro Mode and now saves data to an online database.
             </p>
+            - Sign in with Google: Save games to the cloud and access them from any device.<br />
+            - Pro mode: Enable pro mode to see the exact win probability for each team, and customize bid presets.<br />
             - Sandbagger. Are you a sandbagger? Check the team stats to find out.<br />
             - Select teams: Team statistics save per team once team names are entered.<br />
-            - Automatic Team Stats: Newly created team names are stored locally, along with more stats.<br />
             - Expanded Statistics Section: Click the dropdown for more stats.<br />
-            - Various small UI and logic improvements.
+            - Various small UI and logic improvements.<br />
+            - More features coming soon!
           </p>
           <strong class="text-gray-700 dark:text-white mb-4"><br />Author: Marv Heinonen</strong>
           <div class="flex justify-end space-x-2">
@@ -978,7 +1001,7 @@ function updateAuthUI(user) {
   const authLabel = document.getElementById("authLabel");
   if (user) {
     if (user.isAnonymous) {
-      authLabel.textContent = "Sign in with Google (Anonymous)";
+      authLabel.textContent = "Sign in with Google"; // No "(Anonymous)" added
     } else {
       authLabel.textContent = `Sign out (${user.displayName || "Google User"})`;
     }
@@ -2198,17 +2221,23 @@ function showErrorIndicator(message) {
   }
 
   function handleFreezerGame() {
-    if (!state.rounds || state.rounds.length === 0) {
-      alert("No game data to freeze. Play at least one round first.");
-      return;
-    }
-    if (!state.usTeamName || !state.demTeamName) {
-      pendingGameAction = "freeze";
-      openTeamSelectionModal();
-      return;
-    }
-    confirmFreeze();
+  if (!state.rounds || state.rounds.length === 0) {
+    alert("No game data to freeze. Play at least one round first.");
+    return;
   }
+  // Check if team names are missing or if both are the default names.
+  if (
+    !state.usTeamName ||
+    !state.demTeamName ||
+    (state.usTeamName.trim().toLowerCase() === "us" &&
+     state.demTeamName.trim().toLowerCase() === "dem")
+  ) {
+    pendingGameAction = "freeze";
+    openTeamSelectionModal();
+    return;
+  }
+  confirmFreeze();
+}
 
   function confirmFreeze() {
     openConfirmationModal(
@@ -2640,10 +2669,10 @@ function showErrorIndicator(message) {
       const teamColor = teamKey === "us" ? "var(--primary-color)" : "var(--accent-color)";
       const brightness = isSelected ? "brightness(0.75)" : "brightness(0.85)";
       winProbDisplay = `
-      <div class="mt-1 text-sm rounded-full px-2 py-1 relative" style="background-color: ${teamColor}; filter: ${brightness};">
-        <span class="relative text-white font-medium" style="z-index: 1;">Win: ${prob.toFixed(1)}%</span>
-        ${isSelected ? '<div class="absolute inset-0 rounded-full" style="background: rgba(0, 0, 0, 0.414); pointer-events: none; z-index: 0;"></div>' : ""}
-      </div>`;
+  <div class="mt-1 text-xs rounded-full px-2 py-1 relative" style="background-color: ${teamColor}; filter: ${brightness};">
+    <span class="relative font-medium" style="color: #F5F5F5; z-index: 1;">Win: ${prob.toFixed(1)}%</span>
+    ${isSelected ? '<div class="absolute inset-0 rounded-full" style="background: rgba(0, 0, 0, 0.414); pointer-events: none; z-index: 0;"></div>' : ""}
+  </div>`;
     }
     return `
       <div class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-colors rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-0 w-32 h-32"
@@ -2854,41 +2883,41 @@ function showErrorIndicator(message) {
   }
 
   function renderApp() {
-    const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
-    const totals = rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
-    const roundNumber = rounds.length + 1;
-    let lastBidHtml = "";
-    if (lastBidAmount && lastBidTeam) {
-      const arrow = lastBidTeam === "us" ? "←" : "→";
-      lastBidHtml = `
-        <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
-          <span class="font-medium">Bid:</span>
-          <span>${lastBidAmount}</span>
-          <span>${arrow}</span>
-        </div>`;
-    }
-    document.getElementById("app").innerHTML = `
-      <div class="text-center space-y-2">
-        <div class="flex flex-col items-center">
-          <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">Rook!</h1>
-        </div>
-        <p class="text-md sm:text-lg text-gray-600 dark:text-white">Tap a team to start a bid!</p>
-      </div>
-      <div class="flex flex-row space-x-4 flex-wrap justify-center">
-        ${renderTeamCard("us", totals.us)}
-        ${renderRoundCard(roundNumber, lastBidHtml)}
-        ${renderTeamCard("dem", totals.dem)}
-      </div>
-      ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
-      ${renderScoreInputCard()}
-      ${renderHistoryCard()}
-      ${renderGameOverOverlay()}
-    `;
-    if (gameOver && !confettiTriggered) {
-      confettiTriggered = true;
-      confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
-    }
+  const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
+  const totals = rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
+  const roundNumber = rounds.length + 1;
+  let lastBidHtml = "";
+  if (lastBidAmount && lastBidTeam) {
+    const arrow = lastBidTeam === "us" ? "←" : "→";
+    lastBidHtml = `
+      <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
+        <span class="font-medium">Bid:</span>
+        <span>${lastBidAmount}</span>
+        <span>${arrow}</span>
+      </div>`;
   }
+  document.getElementById("app").innerHTML = `
+    <div class="text-center space-y-2">
+      <div class="flex flex-col items-center">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white">Rook!</h1>
+      </div>
+      <p class="text-md sm:text-lg text-gray-600 dark:text-white">Tap a team to start a bid!</p>
+    </div>
+    <div class="flex flex-row space-x-4 flex-wrap justify-center">
+      ${renderTeamCard("us", totals.us)}
+      ${renderRoundCard(roundNumber, lastBidHtml)}
+      ${renderTeamCard("dem", totals.dem)}
+    </div>
+    ${error ? `<div>${renderErrorAlert(error)}</div>` : ""}
+    ${renderScoreInputCard()}
+    ${renderHistoryCard()}
+    ${renderGameOverOverlay()}
+  `;
+  if (gameOver && !confettiTriggered) {
+    confettiTriggered = true;
+    confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
+  }
+}
 
   function validateBid(bidStr) {
     const bidVal = Number(bidStr);
@@ -2909,7 +2938,7 @@ function showErrorIndicator(message) {
   }
 
   function showVersionNum() {
-    alert("version 1.3.5 adds a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
+    alert("version 1.4.0 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
   }
 
   function openAboutModal() {
