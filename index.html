@@ -22,6 +22,9 @@
       src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
     ></script>
     <style>
+      .overflow-hidden {
+  overflow: hidden;
+}
     input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
@@ -120,15 +123,15 @@ input[type="color"]:focus {
       }
 
       .hamburger-menu {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        width: 30px;
-        height: 24px;
-        cursor: pointer;
-        z-index: 1100;
-        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      }
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 30px;
+  height: 24px;
+  cursor: pointer;
+  z-index: 1300; /* Increased z-index so it appears above the nav menu */
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
       .hamburger-menu:hover {
         transform: scale(1.1);
       }
@@ -170,18 +173,20 @@ input[type="color"]:focus {
       }
 
       nav {
-        position: fixed;
-        top: 0;
-        left: -300px;
-        width: 280px;
-        height: 100%;
-        background-color: #fff;
-        z-index: 1200;
-        transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        border-top-right-radius: 0.75rem;
-        border-bottom-right-radius: 0.75rem;
-      }
+  position: fixed;
+  top: 0;
+  left: -300px;
+  width: 280px;
+  height: 100%;
+  background-color: #fff;
+  z-index: 1200;
+  transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  border-top-right-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+  overflow-y: auto;          /* Enables vertical scrolling */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
       nav.show {
         left: 0;
       }
@@ -1799,22 +1804,23 @@ function showErrorIndicator(message) {
   }
 
   function toggleMenu(e) {
-    e.stopPropagation();
-    const menu = document.getElementById("menu");
-    const hamburgerIcon = document.getElementById("hamburgerIcon");
-    const menuOverlay = document.getElementById("menuOverlay");
-    const isOpen = menu.classList.contains("show");
-    if (isOpen) {
-      menu.classList.remove("show");
-      hamburgerIcon.classList.remove("open");
-      menuOverlay.classList.remove("show");
-    } else {
-      menu.classList.add("show");
-      hamburgerIcon.classList.add("open");
-      menuOverlay.classList.add("show");
-      bringHamburgerToFront();
-    }
+  e.stopPropagation();
+  const menu = document.getElementById("menu");
+  const hamburgerIcon = document.getElementById("hamburgerIcon");
+  const menuOverlay = document.getElementById("menuOverlay");
+  const isOpen = menu.classList.contains("show");
+  if (isOpen) {
+    menu.classList.remove("show");
+    hamburgerIcon.classList.remove("open");
+    menuOverlay.classList.remove("show");
+    document.body.classList.remove("overflow-hidden");
+  } else {
+    menu.classList.add("show");
+    hamburgerIcon.classList.add("open");
+    menuOverlay.classList.add("show");
+    document.body.classList.add("overflow-hidden");
   }
+}
 
   function closeMenuOverlay() {
     document.getElementById("menu").classList.remove("show");
