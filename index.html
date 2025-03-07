@@ -548,7 +548,7 @@ html:not(.dark) body#bodyRoot {
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.4.2</p>
+      <p>version 1.4.69</p>
     </div>
 
     <!-- Main App Container -->
@@ -724,9 +724,9 @@ aria-labelledby="savedGamesTitle"
             dark mode, toggle pro mode, and change the theme from the menu. Sign in with Google to preserve your games among devices.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.4.2:</strong>
+            <strong>What's New in 1.4.69:</strong>
             <p>
-              version 1.4.2 introduces a Pro Mode and now saves data to an online database.
+              version 1.4.69 introduces a Pro Mode and now saves data to an online database.
             </p>
             - Sign in with Google: Save games to the cloud and access them from any device.<br />
             - Pro mode: Enable pro mode to see the exact win probability for each team, and customize bid presets.<br />
@@ -964,9 +964,9 @@ aria-labelledby="savedGamesTitle"
     </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.2/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.2/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.69/firebase-app.js";
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.69/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.69/firebase-firestore.js";
   
   console.log("Firebase SDKs loading...");
   
@@ -3419,7 +3419,7 @@ function resetGameState() {
   }
 
   function showVersionNum() {
-    alert("version 1.4.2 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
+    alert("version 1.4.69 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
   }
 
   function openAboutModal() {
