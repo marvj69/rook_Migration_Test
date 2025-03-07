@@ -3774,10 +3774,12 @@ function setupColorPickerListeners() {
     refreshing = true;
     window.location.reload();
   });
- if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+
   navigator.serviceWorker.register('./service-worker.js')
     .then(registration => {
-      // Check if there's already a controlling service worker
+      // Check if this is the first load (no controlling SW yet)
       const isFirstLoad = !navigator.serviceWorker.controller;
 
       registration.addEventListener('updatefound', () => {
@@ -3785,20 +3787,23 @@ function setupColorPickerListeners() {
 
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && !isFirstLoad) {
-            // Only show the prompt if this isn't the first load and an update is waiting
-            if (registration.waiting && confirm('New version available! Reload to update?')) {
-              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            // A new SW is installed and waiting, and this isn't the first load
+            if (registration.waiting) {
+              if (confirm('New version available! Reload to update?')) {
+                // Send message to skip waiting
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
             }
           }
         });
       });
 
-      // Handle controller change (reload after skipWaiting)
+      // Handle controller change to reload the page when the new SW takes over
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
-        }
+        if (refreshing) return;
+        refreshing = true;
+        // Force a hard reload to bypass cache
+        window.location.reload(true); // true forces reload from server, not cache
       });
 
       // Periodically check for updates
