@@ -3774,25 +3774,40 @@ function setupColorPickerListeners() {
     refreshing = true;
     window.location.reload();
   });
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(registration => {
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated') {
-              if (window.confirm('New version available! Reload to update?')) {
-                newWorker.postMessage('skipWaiting');
-              }
+ if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(registration => {
+      // Check if there's already a controlling service worker
+      const isFirstLoad = !navigator.serviceWorker.controller;
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && !isFirstLoad) {
+            // Only show the prompt if this isn't the first load and an update is waiting
+            if (registration.waiting && confirm('New version available! Reload to update?')) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
             }
-          });
+          }
         });
-      })
-      .catch(error => console.log('SW registration failed:', error));
-    setInterval(() => {
-      navigator.serviceWorker.ready.then(registration => { registration.update(); });
-    }, 60 * 1000);
-  }
+      });
+
+      // Handle controller change (reload after skipWaiting)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
+      // Periodically check for updates
+      setInterval(() => {
+        registration.update();
+      }, 60 * 1000);
+    })
+    .catch(error => console.log('SW registration failed:', error));
+}
   
   function updateState(newState) {
     state = { ...state, ...newState };
