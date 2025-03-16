@@ -210,8 +210,7 @@ input[type="color"]:focus {
         border-bottom: none;
       }
       nav ul li a,
-      nav ul li button
-      nav ul li label {
+      nav ul li button {
         color: #333;
         text-decoration: none;
         font-size: 20px;
@@ -226,8 +225,7 @@ input[type="color"]:focus {
         font-family: inherit;
       }
       nav ul li a:hover,
-      nav ul li button:hover
-       {
+      nav ul li button:hover {
         background-color: #f5f5f5;
         filter: brightness(0.97);
       }
@@ -397,16 +395,6 @@ input[type="color"]:focus {
       .modal-open .hamburger-menu {
         display: none;
       }
-/* Add this to your existing <style> section */
-  html.dark body#bodyRoot {
-  background-color: #1a202c;  /* Default dark background */
-}
-
-html:not(.dark) body#bodyRoot {
-  background-color: #ffffff;  /* Default light background */
-}
-
-/* Removed empty ruleset */
     </style>
   </head>
   <body
@@ -450,31 +438,31 @@ html:not(.dark) body#bodyRoot {
             Statistics
           </a>
         </li>
-       <li>
-  <label
-    for="darkModeToggle"
-    class="px-5 py-[15px] border-b-[0.3px] border-gray-200 dark:border-gray-600 flex items-center justify-between w-full cursor-pointer text-[20px] hover:bg-gray-100 dark:hover:bg-gray-600"
-  >
-    <span class="text-gray-700 dark:text-white">
-      Dark Mode
-    </span>
-    <div class="relative">
-      <input type="checkbox" id="darkModeToggle" class="sr-only peer" />
-      <div
-        class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
-               peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
-               peer-checked:bg-gray-1000
-               after:content-['☀'] dark:after:content-['☾']
-               after:absolute after:top-1/2 after:left-0
-               after:bg-white after:border after:border-gray-300 after:rounded-full
-               after:h-7 after:w-7 after:flex after:items-center after:justify-center after:text-xl
-               after:font-mono after:text-black /* Add a font that avoids emojis */
-               after:transition-transform after:-translate-y-1/2
-               peer-checked:after:translate-x-[36px]"
-      ></div>
-    </div>
-  </label>
-</li>
+        <li>
+          <label
+            for="darkModeToggle"
+            class="px-5 py-[15px] border-b-[0.3px] border-gray-200 dark:border-gray-600 flex items-center justify-between w-full cursor-pointer text-[20px] hover:bg-gray-100 dark:hover:bg-gray-600"
+          >
+            <span class="text-gray-700 dark:text-white">
+              Dark Mode
+            </span>
+            <div class="relative">
+              <input type="checkbox" id="darkModeToggle" class="sr-only peer" />
+              <div
+                class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
+                       peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
+                       peer-checked:bg-gray-1000
+                       after:content-['☀'] dark:after:content-['☾']
+                       after:absolute after:top-1/2 after:left-0
+                       after:bg-white after:border after:border-gray-300 after:rounded-full
+                       after:h-7 after:w-7 after:flex after:items-center after:justify-center after:text-xl after:font-sans
+                       after:text-black
+                       after:transition-transform after:-translate-y-1/2
+                       peer-checked:after:translate-x-[36px]"
+              ></div>
+            </div>
+          </label>
+        </li>
         <li>
           <label
             for="proModeToggle"
@@ -548,7 +536,7 @@ html:not(.dark) body#bodyRoot {
       style="cursor: pointer"
       onclick="showVersionNum()"
     >
-      <p>version 1.4.69</p>
+      <p>version 1.4.0</p>
     </div>
 
     <!-- Main App Container -->
@@ -724,9 +712,9 @@ aria-labelledby="savedGamesTitle"
             dark mode, toggle pro mode, and change the theme from the menu. Sign in with Google to preserve your games among devices.
           </p>
           <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.4.69:</strong>
+            <strong>What's New in 1.4.0:</strong>
             <p>
-              version 1.4.69 introduces a Pro Mode and now saves data to an online database.
+              version 1.4.0 introduces a Pro Mode and now saves data to an online database.
             </p>
             - Sign in with Google: Save games to the cloud and access them from any device.<br />
             - Pro mode: Enable pro mode to see the exact win probability for each team, and customize bid presets.<br />
@@ -861,112 +849,89 @@ aria-labelledby="savedGamesTitle"
     </div>
 
     <!-- CUSTOM THEME SELECTION MODAL -->
-    <div id="themeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal" role="dialog" aria-modal="true" aria-labelledby="themeModalTitle">
-      <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6 text-center">
-        <h2 id="themeModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Choose Your Colors</h2>
-    
-        <!-- Team color picker container -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Team Colors</h3>
-          <div class="flex justify-center items-center space-x-6 my-4">
-            <div class="text-center">
-              <label for="usColorPicker" class="block text-gray-700 dark:text-white mb-2">
-                Us Color:
-              </label>
-              <input
-                type="color"
-                id="usColorPicker"
-                value="#3b82f6"
-                class="mx-auto w-12 h-12 cursor-pointer"
-              />
-            </div>
-            <div class="text-center">
-              <label for="demColorPicker" class="block text-gray-700 dark:text-white mb-2">
-                Dem Color:
-              </label>
-              <input
-                type="color"
-                id="demColorPicker"
-                value="#ef4444"
-                class="mx-auto w-12 h-12 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-    
-        <!-- Background color picker container -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-white">Background Colors</h3>
-          <div class="flex justify-center items-center space-x-6 my-4">
-            <div class="text-center">
-              <label for="lightBgColorPicker" class="block text-gray-700 dark:text-white mb-2">
-                Light Mode:
-              </label>
-              <input
-                type="color"
-                id="lightBgColorPicker"
-                value="#ffffff"
-                class="mx-auto w-12 h-12 cursor-pointer"
-              />
-            </div>
-            <div class="text-center">
-              <label for="darkBgColorPicker" class="block text-gray-700 dark:text-white mb-2">
-                Dark Mode:
-              </label>
-              <input
-                type="color"
-                id="darkBgColorPicker"
-                value="#1a202c"
-                class="mx-auto w-12 h-12 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-    
-        <!-- Randomize button -->
-        <div class="mb-4">
-          <button
-            type="button"
-            onclick="randomizeThemeColors()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
-          >
-            <span>↻</span>
-            Random Colors
-          </button>
-          
-        </div>
-    
-        <!-- Button row at the bottom -->
-        <div class="flex justify-center space-x-2 mt-6">
-          <button
-            type="button"
-            onclick="applyCustomThemeColors()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
-          >
-            Apply
-          </button>
-          <button
-            type="button"
-            onclick="resetThemeColors()"
-            class="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
-          >
-            Reset
-          </button>
-          <button
-            type="button"
-            onclick="closeThemeModal()"
-            class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
-          >
-            Close
-          </button>
-        </div>
+    <div
+  id="themeModal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="themeModalTitle"
+>
+  <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6 text-center">
+    <h2
+      id="themeModalTitle"
+      class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
+    >
+      Choose Your Colors
+    </h2>
+
+    <!-- Color picker container: side by side -->
+    <div class="flex justify-center items-center space-x-6 my-4">
+      <div class="text-center">
+        <label for="usColorPicker" class="block text-gray-700 dark:text-white mb-2">
+          Us Color:
+        </label>
+        <input
+          type="color"
+          id="usColorPicker"
+          value="#3b82f6"
+          class="mx-auto w-12 h-12 cursor-pointer"
+        />
+      </div>
+      <div class="text-center">
+        <label for="demColorPicker" class="block text-gray-700 dark:text-white mb-2">
+          Dem Color:
+        </label>
+        <input
+          type="color"
+          id="demColorPicker"
+          value="#ef4444"
+          class="mx-auto w-12 h-12 cursor-pointer"
+        />
       </div>
     </div>
 
+    <!-- Randomize button placed underneath the color pickers -->
+    <div class="mb-4">
+      <button
+        type="button"
+        onclick="randomizeThemeColors()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
+      >
+      <span>↻</span>
+        Random
+      </button>
+    </div>
+
+    <!-- Button row at the bottom -->
+    <div class="flex justify-center space-x-2 mt-6">
+      <button
+        type="button"
+        onclick="applyCustomThemeColors()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
+      >
+        Apply
+      </button>
+      <button
+        type="button"
+        onclick="resetThemeColors()"
+        class="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
+      >
+        Reset
+      </button>
+      <button
+        type="button"
+        onclick="closeThemeModal()"
+        class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.69/firebase-app.js";
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.69/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.69/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
   
   console.log("Firebase SDKs loading...");
   
@@ -1189,10 +1154,6 @@ function updateAuthUI(user) {
       console.error("Firebase not initialized");
       return false;
     }
-    if (!window.firebaseAuth.currentUser || window.firebaseAuth.currentUser.isAnonymous) {
-      console.log("User must be signed in with Google to sync");
-      return false;
-    }
     try {
       const userId = window.firebaseAuth.currentUser.uid;
       console.log(`Syncing to Firestore for user: ${userId}`);
@@ -1211,22 +1172,26 @@ function updateAuthUI(user) {
   </script>
 <script>
   "use strict";
+
   let savedGamesModal, viewSavedGameModal, aboutModal, statisticsModal, teamSelectionModal, themeModal;
-  let pendingGameData = null;
 
   function setLocalStorage(key, value) {
   console.log(`setLocalStorage called with key: ${key}`);
   try {
     localStorage.setItem(key, JSON.stringify(value));
-    if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
-      setTimeout(() => {
-        window.syncToFirestore(key, value).catch(err => {
-          console.warn(`Firestore sync failed for ${key}, but data is saved locally:`, err);
-        });
-      }, 0);
-    } else {
-      console.log(`Not syncing ${key} - either Firebase not ready or not Google authenticated`);
-    }
+  if (
+  window.syncToFirestore &&
+  window.firebaseReady &&
+  window.firebaseAuth.currentUser // remove the !.isAnonymous condition
+) {
+  setTimeout(() => {
+    window.syncToFirestore(key, value).catch(err => {
+      console.warn(`Firestore sync failed for ${key}:`, err);
+    });
+  }, 0);
+} else {
+  console.log(`Not syncing ${key} - Firebase not ready or no current user.`);
+}
   } catch (error) {
     console.error(`Error in setLocalStorage for key ${key}:`, error);
   }
@@ -1292,16 +1257,14 @@ function getLocalStorage(key) {
         <div id="presetEditorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" role="dialog" aria-modal="true" aria-labelledby="presetEditorTitle">
             <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6">
                 <h2 id="presetEditorTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Bid Presets</h2>
-                <div id="presetInputs" class="grid grid-cols-2 gap-4">
-  ${presetBids.filter(b => b !== "other").map((bid, index) => `
-    <div class="flex items-center space-x-2">
-      <input type="number" value="${bid}" class="w-24 border border-gray-300 rounded-xl px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" data-index="${index}">
-      <button type="button" onclick="removePreset(${index})" class="text-red-600 hover:text-red-800 dark:text-red-300 dark:hover:text-red-500">
-        ${Icons.Trash}
-      </button>
-    </div>
-  `).join('')}
-</div>
+                <div id="presetInputs" class="space-y-4">
+                    ${presetBids.filter(b => b !== "other").map((bid, index) => `
+                        <div class="flex items-center space-x-2">
+                            <input type="number" value="${bid}" class="w-24 border border-gray-300 rounded-xl px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" data-index="${index}">
+                            <button type="button" onclick="removePreset(${index})" class="text-red-600 hover:text-red-800 dark:text-red-300 dark:hover:text-red-500">${Icons.Trash}</button>
+                        </div>
+                    `).join('')}
+                </div>
                 <button type="button" onclick="addPreset()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 threed">Add Preset</button>
                 <div class="flex justify-end space-x-2 mt-6">
                     <button type="button" onclick="closePresetEditorModal()" class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 threed">Cancel</button>
@@ -1313,13 +1276,6 @@ function getLocalStorage(key) {
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     document.body.classList.add('modal-open');
-
-      // Attach the click event listener for clicking outside the inner content.
-  const modalEl = document.getElementById("presetEditorModal");
-  modalEl.addEventListener("click", function(e) {
-    // This will only fire if the click is on the overlay (the modal container itself)
-    if (e.target === modalEl) closePresetEditorModal();
-  });
   }
 
   function closePresetEditorModal() {
@@ -1551,28 +1507,9 @@ function showErrorIndicator(message) {
   const THEME_KEY = "rookSelectedTheme";
 
   function openThemeModal() {
-  document.getElementById("themeModal").classList.remove("hidden");
-  document.body.classList.add("modal-open");
-  
-  // Generate suggested background colors based on current team colors
-  const usColor = document.getElementById('usColorPicker').value;
-  const demColor = document.getElementById('demColorPicker').value;
-  
-  // Set suggested background colors
-  const lightBgSuggested = calculateBackgroundColor(usColor, demColor, false);
-  const darkBgSuggested = calculateBackgroundColor(usColor, demColor, true);
-  
-  // Get stored custom background colors (if any)
-  const customLightBg = localStorage.getItem('customLightBgColor') || lightBgSuggested;
-  const customDarkBg = localStorage.getItem('customDarkBgColor') || darkBgSuggested;
-  
-  // Update the background color pickers
-  const lightBgPicker = document.getElementById('lightBgColorPicker');
-  const darkBgPicker = document.getElementById('darkBgColorPicker');
-  
-  if (lightBgPicker) lightBgPicker.value = customLightBg;
-  if (darkBgPicker) darkBgPicker.value = customDarkBg;
-}
+    document.getElementById("themeModal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
 
   function closeThemeModal() {
     document.getElementById("themeModal").classList.add("hidden");
@@ -1600,342 +1537,79 @@ function showErrorIndicator(message) {
   }
 
   function applyCustomThemeColors() {
-  const usColor = document.getElementById('usColorPicker').value;
-  const demColor = document.getElementById('demColorPicker').value;
-  const lightBgColor = document.getElementById('lightBgColorPicker').value;
-  const darkBgColor = document.getElementById('darkBgColorPicker').value;
-  
-  const body = document.getElementById('bodyRoot');
-  
-  console.log("Applying custom theme colors:", usColor, demColor);
-  console.log("Applying custom background colors:", lightBgColor, darkBgColor);
-  
-  // Set the team colors
-  body.style.setProperty('--primary-color', usColor);
-  body.style.setProperty('--accent-color', demColor);
-  
-  // Store all custom colors
-  localStorage.setItem('customUsColor', usColor);
-  localStorage.setItem('customDemColor', demColor);
-  localStorage.setItem('customLightBgColor', lightBgColor);
-  localStorage.setItem('customDarkBgColor', darkBgColor);
-  localStorage.removeItem('usingDefaultColors'); // User has explicitly chosen colors
-  
-  // Apply the background color
-  const isDark = document.documentElement.classList.contains('dark');
-  const currentBgColor = isDark ? darkBgColor : lightBgColor;
-  body.style.setProperty('background-color', currentBgColor, 'important');
-  
-  closeThemeModal();
-}
-function calculateBackgroundColor(baseColor, isDark) {
-  try {
-    const baseRgb = hexToRgb(baseColor);
-    
-    if (!baseRgb) {
-      console.error("Invalid RGB values for baseColor:", baseRgb);
-      return isDark ? "#1a202c" : "#f5f5f5";
-    }
-    
-    const baseHsl = hexToHSL(baseColor);
-    let adjustedHsl = { h: baseHsl.h, s: baseHsl.s, l: baseHsl.l };
-    
-    if (isDark) {
-      adjustedHsl.l = 15;
-      adjustedHsl.s = Math.min(100, baseHsl.s * 1.2);
-    } else {
-      adjustedHsl.l = 90;
-      adjustedHsl.s = Math.min(100, baseHsl.s * 0.9);
-    }
-    
-    return hslToHex(adjustedHsl);
-  } catch (error) {
-    console.error("Error calculating background color:", error);
-    return isDark ? "#1a202c" : "#f5f5f5";
-  }
-}
-function hexToRgb(hex) {
-  try {
-    // Remove the # if present
-    hex = hex.replace(/^#/, '');
-    
-    // Handle shorthand hex format (e.g. "#03F" -> "#0033FF")
-    if (hex.length === 3) {
-      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-    }
-    
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
-    // Validate that we have proper numbers
-    if (isNaN(r) || isNaN(g) || isNaN(b)) {
-      console.error("Invalid hex color component:", hex);
-      return null;
-    }
-    
-    return { r, g, b };
-  } catch (error) {
-    console.error("Error parsing hex color:", error);
-    return null;
-  }
-}
-
-// Convert hex color to HSL object
-function hexToHSL(hex) {
-  // Remove the # if present
-  hex = hex.replace(/^#/, '');
-  
-  // Parse the RGB components
-  let r = parseInt(hex.substr(0, 2), 16) / 255;
-  let g = parseInt(hex.substr(2, 2), 16) / 255;
-  let b = parseInt(hex.substr(4, 2), 16) / 255;
-  
-  // Find max and min RGB components
-  let max = Math.max(r, g, b);
-  let min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  
-  if (max === min) {
-    h = s = 0; // achromatic
-  } else {
-    let d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    
-    h /= 6;
-  }
-  
-  return { h: h * 360, s: s * 100, l: l * 100 };
-}
-
-// Convert HSL object to hex
-function hslToHex(hsl) {
-  let h = hsl.h;
-  let s = hsl.s / 100;
-  let l = hsl.l / 100;
-  
-  let c = (1 - Math.abs(2 * l - 1)) * s;
-  let x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  let m = l - c / 2;
-  let r, g, b;
-  
-  if (h >= 0 && h < 60) {
-    r = c; g = x; b = 0;
-  } else if (h >= 60 && h < 120) {
-    r = x; g = c; b = 0;
-  } else if (h >= 120 && h < 180) {
-    r = 0; g = c; b = x;
-  } else if (h >= 180 && h < 240) {
-    r = 0; g = x; b = c;
-  } else if (h >= 240 && h < 300) {
-    r = x; g = 0; b = c;
-  } else {
-    r = c; g = 0; b = x;
-  }
-  
-  r = Math.round((r + m) * 255).toString(16).padStart(2, '0');
-  g = Math.round((g + m) * 255).toString(16).padStart(2, '0');
-  b = Math.round((b + m) * 255).toString(16).padStart(2, '0');
-  
-  return `#${r}${g}${b}`;
-}
-
-// Blend two hex colors with a given ratio
-function blendColors(color1, color2, ratio) {
-  // Remove the # if present
-  color1 = color1.replace(/^#/, '');
-  color2 = color2.replace(/^#/, '');
-  
-  // Parse the RGB components
-  let r1 = parseInt(color1.substr(0, 2), 16);
-  let g1 = parseInt(color1.substr(2, 2), 16);
-  let b1 = parseInt(color1.substr(4, 2), 16);
-  
-  let r2 = parseInt(color2.substr(0, 2), 16);
-  let g2 = parseInt(color2.substr(2, 2), 16);
-  let b2 = parseInt(color2.substr(4, 2), 16);
-  
-  // Blend the colors
-  let r = Math.round(r1 * (1 - ratio) + r2 * ratio);
-  let g = Math.round(g1 * (1 - ratio) + g2 * ratio);
-  let b = Math.round(b1 * (1 - ratio) + b2 * ratio);
-  
-  // Convert back to hex
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-function initializeCustomThemeColors() {
-  const customUsColor = localStorage.getItem('customUsColor');
-  const customDemColor = localStorage.getItem('customDemColor');
-  const usingDefaultColors = localStorage.getItem('usingDefaultColors') === 'true';
-  
-  if (customUsColor && customDemColor) {
-    const body = document.getElementById('bodyRoot');
-    body.style.setProperty('--primary-color', customUsColor);
-    body.style.setProperty('--accent-color', customDemColor);
-    
-    const usPicker = document.getElementById('usColorPicker');
-    const demPicker = document.getElementById('demColorPicker');
-    if (usPicker) usPicker.value = customUsColor;
-    if (demPicker) demPicker.value = customDemColor;
-    
-    // Only apply background if we're not using default colors
-    if (!usingDefaultColors) {
-      applyBackgroundColors();
-    }
-  }
-}
-
-function resetThemeColors() {
-  const defaultUsColor = "#3b82f6";
-  const defaultDemColor = "#ef4444";
-  const defaultLightBg = "#ffffff";
-  const defaultDarkBg = "#1a202c";
-  
-  const body = document.getElementById('bodyRoot');
-  
-  // Set the team colors back to default
-  body.style.setProperty('--primary-color', defaultUsColor);
-  body.style.setProperty('--accent-color', defaultDemColor);
-  
-  // Remove custom background colors from localStorage
-  localStorage.removeItem('customLightBgColor');
-  localStorage.removeItem('customDarkBgColor');
-  localStorage.removeItem('customUsColor');
-  localStorage.removeItem('customDemColor');
-  
-  // Add a flag to indicate we're using default colors
-  localStorage.setItem('usingDefaultColors', 'true');
-  
-  // Reset background to default
-  body.style.removeProperty('background-color');
-  
-  // Reset all color pickers to default values
-  const usPicker = document.getElementById('usColorPicker');
-  const demPicker = document.getElementById('demColorPicker');
-  const lightBgPicker = document.getElementById('lightBgColorPicker');
-  const darkBgPicker = document.getElementById('darkBgColorPicker');
-  
-  if (usPicker) usPicker.value = defaultUsColor;
-  if (demPicker) demPicker.value = defaultDemColor;
-  if (lightBgPicker) lightBgPicker.value = defaultLightBg;
-  if (darkBgPicker) darkBgPicker.value = defaultDarkBg;
-  
-  console.log("Theme reset to defaults");
-  
-  closeThemeModal();
-}
-// Fix the hslToHex function
-function hslToHex(h, s, l) {
-  // Accept either an object or individual parameters
-  if (typeof h === 'object') {
-    const hslObj = h;
-    h = hslObj.h;
-    s = hslObj.s;
-    l = hslObj.l;
-  }
-  
-  // Convert to 0-1 range
-  s /= 100;
-  l /= 100;
-  
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = l - c / 2;
-  let r, g, b;
-  
-  if (h >= 0 && h < 60) {
-    r = c; g = x; b = 0;
-  } else if (h >= 60 && h < 120) {
-    r = x; g = c; b = 0;
-  } else if (h >= 120 && h < 180) {
-    r = 0; g = c; b = x;
-  } else if (h >= 180 && h < 240) {
-    r = 0; g = x; b = c;
-  } else if (h >= 240 && h < 300) {
-    r = x; g = 0; b = c;
-  } else {
-    r = c; g = 0; b = x;
-  }
-  
-  // Convert to 0-255 range and then to hex
-  r = Math.round((r + m) * 255);
-  g = Math.round((g + m) * 255);
-  b = Math.round((b + m) * 255);
-  
-  // Ensure values are valid (0-255)
-  r = Math.max(0, Math.min(255, r));
-  g = Math.max(0, Math.min(255, g));
-  b = Math.max(0, Math.min(255, b));
-  
-  // Convert to hex, ensuring 2 digits with padStart
-  const rHex = r.toString(16).padStart(2, '0');
-  const gHex = g.toString(16).padStart(2, '0');
-  const bHex = b.toString(16).padStart(2, '0');
-  
-  return `#${rHex}${gHex}${bHex}`;
-}
-
-// Update the randomizeThemeColors function
-function randomizeThemeColors() {
-  // Generate random colors
-  const randomHue = Math.floor(Math.random() * 360);
-  const variation = Math.floor(Math.random() * 41) - 20; // -20 to +20
-  const complementaryHue = (randomHue + 180 + variation) % 360;
-  
-  // More saturated and brighter colors
-  const saturation = Math.floor(Math.random() * 40) + 60; // 60-100%
-  const lightness = Math.floor(Math.random() * 30) + 35;  // 35-65%
-  
-  // Convert to hex
-  const randomUs = hslToHex(randomHue, saturation, lightness);
-  const randomDem = hslToHex(complementaryHue, saturation, lightness);
-  
-  console.log("Generated random team colors:", randomUs, randomDem);
-  
-  // Set the color picker values
-  const usPicker = document.getElementById('usColorPicker');
-  const demPicker = document.getElementById('demColorPicker');
-  
-  if (usPicker) usPicker.value = randomUs;
-  if (demPicker) demPicker.value = randomDem;
-  
-  // Generate and set suggested background colors
-  suggestBackgroundColors();
-}
-
-function suggestBackgroundColors() {
-  try {
     const usColor = document.getElementById('usColorPicker').value;
     const demColor = document.getElementById('demColorPicker').value;
-    
-    if (!usColor.match(/^#[0-9A-Fa-f]{6}$/) || !demColor.match(/^#[0-9A-Fa-f]{6}$/)) {
-      console.error("Invalid color format:", usColor, demColor);
-      return;
-    }
-    
-    const baseColor = Math.random() < 0.5 ? usColor : demColor;
-    const lightBgSuggested = calculateBackgroundColor(baseColor, false);
-    const darkBgSuggested = calculateBackgroundColor(baseColor, true);
-    
-    console.log("Base color chosen:", baseColor);
-    console.log("Generated background suggestions:", lightBgSuggested, darkBgSuggested);
-    
-    const lightBgPicker = document.getElementById('lightBgColorPicker');
-    const darkBgPicker = document.getElementById('darkBgColorPicker');
-    
-    if (lightBgPicker) lightBgPicker.value = lightBgSuggested;
-    if (darkBgPicker) darkBgPicker.value = darkBgSuggested;
-  } catch (error) {
-    console.error("Error suggesting background colors:", error);
+    const body = document.getElementById('bodyRoot');
+    body.style.setProperty('--primary-color', usColor);
+    body.style.setProperty('--accent-color', demColor);
+    localStorage.setItem('customUsColor', usColor);
+    localStorage.setItem('customDemColor', demColor);
+    closeThemeModal();
   }
-}
+
+  function initializeCustomThemeColors() {
+    const customUsColor = localStorage.getItem('customUsColor');
+    const customDemColor = localStorage.getItem('customDemColor');
+    if (customUsColor && customDemColor) {
+      const body = document.getElementById('bodyRoot');
+      body.style.setProperty('--primary-color', customUsColor);
+      body.style.setProperty('--accent-color', customDemColor);
+      const usPicker = document.getElementById('usColorPicker');
+      const demPicker = document.getElementById('demColorPicker');
+      if (usPicker) usPicker.value = customUsColor;
+      if (demPicker) demPicker.value = customDemColor;
+    }
+  }
+
+  function resetThemeColors() {
+    const defaultUsColor = "#3b82f6";
+    const defaultDemColor = "#ef4444";
+    const body = document.getElementById('bodyRoot');
+    body.style.setProperty('--primary-color', defaultUsColor);
+    body.style.setProperty('--accent-color', defaultDemColor);
+    localStorage.removeItem('customUsColor');
+    localStorage.removeItem('customDemColor');
+    const usPicker = document.getElementById('usColorPicker');
+    const demPicker = document.getElementById('demColorPicker');
+    if (usPicker) usPicker.value = defaultUsColor;
+    if (demPicker) demPicker.value = defaultDemColor;
+  }
+
+  function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r, g, b;
+    if (h < 60) { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b)
+      .toString(16)
+      .slice(1);
+  }
+
+  function randomizeThemeColors() {
+    const randomHue = Math.floor(Math.random() * 360);
+    const variation = Math.floor(Math.random() * 41) - 20;
+    const complementaryHue = (randomHue + 180 + variation) % 360;
+    const saturation = Math.floor(Math.random() * 51) + 50;
+    const lightness = Math.floor(Math.random() * 41) + 20;
+    const randomUs = hslToHex(randomHue, saturation, lightness);
+    const randomDem = hslToHex(complementaryHue, saturation, lightness);
+    const usPicker = document.getElementById('usColorPicker');
+    const demPicker = document.getElementById('demColorPicker');
+    if (usPicker) usPicker.value = randomUs;
+    if (demPicker) demPicker.value = randomDem;
+  }
+
   // -------------------------------
   // Icons, Dark Mode, and Utility Functions
   // -------------------------------
@@ -1996,60 +1670,15 @@ function suggestBackgroundColors() {
   }
 
   function initializeDarkMode() {
-  const isDark = JSON.parse(localStorage.getItem(DARK_MODE_KEY));
-  
-  // Apply dark class to html element (for Tailwind dark mode)
-  document.documentElement.classList.toggle("dark", isDark);
-  
-  // Make sure body has right Tailwind classes
-  const body = document.getElementById('bodyRoot');
-  
-  // Force a repaint of the Tailwind classes
-  if (isDark) {
-    body.classList.add('dark:bg-gray-900');
-    body.classList.remove('bg-white');
-  } else {
-    body.classList.remove('dark:bg-gray-900');
-    body.classList.add('bg-white');
-  }
-  
-  const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
-  if (darkModeToggleCheckbox) {
-    darkModeToggleCheckbox.checked = isDark;
-  }
-  
-  updateDarkModeLabel(isDark);
-  updateMetaThemeColor(isDark);
-  
-  // Apply custom background colors if needed
-  applyBackgroundColors();
-}
-function applyBackgroundColors() {
-  const body = document.getElementById('bodyRoot');
-  const customLightBgColor = localStorage.getItem('customLightBgColor');
-  const customDarkBgColor = localStorage.getItem('customDarkBgColor');
-  const usingDefaultColors = localStorage.getItem('usingDefaultColors') === 'true';
-  const isDark = document.documentElement.classList.contains('dark');
-  
-  if (!usingDefaultColors && customLightBgColor && customDarkBgColor) {
-    // Apply custom background color
-    const currentBgColor = isDark ? customDarkBgColor : customLightBgColor;
-    body.style.setProperty('background-color', currentBgColor, 'important');
-    console.log("Applying custom background color:", currentBgColor);
-  } else {
-    // Reset to default background handling
-    body.style.removeProperty('background-color');
-    
-    // Make sure the right Tailwind classes are applied
-    if (isDark) {
-      body.classList.add('dark:bg-gray-900');
-    } else {
-      body.classList.add('bg-white');
+    const isDark = JSON.parse(localStorage.getItem(DARK_MODE_KEY));
+    document.documentElement.classList.toggle("dark", isDark);
+    const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
+    if (darkModeToggleCheckbox) {
+      darkModeToggleCheckbox.checked = isDark;
     }
-    
-    console.log("Using default background color");
+    updateDarkModeLabel(isDark);
+    updateMetaThemeColor(isDark);
   }
-}
 
   function updateMetaThemeColor(isDark) {
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -2059,12 +1688,12 @@ function applyBackgroundColors() {
   }
 
   function getTeamsObject() {
-  return JSON.parse(localStorage.getItem("teams")) || {};
-}
+    return JSON.parse(localStorage.getItem("teams")) || {};
+  }
 
-function setTeamsObject(teams) {
-  setLocalStorage("teams", teams);
-}
+  function setTeamsObject(obj) {
+    setLocalStorage("teams", obj);
+  }
 
   function removeTeamsStatsForGame(game) {
     if (!game.usTeamName || !game.demTeamName || !game.winner) return;
@@ -2123,16 +1752,13 @@ function setTeamsObject(teams) {
   }
 
   function saveCurrentGameState() {
-  const gameState = {
-    rounds: state.rounds,
-    usTeamName: state.usTeamName,
-    demTeamName: state.demTeamName,
-    startTime: state.startTime,
-    lastBidAmount: state.lastBidAmount,
-    lastBidTeam: state.lastBidTeam,
-  };
-  setLocalStorage("currentGame", gameState);
-}
+    if (state.gameOver) {
+      localStorage.removeItem(ACTIVE_GAME_KEY);
+    } else {
+      setLocalStorage(ACTIVE_GAME_KEY, state);
+      showSaveIndicator();
+    }
+  }
       
   function recalcTeamsStats() {
     const savedGames = getLocalStorage("savedGames");
@@ -2249,61 +1875,15 @@ function setTeamsObject(teams) {
   }
 
   function openTeamSelectionModal() {
-  const modal = document.getElementById("teamSelectionModal");
-  modal.classList.remove("hidden");
-  document.body.classList.add("modal-open");
+    populateTeamSelects();
+    document.getElementById("teamSelectionModal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
 
-  // Populate team selection dropdowns with existing teams
-  const teams = getTeamsObject();
-  const teamNames = Object.keys(teams).sort();
-  const selectUs = document.getElementById("selectUsTeam");
-  const selectDem = document.getElementById("selectDemTeam");
-
-  // Clear existing options
-  selectUs.innerHTML = "";
-  selectDem.innerHTML = "";
-
-  // Add default and existing team options
-  const defaultOptions = ["Us", "Dem", "New Team..."];
-  const allOptions = [...defaultOptions, ...teamNames.filter(name => name !== "Us" && name !== "Dem")];
-  
-  allOptions.forEach(name => {
-    const optionUs = document.createElement("option");
-    optionUs.value = name;
-    optionUs.textContent = name;
-    selectUs.appendChild(optionUs);
-
-    const optionDem = document.createElement("option");
-    optionDem.value = name;
-    optionDem.textContent = name;
-    selectDem.appendChild(optionDem);
-  });
-
-  // Set current team names if they exist
-  selectUs.value = state.usTeamName || "Us";
-  selectDem.value = state.demTeamName || "Dem";
-
-  // Handle "New Team..." selection
-  const newUsInput = document.getElementById("newUsTeamName");
-  const newDemInput = document.getElementById("newDemTeamName");
-  
-  newUsInput.classList.toggle("hidden", selectUs.value !== "New Team...");
-  newDemInput.classList.toggle("hidden", selectDem.value !== "New Team...");
-
-  selectUs.addEventListener("change", (e) => {
-    newUsInput.classList.toggle("hidden", e.target.value !== "New Team...");
-    if (e.target.value === "New Team...") newUsInput.focus();
-  });
-  selectDem.addEventListener("change", (e) => {
-    newDemInput.classList.toggle("hidden", e.target.value !== "New Team...");
-    if (e.target.value === "New Team...") newDemInput.focus();
-  });
-}
-
-function closeTeamSelectionModal() {
-  document.getElementById("teamSelectionModal").classList.add("hidden");
-  document.body.classList.remove("modal-open");
-}
+  function closeTeamSelectionModal() {
+    document.getElementById("teamSelectionModal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  }
 
   function populateTeamSelects() {
     const teamsObj = getTeamsObject();
@@ -2348,58 +1928,56 @@ function closeTeamSelectionModal() {
     };
   }
 
-  function handleTeamSelectionSubmit(event) {
-  event.preventDefault();
-
-  const selectUs = document.getElementById("selectUsTeam").value;
-  const selectDem = document.getElementById("selectDemTeam").value;
-  const newUsTeamName = document.getElementById("newUsTeamName").value.trim();
-  const newDemTeamName = document.getElementById("newDemTeamName").value.trim();
-
-  // Determine final team names
-  let usTeamName = selectUs === "New Team..." && newUsTeamName ? newUsTeamName : selectUs;
-  let demTeamName = selectDem === "New Team..." && newDemTeamName ? newDemTeamName : selectDem;
-
-  // Validate team names
-  if (!usTeamName || !demTeamName || usTeamName === demTeamName) {
-    alert("Please enter unique team names for both teams.");
-    return;
+  function handleTeamSelectionSubmit(e) {
+    e.preventDefault();
+    const usVal = document.getElementById("selectUsTeam").value;
+    const newUsVal = document.getElementById("newUsTeamName").value.trim();
+    const demVal = document.getElementById("selectDemTeam").value;
+    const newDemVal = document.getElementById("newDemTeamName").value.trim();
+    let finalUs = "";
+    let finalDem = "";
+    if (usVal === "NEW_TEAM") {
+      if (!newUsVal) {
+        alert("Please enter a new team name for 'Us' or select an existing team.");
+        return;
+      }
+      finalUs = newUsVal;
+      addTeamIfNotExists(newUsVal);
+    } else {
+      if (!usVal) {
+        alert("Please select a team for 'Us' or create a new one.");
+        return;
+      }
+      finalUs = usVal;
+    }
+    if (demVal === "NEW_TEAM") {
+      if (!newDemVal) {
+        alert("Please enter a new team name for 'Dem' or select an existing team.");
+        return;
+      }
+      finalDem = newDemVal;
+      addTeamIfNotExists(newDemVal);
+    } else {
+      if (!demVal) {
+        alert("Please select a team for 'Dem' or create a new one.");
+        return;
+      }
+      finalDem = demVal;
+    }
+    if (finalUs === finalDem) {
+      alert("Team 'Us' and 'Dem' cannot be the same.");
+      return;
+    }
+    updateState({ usTeamName: finalUs, demTeamName: finalDem });
+    saveCurrentGameState();
+    closeTeamSelectionModal();
+    if (pendingGameAction === "freeze") {
+      confirmFreeze();
+    } else if (pendingGameAction === "save") {
+      handleManualSaveGame();
+    }
+    pendingGameAction = null;
   }
-
-  // Update teams object
-  const teams = getTeamsObject();
-  if (!teams[usTeamName]) teams[usTeamName] = { created: Date.now() };
-  if (!teams[demTeamName]) teams[demTeamName] = { created: Date.now() };
-  setTeamsObject(teams);
-
-  // Update pending game data with team names
-  pendingGameData.usTeamName = usTeamName;
-  pendingGameData.demTeamName = demTeamName;
-
-  // Save the game
-  const savedGames = getLocalStorage("savedGames");
-  savedGames.push(pendingGameData);
-  setLocalStorage("savedGames", savedGames);
-
-  // Show save indicator
-  const saveIndicator = document.getElementById("saveIndicator");
-  saveIndicator.classList.remove("hidden");
-  saveIndicator.classList.add("show");
-  setTimeout(() => {
-    saveIndicator.classList.remove("show");
-    setTimeout(() => saveIndicator.classList.add("hidden"), 300);
-  }, 2000);
-
-  // Reset game state
-  resetGameState();
-
-  // Close modal and re-render
-  closeTeamSelectionModal();
-  renderApp();
-
-  // Clear pending game data
-  pendingGameData = null;
-}
 
   function addTeamIfNotExists(teamName) {
     const teams = getTeamsObject();
@@ -2410,48 +1988,37 @@ function closeTeamSelectionModal() {
   }
 
   function handleTeamClick(team) {
-  // If the game is over, reset the game state to start a new game.
-  if (state.gameOver) {
-    resetGameState();
-  }
-  if (state.biddingTeam === team) {
-    state.savedScoreInputStates[team] = {
-      bidAmount: state.bidAmount,
-      customBidValue: state.customBidValue,
-      showCustomBid: state.showCustomBid,
-      enterBidderPoints: state.enterBidderPoints,
-      error: state.error,
-    };
-    updateState({
-      biddingTeam: "",
-      bidAmount: "",
-      showCustomBid: false,
-      customBidValue: "",
-      enterBidderPoints: false,
-      error: "",
-      showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
-    });
-  } else {
-    const otherTeam = team === "us" ? "dem" : "us";
-    state.savedScoreInputStates[otherTeam] = null;
-    let newState = {
-      biddingTeam: team,
-      bidAmount: "",
-      showCustomBid: false,
-      customBidValue: "",
-      enterBidderPoints: false,
-      error: "",
-      showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false
-    };
-    const saved = state.savedScoreInputStates[team];
-    if (saved) {
-      newState = { ...newState, ...saved };
+    if (state.gameOver) return;
+    if (state.biddingTeam === team) {
+      state.savedScoreInputStates[team] = {
+        bidAmount: state.bidAmount,
+        customBidValue: state.customBidValue,
+        showCustomBid: state.showCustomBid,
+        enterBidderPoints: state.enterBidderPoints,
+        error: state.error,
+      };
+      updateState({
+        biddingTeam: "",
+        bidAmount: "",
+        showCustomBid: false,
+        customBidValue: "",
+        enterBidderPoints: false,
+        error: "",
+        showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
+      });
+    } else {
+      const otherTeam = team === "us" ? "dem" : "us";
+      state.savedScoreInputStates[otherTeam] = null;
+      let newState = { biddingTeam: team, bidAmount: "", showCustomBid: false, customBidValue: "", enterBidderPoints: false, error: "", showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false };
+      const saved = state.savedScoreInputStates[team];
+      if (saved) {
+        newState = { ...newState, ...saved };
+      }
+      updateState(newState);
     }
-    updateState(newState);
+    ephemeralCustomBid = "";
+    ephemeralPoints = "";
   }
-  ephemeralCustomBid = "";
-  ephemeralPoints = "";
-}
 
   function handleBidSelect(bid) {
     if (bid === "other") {
@@ -2611,56 +2178,12 @@ function closeTeamSelectionModal() {
     );
   }
 
-  function handleGameOverSaveClick(event) {
-  event.preventDefault();
-  event.stopPropagation();
+  function handleGameOverSaveClick(e) {
+    if (e) e.preventDefault();
+    pendingGameAction = "save";
+    openTeamSelectionModal();
+  }
 
-  // Calculate total duration: if startTime is still active, add the current elapsed time; 
-  // otherwise, use the accumulated time.
-  const durationMs = ((state.startTime !== null) ? (Date.now() - state.startTime) : 0) + state.accumulatedTime;
-
-  // Prepare the game data to save
-  pendingGameData = {
-    rounds: state.rounds,
-    finalScore: {
-      us: state.rounds.reduce((acc, r) => acc + r.usPoints, 0),
-      dem: state.rounds.reduce((acc, r) => acc + r.demPoints, 0),
-    },
-    timestamp: new Date().toISOString(),
-    usTeamName: state.usTeamName || "Us",
-    demTeamName: state.demTeamName || "Dem",
-    winner: state.winner,
-    victoryMethod: state.victoryMethod || "Points",
-    durationMs: durationMs,
-  };
-
-  // Open the team selection modal for saving the game
-  openTeamSelectionModal();
-}
-function resetGameState() {
-  state = {
-    rounds: [],
-    biddingTeam: null,
-    bidAmount: null,
-    showCustomBid: false,
-    customBidValue: "",
-    error: "",
-    gameOver: false,
-    winner: null,
-    victoryMethod: null,
-    usTeamName: null,
-    demTeamName: null,
-    startTime: Date.now(),
-    accumulatedTime: 0, // Reset accumulated time here
-    enterBidderPoints: true,
-    lastBidAmount: null,
-    lastBidTeam: null,
-    showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
-    savedScoreInputStates: { us: null, dem: null }
-  };
-  confettiTriggered = false;
-  saveCurrentGameState();
-}
   function handleManualSaveGame() {
     if (!state.usTeamName || !state.demTeamName) {
       pendingGameAction = "save";
@@ -3419,7 +2942,7 @@ function resetGameState() {
   }
 
   function showVersionNum() {
-    alert("version 1.4.69 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
+    alert("version 1.4.0 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
   }
 
   function openAboutModal() {
@@ -3647,23 +3170,6 @@ function resetGameState() {
     state.showWinProbability = isProMode;
     renderApp();
   }
-  // Function to set up event listeners (call this once on page load)
-function setupColorPickerListeners() {
-  const usColorPicker = document.getElementById('usColorPicker');
-  const demColorPicker = document.getElementById('demColorPicker');
-  
-  if (usColorPicker) {
-    usColorPicker.addEventListener('input', suggestBackgroundColors);
-  } else {
-    console.error("usColorPicker not found in DOM");
-  }
-  
-  if (demColorPicker) {
-    demColorPicker.addEventListener('input', suggestBackgroundColors);
-  } else {
-    console.error("demColorPicker not found in DOM");
-  }
-}
 
   document.addEventListener("DOMContentLoaded", () => {
     const closeViewSavedBtn = document.getElementById("closeViewSavedGameModalBtn");
@@ -3693,20 +3199,16 @@ function setupColorPickerListeners() {
     initializeDarkMode();
     initializeTheme();
     initializeCustomThemeColors();
-    setupColorPickerListeners();
-    suggestBackgroundColors();
     renderApp();
     const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
     if (darkModeToggleCheckbox) {
-      // Update the dark mode toggle event listener in your DOMContentLoaded function
       darkModeToggleCheckbox.addEventListener("change", (e) => {
-  const isDark = e.target.checked;
-  document.documentElement.classList.toggle("dark", isDark);
-  localStorage.setItem(DARK_MODE_KEY, isDark);
-  updateDarkModeLabel(isDark);
-  updateMetaThemeColor(isDark);
-  applyBackgroundColors(); // Re-apply background colors when dark mode changes
-});
+        const isDark = e.target.checked;
+        document.documentElement.classList.toggle("dark", isDark);
+        localStorage.setItem(DARK_MODE_KEY, isDark);
+        updateDarkModeLabel(isDark);
+        updateMetaThemeColor(isDark);
+      });
     }
     const proModeToggleCheckbox = document.getElementById("proModeToggle");
     if (proModeToggleCheckbox) {
@@ -3738,12 +3240,6 @@ function setupColorPickerListeners() {
     if (!themeModal.classList.contains("hidden") && !themeModal.contains(e.target)) {
       closeThemeModal();
     }
-    if (!teamSelectionModal.classList.contains("hidden") && !teamSelectionModal.contains(e.target)) {
-      closeTeamSelectionModal();
-    }
-    if (!confirmationModal.classList.contains("hidden") && !confirmationModal.contains(e.target)) {
-      closeConfirmationModal();
-    }   
   });
 
   const modals = [
@@ -3774,45 +3270,22 @@ function setupColorPickerListeners() {
     refreshing = true;
     window.location.reload();
   });
-if ('serviceWorker' in navigator) {
-  let refreshing = false;
-
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(registration => {
-      // Check if this is the first load (no controlling SW yet)
-      const isFirstLoad = !navigator.serviceWorker.controller;
-
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && !isFirstLoad) {
-            // A new SW is installed and waiting, and this isn't the first load
-            if (registration.waiting) {
-              if (confirm('New version available! Reload to update?')) {
-                // Send message to skip waiting
-                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(registration => {
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated') {
+              if (window.confirm('New version available! Reload to update?')) {
+                newWorker.postMessage('skipWaiting');
               }
             }
-          }
+          });
         });
-      });
-
-      // Handle controller change to reload the page when the new SW takes over
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        // Force a hard reload to bypass cache
-        window.location.reload(true); // true forces reload from server, not cache
-      });
-
-      // Periodically check for updates
-      setInterval(() => {
-        registration.update();
-      }, 60 * 1000);
-    })
-    .catch(error => console.log('SW registration failed:', error));
-}
+      })
+      .catch(error => console.log('SW registration failed:', error));
+  }
   
   function updateState(newState) {
     state = { ...state, ...newState };
