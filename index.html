@@ -1154,6 +1154,10 @@ function updateAuthUI(user) {
       console.error("Firebase not initialized");
       return false;
     }
+    if (!window.firebaseAuth.currentUser || window.firebaseAuth.currentUser.isAnonymous) {
+      console.log("User must be signed in with Google to sync");
+      return false;
+    }
     try {
       const userId = window.firebaseAuth.currentUser.uid;
       console.log(`Syncing to Firestore for user: ${userId}`);
@@ -1179,19 +1183,15 @@ function updateAuthUI(user) {
   console.log(`setLocalStorage called with key: ${key}`);
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  if (
-  window.syncToFirestore &&
-  window.firebaseReady &&
-  window.firebaseAuth.currentUser // remove the !.isAnonymous condition
-) {
-  setTimeout(() => {
-    window.syncToFirestore(key, value).catch(err => {
-      console.warn(`Firestore sync failed for ${key}:`, err);
-    });
-  }, 0);
-} else {
-  console.log(`Not syncing ${key} - Firebase not ready or no current user.`);
-}
+    if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+      setTimeout(() => {
+        window.syncToFirestore(key, value).catch(err => {
+          console.warn(`Firestore sync failed for ${key}, but data is saved locally:`, err);
+        });
+      }, 0);
+    } else {
+      console.log(`Not syncing ${key} - either Firebase not ready or not Google authenticated`);
+    }
   } catch (error) {
     console.error(`Error in setLocalStorage for key ${key}:`, error);
   }
@@ -2218,6 +2218,10 @@ function showErrorIndicator(message) {
     setLocalStorage("savedGames", savedGames);
     showSaveIndicator();
     localStorage.removeItem(ACTIVE_GAME_KEY);
+    if (window.syncToFirestore && window.firebaseReady && 
+      window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+    window.syncToFirestore(ACTIVE_GAME_KEY, null);
+  }
     ephemeralCustomBid = "";
     ephemeralPoints = "";
     updateState({ ...DEFAULT_STATE });
@@ -2252,35 +2256,46 @@ function showErrorIndicator(message) {
   }
 
   function freezeCurrentGame() {
-    let finalAccumulated = state.accumulatedTime;
-    if (state.startTime !== null) {
-      finalAccumulated += Date.now() - state.startTime;
-    }
-    const finalScore = state.rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
-    const lastRound = state.rounds[state.rounds.length - 1];
-    const freezerGames = getLocalStorage("freezerGames");
-    const frozenGame = {
-      name: `FROZEN-${Date.now()}`,
-      usName: state.usTeamName || "Us",
-      demName: state.demTeamName || "Dem",
-      finalScore,
-      lastBid: lastRound ? lastRound.bidAmount : null,
-      winner: state.winner,
-      victoryMethod: state.victoryMethod,
-      rounds: state.rounds,
-      timestamp: new Date().toISOString(),
-      accumulatedTime: finalAccumulated,
-    };
-    freezerGames.push(frozenGame);
-    setLocalStorage("freezerGames", freezerGames);
-    localStorage.removeItem(ACTIVE_GAME_KEY);
-    ephemeralCustomBid = "";
-    ephemeralPoints = "";
-    updateState({ ...DEFAULT_STATE });
-    confettiTriggered = false;
-    pendingGameAction = null;
-    renderApp();
+  // Existing code to freeze the game
+  let finalAccumulated = state.accumulatedTime;
+  if (state.startTime !== null) {
+    finalAccumulated += Date.now() - state.startTime;
   }
+  const finalScore = state.rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
+  const lastRound = state.rounds[state.rounds.length - 1];
+  const freezerGames = getLocalStorage("freezerGames");
+  const frozenGame = {
+    name: `FROZEN-${Date.now()}`,
+    usName: state.usTeamName || "Us",
+    demName: state.demTeamName || "Dem",
+    finalScore,
+    lastBid: lastRound ? lastRound.bidAmount : null,
+    winner: state.winner,
+    victoryMethod: state.victoryMethod,
+    rounds: state.rounds,
+    timestamp: new Date().toISOString(),
+    accumulatedTime: finalAccumulated,
+  };
+  freezerGames.push(frozenGame);
+  setLocalStorage("freezerGames", freezerGames);
+  
+  // Remove from localStorage
+  localStorage.removeItem(ACTIVE_GAME_KEY);
+  
+  // NEW CODE: Sync this removal to Firestore
+  if (window.syncToFirestore && window.firebaseReady && 
+      window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+    window.syncToFirestore(ACTIVE_GAME_KEY, null);
+  }
+  
+  // Existing code to reset the state
+  ephemeralCustomBid = "";
+  ephemeralPoints = "";
+  updateState({ ...DEFAULT_STATE });
+  confettiTriggered = false;
+  pendingGameAction = null;
+  renderApp();
+}
 
   function loadFreezerGame(index) {
     const freezerGames = getLocalStorage("freezerGames");
