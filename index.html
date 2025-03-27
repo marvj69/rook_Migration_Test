@@ -431,6 +431,11 @@ input[type="color"]:focus {
           </a>
         </li>
         <li>
+          <a href="#" onclick="openSettingsModal();toggleMenu(event)">
+            Settings
+          </a>
+        </li>
+        <li>
           <a href="#" onclick="openAboutModal();toggleMenu(event)">About</a>
         </li>
         <li>
@@ -462,41 +467,6 @@ input[type="color"]:focus {
               ></div>
             </div>
           </label>
-        </li>
-        <li>
-          <label
-            for="proModeToggle"
-            class="px-5 py-[15px] border-b-[0.3px] border-gray-200 dark:border-gray-600 flex items-center justify-between w-full cursor-pointer text-[20px] hover:bg-gray-100 dark:hover:bg-gray-600"
-          >
-            <span class="text-gray-700 dark:text-white">
-              Pro Mode
-            </span>
-            <div class="relative">
-              <input type="checkbox" id="proModeToggle" class="sr-only peer" />
-              <div
-                class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
-                       peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
-                       peer-checked:bg-gray-1000
-                       after:content-['✗'] peer-checked:after:content-['✓']
-                       after:absolute after:top-1/2 after:left-0
-                       after:bg-white after:border after:border-gray-300 after:rounded-full
-                       after:h-7 after:w-7 after:flex after:items-center after:justify-center after:text-xl after:font-sans
-                       after:text-black
-                       after:transition-transform after:-translate-y-1/2
-                       peer-checked:after:translate-x-[36px]"
-              ></div>
-            </div>
-          </label>
-        </li>
-        <li>
-          <a href="#" onclick="openThemeModal(); toggleMenu(event)">
-            Themes
-          </a>
-        </li>
-        <li id="editPresetsMenuItem">
-          <a href="#" onclick="openPresetEditorModal();toggleMenu(event)">
-            Edit Bid Presets
-          </a>
         </li>
         <!-- Sign in with Google Button -->
         <li id="authMenuItem">
@@ -685,59 +655,78 @@ aria-labelledby="savedGamesTitle"
       </div>
     </div>
 
-    <!-- About Modal -->
-    <div
-      id="aboutModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="aboutModalTitle"
-      style="-webkit-overflow-scrolling: touch;"
-    >
-    <div
-    class="relative mx-auto my-8 w-full max-w-4xl bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden overflow-y-auto z-50"
-    style="max-height: 69vh;"
-  >
-        <div class="p-6">
-          <h2
-            id="aboutModalTitle"
-            class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
-          >
-            About Rook Game Scoring
-          </h2>
-          <p class="text-gray-700 dark:text-white mb-4">
-            <strong>How to Use:</strong> Tap a team to begin bidding, enter the bid and the points,
-            then press "Submit." Keep track of all round scores in the “History” section. You can
-            also freeze a current game, view saved games, start a new game, view statistics, toggle
-            dark mode, toggle pro mode, and change the theme from the menu. Sign in with Google to preserve your games among devices.
-          </p>
-          <p class="text-gray-700 dark:text-white mb-4">
-            <strong>What's New in 1.4.0:</strong>
-            <p>
-              version 1.4.0 introduces a Pro Mode and now saves data to an online database.
-            </p>
-            - Sign in with Google: Save games to the cloud and access them from any device.<br />
-            - Pro mode: Enable pro mode to see the exact win probability for each team, and customize bid presets.<br />
-            - Sandbagger. Are you a sandbagger? Check the team stats to find out.<br />
-            - Select teams: Team statistics save per team once team names are entered.<br />
-            - Expanded Statistics Section: Click the dropdown for more stats.<br />
-            - Various small UI and logic improvements.<br />
-            - More features coming soon!
-          </p>
-          <strong class="text-gray-700 dark:text-white mb-4"><br />Author: Marv Heinonen</strong>
-          <div class="flex justify-end space-x-2">
-            <button
-              type="button"
-              onclick="closeAboutModal()"
-              class="bg-gray-300 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500"
+        <!-- About Modal -->
+        <div
+        id="aboutModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="aboutModalTitle"
+        style="-webkit-overflow-scrolling: touch;"
+      >
+        <div
+          class="relative mx-auto my-8 w-full max-w-4xl bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden overflow-y-auto z-50"
+          style="max-height: 69vh;"
+        >
+          <div class="p-6 space-y-6">
+            <h2
+              id="aboutModalTitle"
+              class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
             >
-              Close
-            </button>
+              About Rook Score Keeper
+            </h2>
+  
+            <div>
+              <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-white">Quick Start</h3>
+              <p class="text-gray-700 dark:text-white">
+                Tap a team ('Us' or 'Dem') to start the bidding process for a round. Select or enter the bid amount, choose whether you're entering points for the bidding or non-bidding team, input the points earned, and hit "Submit". Scores update automatically, and round details appear in the "History" section.
+              </p>
+            </div>
+  
+            <div>
+              <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-white">Key Features</h3>
+              <ul class="list-disc list-inside text-gray-700 dark:text-white space-y-1">
+                <li><strong>Effortless Scoring:</strong> Quickly record bids and points for each round.</li>
+                <li><strong>Game History:</strong> Review running totals and bids round-by-round.</li>
+                <li><strong>Save & Load:</strong> Freeze games to finish later or view completed game summaries.</li>
+                <li><strong>Cloud Sync:</strong> Sign in with Google to save your games and stats across devices.</li>
+                <li><strong>Team Statistics:</strong> Track win rates, average bids, and more for named teams.</li>
+                <li><strong>Customization:</strong> Choose themes, set team names, and adjust game rules (like 'Must Win by Bid').</li>
+                <li><strong>Pro Mode (Optional):</strong> See win probabilities and customize bid preset buttons.</li>
+                <li><strong>Dark Mode:</strong> Easier viewing in low-light conditions.</li>
+              </ul>
+            </div>
+  
+            <div>
+              <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-white">What's New in v1.4.0</h3>
+              <ul class="list-disc list-inside text-gray-700 dark:text-white space-y-1">
+                <li><strong>Google Sign-In & Cloud Sync:</strong> Keep your game data safe and access it anywhere.</li>
+                <li><strong>Pro Mode:</strong> Unlock win probability display.</li>
+                <li><strong>Sandbagger Stat:</strong> Discover which teams tend to 'sandbag' based on game history.</li>
+                <li><strong>Enhanced Team Stats:</strong> Assign names to teams ('Us'/'Dem') to track their specific statistics over time.</li>
+                <li><strong>Expanded Statistics View:</strong> Explore more detailed stats via a dropdown menu.</li>
+                <li>Various UI refinements and logic improvements.</li>
+              </ul>
+              <p class="text-gray-600 dark:text-gray-400 mt-2">More features are planned!</p>
+            </div>
+  
+            <div>
+               <p class="text-gray-700 dark:text-white pt-2"><strong>Author:</strong> Marv Heinonen</p>
+            </div>
+  
+  
+            <div class="flex justify-end space-x-2 pt-4">
+              <button
+                type="button"
+                onclick="closeAboutModal()"
+                class="bg-gray-300 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500 threed"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
     <!-- Statistics Modal -->
     <div
       id="statisticsModal"
@@ -848,10 +837,80 @@ aria-labelledby="savedGamesTitle"
       </div>
     </div>
 
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-40 modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" style="-webkit-overflow-scrolling: touch;">
+      <div class="relative mx-auto my-8 w-full max-w-md bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden overflow-y-auto z-50" style="max-height: 69vh;">
+        <div class="p-6">
+          <h2 id="settingsModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Game Settings</h2>
+    
+          <!-- Win Conditions Section -->
+          <div class="space-y-6">
+            <div class="mt-4">
+              <label for="mustWinByBidToggle" class="flex items-center justify-between w-full cursor-pointer">
+                <span class="text-gray-700 dark:text-white">Must win game by taking bid?</span>
+                <div class="relative">
+                  <input type="checkbox" id="mustWinByBidToggle" class="sr-only peer" />
+                  <div class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
+                               peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
+                               peer-checked:bg-blue-600
+                               after:content-[''] after:absolute after:top-1 after:left-1
+                               after:bg-white after:border after:border-gray-300 after:rounded-full
+                               after:h-6 after:w-6 after:transition-all
+                               peer-checked:after:translate-x-8"></div>
+                </div>
+              </label>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                When enabled, a player must make their bid to win the game, even if they have 500+ points.
+              </p>
+            </div>
+          </div>
+    
+          <!-- Additional Settings Section -->
+          <div class="space-y-6 mt-6">
+            <!-- Pro Mode Toggle -->
+            <div>
+              <label for="proModeToggleModal" class="flex items-center justify-between w-full cursor-pointer">
+                <span class="text-gray-700 dark:text-white">Pro Mode</span>
+                <div class="relative">
+                  <input type="checkbox" id="proModeToggleModal" class="sr-only peer" onchange="toggleProMode(this)" />
+                  <div class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
+                               peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
+                               peer-checked:bg-blue-600
+                               after:content-[''] after:absolute after:top-1 after:left-1
+                               after:bg-white after:border after:border-gray-300 after:rounded-full
+                               after:h-6 after:w-6 after:transition-all
+                               peer-checked:after:translate-x-8"></div>
+                </div>
+              </label>
+            </div>
+            <!-- Theme Selection Button -->
+            <div>
+              <button type="button" onclick="openThemeModal(event)" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                Themes
+              </button>
+            </div>
+            <!-- Edit Bid Presets -->
+            <div id="editPresetsContainerModal">
+              <button type="button" onclick="openPresetEditorModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                Edit Bid Presets
+              </button>
+            </div>
+          </div>
+    
+          <!-- Close Button -->
+          <div class="flex justify-end space-x-2 mt-6">
+            <button type="button" onclick="closeSettingsModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- CUSTOM THEME SELECTION MODAL -->
     <div
   id="themeModal"
-  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-99 modal"
   role="dialog"
   aria-modal="true"
   aria-labelledby="themeModalTitle"
@@ -968,7 +1027,19 @@ aria-labelledby="savedGamesTitle"
   
   function initializeFirebaseAuth() {
   console.log("Starting Firebase auth initialization");
+  
+  // Add an offline detection mechanism with timeout
+  let authTimeoutId = setTimeout(() => {
+    console.log("Firebase auth timed out - likely offline");
+    window.firebaseReady = false;
+    updateAuthUI(null);
+    // Load game from local storage anyway
+    loadCurrentGameState();
+    renderApp();
+  }, 3000); // 3 second timeout
+  
   onAuthStateChanged(auth, (user) => {
+    clearTimeout(authTimeoutId); // Clear the timeout since auth responded
     console.log("Auth state changed:", user ? `User ${user.uid} signed in` : "No user");
     if (user) {
       window.firebaseReady = true;
@@ -991,6 +1062,8 @@ aria-labelledby="savedGamesTitle"
           console.error("Anonymous sign-in failed:", error.code, error.message);
           window.firebaseReady = false;
           updateAuthUI(null);
+          // Ensure local data is loaded even when Firebase fails
+          loadCurrentGameState();
           renderApp();
         });
     }
@@ -1051,8 +1124,8 @@ function updateAuthUI(user) {
     if (key === "timestamp") return;
     const localValue = localData[key];
     const firestoreValue = firestoreData[key];
-    if (key === "currentGameState") {
-      // Always use local currentGameState to ensure reset persists
+    if (key === ACTIVE_GAME_KEY) {
+      // Always use local current game state to ensure reset persists
       mergedData[key] = localValue || {
         rounds: [],
         biddingTeam: null,
@@ -1102,7 +1175,7 @@ function updateAuthUI(user) {
       localStorage.setItem(key, JSON.stringify(value));
     }
   });
-  // Ensure state is reset after merge
+  // Ensure state is loaded after merge
   loadCurrentGameState();
   renderApp();
 }
@@ -1169,23 +1242,42 @@ function updateAuthUI(user) {
 <script>
   "use strict";
 
-  let savedGamesModal, viewSavedGameModal, aboutModal, statisticsModal, teamSelectionModal, themeModal;
+  let savedGamesModal, viewSavedGameModal, aboutModal, statisticsModal, teamSelectionModal, themeModal, settingsModal;
+  const MUST_WIN_BY_BID_KEY = "rookMustWinByBid";
 
   function setLocalStorage(key, value) {
   console.log(`setLocalStorage called with key: ${key}`);
   try {
+    // First, save locally - this is the most important step for offline support
     localStorage.setItem(key, JSON.stringify(value));
-    if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+    
+    // Then, try to sync to Firebase if available and relevant
+    if (window.syncToFirestore && window.firebaseReady && 
+        window.firebaseAuth && window.firebaseAuth.currentUser && 
+        !window.firebaseAuth.currentUser.isAnonymous) {
+      
+      // Sync in the background, don't block execution
       setTimeout(() => {
-        window.syncToFirestore(key, value).catch(err => {
-          console.warn(`Firestore sync failed for ${key}, but data is saved locally:`, err);
-        });
+        window.syncToFirestore(key, value)
+          .then(() => {
+            console.log(`Successfully synced ${key} to Firestore`);
+          })
+          .catch(err => {
+            console.warn(`Firestore sync failed for ${key}, but data is saved locally:`, err);
+          });
       }, 0);
     } else {
       console.log(`Not syncing ${key} - either Firebase not ready or not Google authenticated`);
     }
   } catch (error) {
     console.error(`Error in setLocalStorage for key ${key}:`, error);
+    
+    // Last resort attempt - try with direct approach
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (finalError) {
+      console.error(`Critical error: Failed to save ${key} to localStorage:`, finalError);
+    }
   }
 }
 
@@ -1193,7 +1285,17 @@ function getLocalStorage(key) {
   try {
     const item = localStorage.getItem(key);
     if (!item) return [];
-    return JSON.parse(item);
+    
+    const parsed = JSON.parse(item);
+    
+    // Handle both array and object formats
+    if (Array.isArray(parsed)) {
+      return parsed;
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      // If it's an object, wrap it in an array to be consistent
+      return [parsed];
+    }
+    return [];
   } catch (error) {
     console.error(`Error parsing localStorage item ${key}:`, error);
     return [];
@@ -1349,7 +1451,7 @@ function showErrorIndicator(message) {
   // -------------------------------
   // Migrations, Theme & Utility Logic
   // -------------------------------
-  const CURRENT_MIGRATION_VERSION = 4;
+  const CURRENT_MIGRATION_VERSION = 5;
   const MIGRATION_VERSION_KEY = "rookMigrationVersion";
 
   // Reuse our getLocalStorage and setLocalStorage functions
@@ -1357,6 +1459,17 @@ function showErrorIndicator(message) {
     const currentVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
     if (currentVersion && parseInt(currentVersion, 10) >= CURRENT_MIGRATION_VERSION) {
       return; // Already migrated
+    }
+
+    // Migrate active game data from "currentGameState" to "activeGameState" if it exists
+    try {
+      const currentGameData = localStorage.getItem("currentGameState");
+      if (currentGameData && currentGameData !== "[]") {
+        console.log("Migrating currentGameState to activeGameState");
+        localStorage.setItem(ACTIVE_GAME_KEY, currentGameData);
+      }
+    } catch (error) {
+      console.error("Error migrating game state:", error);
     }
 
     // Migrate savedGames
@@ -1498,15 +1611,57 @@ function showErrorIndicator(message) {
   // -------------------------------
   const THEME_KEY = "rookSelectedTheme";
 
-  function openThemeModal() {
-    document.getElementById("themeModal").classList.remove("hidden");
-    document.body.classList.add("modal-open");
+  function openThemeModal(event) {
+  // Prevent event bubbling to avoid automatic closing
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
+  
+  console.log("openThemeModal called with prevented propagation");
+  
+  // First, properly hide the settings modal
+  const settingsModal = document.getElementById("settingsModal");
+  if (settingsModal) {
+    settingsModal.classList.add("hidden");
+  }
+  
+  // Now show the theme modal
+  const themeModal = document.getElementById("themeModal");
+  if (themeModal) {
+    themeModal.classList.remove("hidden");
+    console.log("Theme modal should be visible now");
+    
+    // Make sure clicking inside the theme modal content doesn't close it
+    const themeModalContent = themeModal.querySelector(".bg-white, .dark\\:bg-gray-800");
+    if (themeModalContent) {
+      themeModalContent.onclick = function(e) {
+        e.stopPropagation();
+      };
+    }
+  }
+}
 
-  function closeThemeModal() {
-    document.getElementById("themeModal").classList.add("hidden");
-    document.body.classList.remove("modal-open");
+function closeThemeModal(event) {
+  // Prevent event bubbling
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
+  
+  console.log("closeThemeModal called with prevented propagation");
+  
+  const themeModal = document.getElementById("themeModal");
+  if (themeModal) {
+    themeModal.classList.add("hidden");
+  }
+  
+  // Restore the settings modal
+  const settingsModal = document.getElementById("settingsModal");
+  if (settingsModal) {
+    settingsModal.classList.remove("hidden");
+  }
+}
 
   function applyTheme(themeClass) {
     const body = document.getElementById("bodyRoot");
@@ -1718,35 +1873,100 @@ function showErrorIndicator(message) {
   }
 
   function loadCurrentGameState() {
-  const loadedState = getLocalStorage("currentGameState")[0] || {};
-  // Only restore rounds if explicitly loading (e.g., from freezer), otherwise start fresh
-  const isLoadingGame = window.location.hash === "#loadFreezer"; // Example flag, adjust as needed
-  updateState({
-    rounds: isLoadingGame ? (loadedState.rounds || []) : [],
-    biddingTeam: null,
-    bidAmount: null,
-    showCustomBid: false,
-    customBidValue: "",
-    enterBidderPoints: true,
-    gameOver: false,
-    winner: null,
-    error: null,
-    lastBidTeam: null,
-    lastBidAmount: null,
-    startTime: Date.now(),
-    usTeamName: loadedState.usTeamName || null,
-    demTeamName: loadedState.demTeamName || null,
-    showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
-    ...(isLoadingGame ? loadedState : {}),
-  });
+  try {
+    // First, attempt to get data from localStorage
+    let loadedState;
+    try {
+      loadedState = getLocalStorage(ACTIVE_GAME_KEY)[0] || {};
+    } catch (err) {
+      console.error("Error parsing localStorage game state:", err);
+      // Try alternate direct approach if getLocalStorage fails
+      const rawData = localStorage.getItem(ACTIVE_GAME_KEY);
+      if (rawData) {
+        try {
+          loadedState = JSON.parse(rawData);
+          if (Array.isArray(loadedState)) {
+            loadedState = loadedState[0] || {};
+          }
+        } catch (innerErr) {
+          console.error("Failed direct parse of game state:", innerErr);
+          loadedState = {};
+        }
+      } else {
+        loadedState = {};
+      }
+    }
+    
+    // Always restore the full game state if it exists
+    if (loadedState && Object.keys(loadedState).length > 0 && Array.isArray(loadedState.rounds)) {
+      console.log("Restoring saved game state with", loadedState.rounds.length, "rounds");
+      updateState(loadedState);
+    } else {
+      // Initialize with empty state if no saved state exists
+      console.log("No valid saved game state found, initializing new game");
+      updateState({
+        rounds: [],
+        biddingTeam: null,
+        bidAmount: null,
+        showCustomBid: false,
+        customBidValue: "",
+        enterBidderPoints: true,
+        gameOver: false,
+        winner: null,
+        error: null,
+        lastBidTeam: null,
+        lastBidAmount: null,
+        startTime: Date.now(),
+        usTeamName: null,
+        demTeamName: null,
+        showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
+      });
+    }
+  } catch (err) {
+    console.error("Critical error loading game state:", err);
+    // Last resort fallback
+    updateState({ ...DEFAULT_STATE });
+  }
 }
 
   function saveCurrentGameState() {
-    if (state.gameOver) {
-      localStorage.removeItem(ACTIVE_GAME_KEY);
-    } else {
-      setLocalStorage(ACTIVE_GAME_KEY, state);
-      showSaveIndicator();
+    try {
+      if (state.gameOver) {
+        localStorage.removeItem(ACTIVE_GAME_KEY);
+      } else {
+        // Always save to localStorage first to ensure offline capability
+        try {
+          localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
+          console.log("Game state saved to localStorage");
+        } catch (err) {
+          console.error("Failed to save state to localStorage:", err);
+        }
+        
+        // Then attempt to sync to Firebase if available
+        try {
+          if (window.syncToFirestore && window.firebaseReady && 
+              window.firebaseAuth?.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+            window.syncToFirestore(ACTIVE_GAME_KEY, state).catch(err => {
+              console.warn("Firebase sync failed, but state is saved locally:", err);
+            });
+          }
+        } catch (firebaseErr) {
+          console.error("Error during Firebase sync attempt:", firebaseErr);
+          // Firebase error shouldn't affect user experience since we already saved locally
+        }
+        
+        showSaveIndicator();
+      }
+    } catch (err) {
+      console.error("Error in saveCurrentGameState:", err);
+      // Try one more direct approach as last resort
+      if (!state.gameOver) {
+        try {
+          localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify(state));
+        } catch (finalErr) {
+          console.error("Critical error: Could not save game state:", finalErr);
+        }
+      }
     }
   }
       
@@ -1873,6 +2093,42 @@ function showErrorIndicator(message) {
   function closeTeamSelectionModal() {
     document.getElementById("teamSelectionModal").classList.add("hidden");
     document.body.classList.remove("modal-open");
+  }
+  function openSettingsModal() {
+  document.body.classList.add("modal-open");
+  // Set the must-win toggle as you already do
+  const mustWinByBidToggle = document.getElementById("mustWinByBidToggle");
+  if (mustWinByBidToggle) {
+    mustWinByBidToggle.checked = JSON.parse(localStorage.getItem(MUST_WIN_BY_BID_KEY) || "false");
+  }
+  // Sync the Pro Mode toggle in the modal
+  const proModeToggleModal = document.getElementById("proModeToggleModal");
+  const isPro = JSON.parse(localStorage.getItem(PRO_MODE_KEY) || "false");
+  if (proModeToggleModal) {
+    proModeToggleModal.checked = isPro;
+  }
+  // Always show the Edit Presets button
+  const editPresetsContainer = document.getElementById('editPresetsContainerModal');
+  if (editPresetsContainer) {
+    editPresetsContainer.classList.remove('hidden');
+  }
+  document.getElementById("settingsModal").classList.remove("hidden");
+  document.getElementById("settingsModal").focus();
+}
+
+  // Function to close settings modal
+  function closeSettingsModal() {
+    document.getElementById("settingsModal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  }
+
+  // Function to save settings
+  function saveSettings() {
+    const mustWinByBidToggle = document.getElementById("mustWinByBidToggle");
+    if (mustWinByBidToggle) {
+      localStorage.setItem(MUST_WIN_BY_BID_KEY, mustWinByBidToggle.checked);
+    }
+    showSaveIndicator();
   }
 
   function populateTeamSelects() {
@@ -2084,19 +2340,46 @@ function showErrorIndicator(message) {
     const newTotals = { us: lastTotals.us + usEarned, dem: lastTotals.dem + demEarned };
     const newRound = { biddingTeam, bidAmount: numericBid, usPoints: usEarned, demPoints: demEarned, runningTotals: newTotals };
     const updatedRounds = [...rounds, newRound];
+    
+    // Check if the "Must win by bid" setting is enabled
+    const mustWinByBid = JSON.parse(localStorage.getItem(MUST_WIN_BY_BID_KEY) || "false");
+    
     let gameFinished = false, theWinner = null, victoryMethod = "Won on Bid";
+    
+    // 1000-point spread rule always applies
     if (Math.abs(newTotals.us - newTotals.dem) >= 1000) {
       gameFinished = true;
       theWinner = newTotals.us > newTotals.dem ? "us" : "dem";
       victoryMethod = "1000 Point Spread";
-    } else if ((biddingTeam === "us" && usEarned < 0 && newTotals.dem >= 500) || (biddingTeam === "dem" && demEarned < 0 && newTotals.us >= 500)) {
-      gameFinished = true;
-      theWinner = biddingTeam === "us" ? "dem" : "us";
-      victoryMethod = "Set Other Team";
-    } else if ((biddingTeam === "us" && newTotals.us >= 500 && usEarned >= numericBid) || (biddingTeam === "dem" && newTotals.dem >= 500 && demEarned >= numericBid)) {
-      gameFinished = true;
-      theWinner = newTotals.us > newTotals.dem ? "us" : "dem";
+    } 
+    // Setting the other team rule
+    else if ((biddingTeam === "us" && usEarned < 0 && newTotals.dem >= 500) || 
+             (biddingTeam === "dem" && demEarned < 0 && newTotals.us >= 500)) {
+      // Only end the game if mustWinByBid is false
+      // When mustWinByBid is true, we require the bidder to make their bid to win
+      if (!mustWinByBid) {
+        gameFinished = true;
+        theWinner = biddingTeam === "us" ? "dem" : "us";
+        victoryMethod = "Set Other Team";
+      }
+    } 
+    // Standard 500+ points win condition
+    else if (newTotals.us >= 500 || newTotals.dem >= 500) {
+      if (mustWinByBid) {
+        // When mustWinByBid is true, a team can only win if they are the bidding team and made their bid
+        if ((biddingTeam === "us" && newTotals.us >= 500 && usEarned >= numericBid) || 
+            (biddingTeam === "dem" && newTotals.dem >= 500 && demEarned >= numericBid)) {
+          gameFinished = true;
+          theWinner = biddingTeam;
+          victoryMethod = "Won on Bid";
+        }
+      } else {
+        // Standard rule: first to 500 points wins regardless of bid success
+        gameFinished = true;
+        theWinner = newTotals.us > newTotals.dem ? "us" : "dem";
+      }
     }
+    
     ephemeralCustomBid = "";
     ephemeralPoints = "";
     if (gameFinished) {
@@ -2124,7 +2407,7 @@ function showErrorIndicator(message) {
       updateState({ rounds: updatedRounds, biddingTeam: "", bidAmount: "", showCustomBid: false, customBidValue: "", enterBidderPoints: false, error: "" });
       saveCurrentGameState();
     }
-  }
+}
 
   function updateTeamsStatsOnGameEnd(winner) {
     if (!state.usTeamName || !state.demTeamName) return;
@@ -2210,8 +2493,8 @@ function showErrorIndicator(message) {
     localStorage.removeItem(ACTIVE_GAME_KEY);
     if (window.syncToFirestore && window.firebaseReady && 
       window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
-    window.syncToFirestore(ACTIVE_GAME_KEY, null);
-  }
+      window.syncToFirestore(ACTIVE_GAME_KEY, null);
+    }
     ephemeralCustomBid = "";
     ephemeralPoints = "";
     updateState({ ...DEFAULT_STATE });
@@ -2239,29 +2522,15 @@ function showErrorIndicator(message) {
   };
   freezerGames.unshift(newFreezerGame);
   setLocalStorage("freezerGames", freezerGames);
+  
+  // Reset the game state
   resetGame();
-  // Explicitly clear currentGameState in localStorage and Firestore
-  const clearedState = {
-    rounds: [],
-    biddingTeam: null,
-    bidAmount: null,
-    showCustomBid: false,
-    customBidValue: "",
-    enterBidderPoints: true,
-    gameOver: false,
-    winner: null,
-    error: null,
-    lastBidTeam: null,
-    lastBidAmount: null,
-    startTime: Date.now(),
-    usTeamName: null,
-    demTeamName: null,
-    showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
-  };
-  setLocalStorage("currentGameState", clearedState);
+  
+  // Clear active game from storage
+  localStorage.removeItem(ACTIVE_GAME_KEY);
   if (window.firebaseReady && window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
-    window.syncToFirestore("currentGameState", clearedState).then(() => {
-      console.log("Cleared currentGameState synced to Firestore");
+    window.syncToFirestore(ACTIVE_GAME_KEY, null).then(() => {
+      console.log("Game state cleared from Firestore");
     });
   }
   showSaveIndicator();
@@ -2755,7 +3024,7 @@ function showErrorIndicator(message) {
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
         <div class="border-b border-gray-200 p-5 flex justify-between items-center dark:border-gray-700">
           <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-            Score Input for ${biddingTeam === "us" ? state.usTeamName || "Us" : state.demTeamName || "Dem"}
+            Enter Bid for ${biddingTeam === "us" ? state.usTeamName || "Us" : state.demTeamName || "Dem"}
           </h2>
           <button class="flex items-center border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
                   onclick="handleUndo(event)" ${!rounds.length ? "disabled" : ""} title="Undo Last Round" aria-label="Undo Last Round" type="button">
@@ -3200,61 +3469,140 @@ function showErrorIndicator(message) {
   function updateProModeUI(isProMode) {
     const editPresetsItem = document.getElementById('editPresetsMenuItem');
     if (editPresetsItem) {
-      editPresetsItem.classList.toggle('hidden', !isProMode);
+      // Always show edit presets item, regardless of pro mode
+      editPresetsItem.classList.remove('hidden');
     }
     state.showWinProbability = isProMode;
     renderApp();
   }
+  function toggleProMode(checkbox) {
+  const isPro = checkbox.checked;
+  localStorage.setItem(PRO_MODE_KEY, isPro);
+  updateProModeUI(isPro);
+  // Always show preset editor, regardless of pro mode
+  const editPresetsContainer = document.getElementById('editPresetsContainerModal');
+  if (editPresetsContainer) {
+    editPresetsContainer.classList.remove('hidden');
+  }
+  if (window.updateChatbotVisibility) {
+        window.updateChatbotVisibility(isPro);
+    }
+  saveCurrentGameState();
+}
 
+  // Add offline detection mechanism
+  function handleOfflineStatus() {
+    window.addEventListener('online', function() {
+      console.log('Connected to the internet');
+      // Only attempt to sync if we have a user
+      if (window.firebaseAuth && window.firebaseAuth.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+        console.log('User is signed in, attempting to sync data');
+        mergeLocalStorageWithFirestore(window.firebaseAuth.currentUser)
+          .catch(error => {
+            console.error('Error syncing data after coming online:', error);
+          });
+      }
+    });
+    
+    window.addEventListener('offline', function() {
+      console.log('Lost internet connection. App continuing in offline mode.');
+      // We don't need to do anything special here since we're already using localStorage
+    });
+    
+    // Initial check
+    if (!navigator.onLine) {
+      console.log('App started in offline mode. Using local data only.');
+    }
+  }
+  
   document.addEventListener("DOMContentLoaded", () => {
-    const closeViewSavedBtn = document.getElementById("closeViewSavedGameModalBtn");
-    if (closeViewSavedBtn) {
-      closeViewSavedBtn.addEventListener("click", (e) => { e.stopPropagation(); closeViewSavedGameModal(); });
+    // Setup offline handling
+    handleOfflineStatus();
+    
+    try {
+      const closeViewSavedBtn = document.getElementById("closeViewSavedGameModalBtn");
+      if (closeViewSavedBtn) {
+        closeViewSavedBtn.addEventListener("click", (e) => { e.stopPropagation(); closeViewSavedGameModal(); });
+      }
+      const closeSavedGamesBtn = document.getElementById("closeSavedGamesModalBtn");
+      if (closeSavedGamesBtn) {
+        closeSavedGamesBtn.addEventListener("click", (e) => { e.stopPropagation(); closeSavedGamesModal(); });
+      }
+      const teamSelectionForm = document.getElementById("teamSelectionForm");
+      if (teamSelectionForm) {
+        teamSelectionForm.addEventListener("submit", handleTeamSelectionSubmit);
+      }
+      savedGamesModal = document.getElementById("savedGamesModal");
+      viewSavedGameModal = document.getElementById("viewSavedGameModal");
+      aboutModal = document.getElementById("aboutModal");
+      statisticsModal = document.getElementById("statisticsModal");
+      teamSelectionModal = document.getElementById("teamSelectionModal");
+      themeModal = document.getElementById("themeModal");
+      settingsModal = document.getElementById("settingsModal");
+      
+      // Run migrations regardless of online status
+      performDataMigration();
+      
+      // Always attempt to load local game state first for immediate display
+      loadCurrentGameState();
+      
+      // Initialize theme settings
+      initializeDarkMode();
+      initializeTheme();
+      initializeCustomThemeColors();
+      
+      // Render the app with whatever data we have
+      renderApp();
+      
+      // Set up remaining event listeners
+      const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
+      if (darkModeToggleCheckbox) {
+        darkModeToggleCheckbox.addEventListener("change", (e) => {
+          const isDark = e.target.checked;
+          document.documentElement.classList.toggle("dark", isDark);
+          localStorage.setItem(DARK_MODE_KEY, isDark);
+          updateDarkModeLabel(isDark);
+          updateMetaThemeColor(isDark);
+        });
+      }
+      
+      const proModeToggleCheckbox = document.getElementById("proModeToggle");
+      if (proModeToggleCheckbox) {
+        proModeToggleCheckbox.addEventListener("change", (e) => {
+          const isProMode = e.target.checked;
+          localStorage.setItem(PRO_MODE_KEY, isProMode);
+          updateProModeUI(isProMode);
+          saveCurrentGameState();
+        });
+      }
+      
+      updateProModeUI(JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false);
+      modals.push({ id: "settingsModal", closeFn: closeSettingsModal });
+      
+      // Set up the must win by bid toggle
+      const mustWinByBidToggle = document.getElementById("mustWinByBidToggle");
+      if (mustWinByBidToggle) {
+        // Set initial state from localStorage
+        mustWinByBidToggle.checked = JSON.parse(localStorage.getItem(MUST_WIN_BY_BID_KEY) || "false");
+        
+        // Add event listener to save changes
+        mustWinByBidToggle.addEventListener("change", (e) => {
+          const mustWin = e.target.checked;
+          localStorage.setItem(MUST_WIN_BY_BID_KEY, mustWin);
+          showSaveIndicator();
+        });
+      }
+    } catch (err) {
+      console.error("Error during app initialization:", err);
+      // Try to render app anyway with defaults if there was an error
+      try {
+        loadCurrentGameState();
+        renderApp();
+      } catch (finalErr) {
+        console.error("Critical error loading app:", finalErr);
+        alert("There was an error loading the app. Please try refreshing the page.");
+      }
     }
-    const closeSavedGamesBtn = document.getElementById("closeSavedGamesModalBtn");
-    if (closeSavedGamesBtn) {
-      closeSavedGamesBtn.addEventListener("click", (e) => { e.stopPropagation(); closeSavedGamesModal(); });
-    }
-    const teamSelectionForm = document.getElementById("teamSelectionForm");
-    if (teamSelectionForm) {
-      teamSelectionForm.addEventListener("submit", handleTeamSelectionSubmit);
-    }
-    document.querySelector('nav ul').innerHTML += `
-      <li id="editPresetsMenuItem" class="hidden">
-        <a href="#" onclick="openPresetEditorModal();toggleMenu(event)">Edit Bid Presets</a>
-      </li>`;
-    savedGamesModal = document.getElementById("savedGamesModal");
-    viewSavedGameModal = document.getElementById("viewSavedGameModal");
-    aboutModal = document.getElementById("aboutModal");
-    statisticsModal = document.getElementById("statisticsModal");
-    teamSelectionModal = document.getElementById("teamSelectionModal");
-    themeModal = document.getElementById("themeModal");
-    performDataMigration();
-    loadCurrentGameState();
-    initializeDarkMode();
-    initializeTheme();
-    initializeCustomThemeColors();
-    renderApp();
-    const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
-    if (darkModeToggleCheckbox) {
-      darkModeToggleCheckbox.addEventListener("change", (e) => {
-        const isDark = e.target.checked;
-        document.documentElement.classList.toggle("dark", isDark);
-        localStorage.setItem(DARK_MODE_KEY, isDark);
-        updateDarkModeLabel(isDark);
-        updateMetaThemeColor(isDark);
-      });
-    }
-    const proModeToggleCheckbox = document.getElementById("proModeToggle");
-    if (proModeToggleCheckbox) {
-      proModeToggleCheckbox.addEventListener("change", (e) => {
-        const isProMode = e.target.checked;
-        localStorage.setItem(PRO_MODE_KEY, isProMode);
-        updateProModeUI(isProMode);
-        saveCurrentGameState();
-      });
-    }
-    updateProModeUI(JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false);
   });
 
   document.addEventListener("click", function (e) {
@@ -3299,13 +3647,16 @@ function showErrorIndicator(message) {
       toggleMenu(e);
     }
   }, { passive: false });
+  
   let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
-  });
+  
   if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    
     navigator.serviceWorker.register('./service-worker.js')
       .then(registration => {
         registration.addEventListener('updatefound', () => {
@@ -3326,6 +3677,18 @@ function showErrorIndicator(message) {
     state = { ...state, ...newState };
     renderApp();
   }
+
+  function resetGame() {
+    const isProMode = JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false;
+    updateState({ 
+      ...DEFAULT_STATE, 
+      showWinProbability: isProMode 
+    });
+    confettiTriggered = false;
+    ephemeralCustomBid = "";
+    ephemeralPoints = "";
+  }
 </script>
+<script src="chatbot.js" defer></script>
   </body>
 </html>
