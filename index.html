@@ -3484,9 +3484,6 @@ function closeThemeModal(event) {
   if (editPresetsContainer) {
     editPresetsContainer.classList.remove('hidden');
   }
-  if (window.updateChatbotVisibility) {
-        window.updateChatbotVisibility(isPro);
-    }
   saveCurrentGameState();
 }
 
@@ -3689,6 +3686,5 @@ function closeThemeModal(event) {
     ephemeralPoints = "";
   }
 </script>
-<script src="chatbot.js" defer></script>
   </body>
 </html>
