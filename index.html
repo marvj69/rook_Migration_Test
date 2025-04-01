@@ -75,6 +75,36 @@ input[type="color"]:focus {
       .animate-fade-in {
         animation: fadeIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
+      
+      @keyframes fadeInElement {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes fadeOutElement {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+      }
+      
+      .animate-fadeIn {
+        animation: fadeInElement 0.2s ease-in-out forwards;
+      }
+      
+      .animate-fadeOut {
+        animation: fadeOutElement 0.15s ease-in-out forwards;
+      }
 
       .score-input-container {
         overflow: hidden;
@@ -510,7 +540,7 @@ input[type="color"]:focus {
     </div>
 
     <!-- Main App Container -->
-    <div id="app" class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6"></div>
+    <div id="app" class="max-w-4xl mx-auto p-2 sm:p-4 space-y-3"></div>
 
     <!-- Save Indicator -->
     <div id="saveIndicator" class="hidden">Saved</div>
@@ -575,38 +605,45 @@ aria-labelledby="savedGamesTitle"
     <!-- Confirmation Modal -->
     <div
       id="confirmationModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 modal transition-opacity duration-300"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmationModalTitle"
     >
       <div
-        class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 z-50"
+        class="bg-white w-full max-w-md rounded-2xl shadow-xl dark:bg-gray-800 z-50 transform transition-all duration-300 scale-100"
       >
-        <div class="p-6">
-          <h2
-            id="confirmationModalTitle"
-            class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
-          >
-            Confirm Action
-          </h2>
-          <p id="confirmationModalMessage" class="text-gray-700 dark:text-white mb-6">
+        <div class="p-6 space-y-6">
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="h-8 w-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2
+              id="confirmationModalTitle"
+              class="text-2xl font-semibold text-gray-900 dark:text-white"
+            >
+              Confirm Action
+            </h2>
+          </div>
+          <p id="confirmationModalMessage" class="text-base text-gray-600 dark:text-gray-300">
             Are you sure you want to proceed?
           </p>
-          <div class="flex justify-end space-x-2">
+          <div class="flex justify-end items-center space-x-3">
             <button
               type="button"
               id="noModalButton"
-              class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-gray-400 dark:hover:bg-gray-500 dark:focus:ring-yellow-400"
+              class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium"
             >
-              No
+              Cancel
             </button>
             <button
               type="button"
               id="confirmModalButton"
-              class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-red-400"
+              class="px-4 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200 font-medium"
             >
-              Yes
+              Confirm
             </button>
           </div>
         </div>
@@ -666,56 +703,188 @@ aria-labelledby="savedGamesTitle"
       >
         <div
           class="relative mx-auto my-8 w-full max-w-4xl bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden overflow-y-auto z-50"
-          style="max-height: 69vh;"
+          style="max-height: 80vh;"
         >
-          <div class="p-6 space-y-6">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
             <h2
               id="aboutModalTitle"
-              class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
+                class="text-3xl font-bold text-gray-800 dark:text-white"
             >
-              About Rook Score Keeper
+              About!
             </h2>
-  
-            <div>
-              <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-white">Quick Start</h3>
-              <p class="text-gray-700 dark:text-white">
-                Tap a team ('Us' or 'Dem') to start the bidding process for a round. Select or enter the bid amount, choose whether you're entering points for the bidding or non-bidding team, input the points earned, and hit "Submit". Scores update automatically, and round details appear in the "History" section.
+              <button
+                type="button"
+                onclick="closeAboutModal()"
+                class="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-full dark:text-gray-400 dark:hover:text-white"
+                aria-label="Close About Modal"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 shadow-sm">
+                <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Quick Start
+                </h3>
+                <p class="text-gray-700 dark:text-gray-200">
+                  Tap a team ('Us' or 'Dem') to start the bidding process. Select or enter the bid amount, choose which team's points you're entering, input the points earned, and hit "Submit". Scores update automatically, and round details appear in the "History" section.
               </p>
             </div>
   
-            <div>
-              <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-white">Key Features</h3>
-              <ul class="list-disc list-inside text-gray-700 dark:text-white space-y-1">
-                <li><strong>Effortless Scoring:</strong> Quickly record bids and points for each round.</li>
-                <li><strong>Game History:</strong> Review running totals and bids round-by-round.</li>
-                <li><strong>Save & Load:</strong> Freeze games to finish later or view completed game summaries.</li>
-                <li><strong>Cloud Sync:</strong> Sign in with Google to save your games and stats across devices.</li>
-                <li><strong>Team Statistics:</strong> Track win rates, average bids, and more for named teams.</li>
-                <li><strong>Customization:</strong> Choose themes, set team names, and adjust game rules (like 'Must Win by Bid').</li>
-                <li><strong>Pro Mode (Optional):</strong> See win probabilities and customize bid preset buttons.</li>
-                <li><strong>Dark Mode:</strong> Easier viewing in low-light conditions.</li>
+              <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 shadow-sm">
+                <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Pro Features
+                </h3>
+                <ul class="list-disc list-inside text-gray-700 dark:text-gray-200 space-y-1">
+                  <li class="flex items-start">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Win probability display for each team</span>
+                  </li>
+                  <li class="flex items-start">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Customizable bid preset buttons</span>
+                  </li>
+                  <li class="flex items-start">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Extended team statistics tracking</span>
+                  </li>
               </ul>
+              </div>
             </div>
   
-            <div>
-              <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-white">What's New in v1.4.0</h3>
-              <ul class="list-disc list-inside text-gray-700 dark:text-white space-y-1">
-                <li><strong>Google Sign-In & Cloud Sync:</strong> Keep your game data safe and access it anywhere.</li>
-                <li><strong>Pro Mode:</strong> Unlock win probability display.</li>
-                <li><strong>Sandbagger Stat:</strong> Discover which teams tend to 'sandbag' based on game history.</li>
-                <li><strong>Enhanced Team Stats:</strong> Assign names to teams ('Us'/'Dem') to track their specific statistics over time.</li>
-                <li><strong>Expanded Statistics View:</strong> Explore more detailed stats via a dropdown menu.</li>
-                <li>Various UI refinements and logic improvements.</li>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 shadow-sm mb-6">
+              <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Key Features
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Effortless Scoring</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Game History</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Save & Load Games</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Cloud Sync</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Team Statistics</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Customizable Themes</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Dark Mode</span>
+                </div>
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-blue-600 dark:text-blue-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2 text-gray-700 dark:text-gray-200">Win Probability</span>
+                </div>
+              </div>
+            </div>
+  
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 shadow-sm mb-6">
+              <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                What's New in v1.4.0
+              </h3>
+              <ul class="space-y-2 text-gray-700 dark:text-gray-200">
+                <li class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2"><strong>Google Sign-In & Cloud Sync:</strong> Keep your game data safe and access it anywhere.</span>
+                </li>
+                <li class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2"><strong>Pro Mode:</strong> Unlock win probability display and customize bid presets.</span>
+                </li>
+                <li class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2"><strong>Sandbagger Stat:</strong> Discover which teams tend to 'sandbag' based on game history.</span>
+                </li>
+                <li class="flex items-start">
+                  <div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <span class="ml-2"><strong>Enhanced Team Stats:</strong> Assign names to teams to track their specific statistics over time.</span>
+                </li>
               </ul>
-              <p class="text-gray-600 dark:text-gray-400 mt-2">More features are planned!</p>
+              <p class="text-gray-600 dark:text-gray-400 mt-4 italic">More features and improvements planned for future updates!</p>
             </div>
   
-            <div>
-               <p class="text-gray-700 dark:text-white pt-2"><strong>Author:</strong> Marv Heinonen</p>
-            </div>
-  
-  
-            <div class="flex justify-end space-x-2 pt-4">
+            <div class="flex justify-between items-center">
+              <div class="text-gray-700 dark:text-white">
+                <strong>Author:</strong> Marv Heinonen
+              </div>
               <button
                 type="button"
                 onclick="closeAboutModal()"
@@ -838,67 +1007,129 @@ aria-labelledby="savedGamesTitle"
     </div>
 
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-40 modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" style="-webkit-overflow-scrolling: touch;">
-      <div class="relative mx-auto my-8 w-full max-w-md bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden overflow-y-auto z-50" style="max-height: 69vh;">
+      <div class="relative mx-auto my-8 w-full max-w-lg bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden overflow-y-auto z-50" style="max-height: 80vh;">
         <div class="p-6">
-          <h2 id="settingsModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Game Settings</h2>
-    
-          <!-- Win Conditions Section -->
-          <div class="space-y-6">
-            <div class="mt-4">
-              <label for="mustWinByBidToggle" class="flex items-center justify-between w-full cursor-pointer">
-                <span class="text-gray-700 dark:text-white">Must win game by taking bid?</span>
-                <div class="relative">
-                  <input type="checkbox" id="mustWinByBidToggle" class="sr-only peer" />
-                  <div class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
+          <div class="flex justify-between items-center mb-6">
+            <h2 id="settingsModalTitle" class="text-2xl font-bold text-gray-800 dark:text-white">Game Settings</h2>
+            <button 
+              type="button" 
+              onclick="closeSettingsModal()" 
+              class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 rounded-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Game Rules Section -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 mb-6">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 dark:text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+              Game Rules
+            </h3>
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm">
+                <div>
+                  <label for="mustWinByBidToggle" class="text-gray-700 dark:text-white font-medium">Must win by making bid</label>
+                  <p class="text-sm text-gray-500 dark:text-gray-300 mt-1">
+                    When enabled, a player must make their bid to win, even if they have 500+ points.
+                  </p>
+                </div>
+                <div class="relative ml-4">
+                  <input type="checkbox" id="mustWinByBidToggle" class="sr-only peer" onchange="saveSettings()" />
+                  <div class="w-14 h-7 bg-gray-200 rounded-full dark:bg-gray-700
                                peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
                                peer-checked:bg-blue-600
-                               after:content-[''] after:absolute after:top-1 after:left-1
+                               after:content-[''] after:absolute after:top-0.5 after:left-0.5
                                after:bg-white after:border after:border-gray-300 after:rounded-full
                                after:h-6 after:w-6 after:transition-all
-                               peer-checked:after:translate-x-8"></div>
+                               peer-checked:after:translate-x-7 cursor-pointer"
+                       onclick="document.getElementById('mustWinByBidToggle').click()"></div>
                 </div>
-              </label>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                When enabled, a player must make their bid to win the game, even if they have 500+ points.
-              </p>
+              </div>
             </div>
           </div>
-    
-          <!-- Additional Settings Section -->
-          <div class="space-y-6 mt-6">
-            <!-- Pro Mode Toggle -->
-            <div>
-              <label for="proModeToggleModal" class="flex items-center justify-between w-full cursor-pointer">
-                <span class="text-gray-700 dark:text-white">Pro Mode</span>
-                <div class="relative">
+          
+          <!-- Appearance & Features Section -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 mb-6">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 dark:text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Appearance & Features
+            </h3>
+            
+            <div class="space-y-4">
+              <!-- Pro Mode Toggle -->
+              <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm">
+                <div>
+                  <label for="proModeToggleModal" class="text-gray-700 dark:text-white font-medium">Pro Mode</label>
+                  <p class="text-sm text-gray-500 dark:text-gray-300 mt-1">
+                    Enables win probability display.
+                  </p>
+                </div>
+                <div class="relative ml-4">
                   <input type="checkbox" id="proModeToggleModal" class="sr-only peer" onchange="toggleProMode(this)" />
-                  <div class="w-16 h-8 bg-gray-200 rounded-full dark:bg-gray-700
+                  <div class="w-14 h-7 bg-gray-200 rounded-full dark:bg-gray-700
                                peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500
                                peer-checked:bg-blue-600
-                               after:content-[''] after:absolute after:top-1 after:left-1
+                               after:content-[''] after:absolute after:top-0.5 after:left-0.5
                                after:bg-white after:border after:border-gray-300 after:rounded-full
                                after:h-6 after:w-6 after:transition-all
-                               peer-checked:after:translate-x-8"></div>
+                               peer-checked:after:translate-x-7 cursor-pointer"
+                       onclick="document.getElementById('proModeToggleModal').click()"></div>
                 </div>
-              </label>
-            </div>
-            <!-- Theme Selection Button -->
-            <div>
-              <button type="button" onclick="openThemeModal(event)" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                Themes
+              </div>
+              
+              <!-- Theme Selection Button -->
+              <button 
+                type="button" 
+                onclick="openThemeModal(event)" 
+                class="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
+              >
+                <div>
+                  <span class="text-gray-700 dark:text-white font-medium">Customize Theme Colors</span>
+                  <p class="text-sm text-gray-500 dark:text-gray-300 mt-1 text-left">
+                    Personalize team colors and appearance.
+                  </p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
               </button>
-            </div>
-            <!-- Edit Bid Presets -->
-            <div id="editPresetsContainerModal">
-              <button type="button" onclick="openPresetEditorModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                Edit Bid Presets
-              </button>
+              
+              <!-- Edit Bid Presets Button -->
+              <div id="editPresetsContainerModal">
+                <button 
+                  type="button" 
+                  onclick="openPresetEditorModal()" 
+                  class="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
+                >
+                  <div>
+                    <span class="text-gray-700 dark:text-white font-medium">Edit Bid Presets</span>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 mt-1 text-left">
+                      Customize the quick bid buttons.
+                    </p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-    
-          <!-- Close Button -->
-          <div class="flex justify-end space-x-2 mt-6">
-            <button type="button" onclick="closeSettingsModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500">
+          
+          <!-- Footer -->
+          <div class="flex justify-end space-x-2">
+            <button 
+              type="button" 
+              onclick="closeSettingsModal()" 
+              class="bg-gray-300 text-gray-700 px-5 py-2 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500 threed"
+            >
               Close
             </button>
           </div>
@@ -910,83 +1141,178 @@ aria-labelledby="savedGamesTitle"
     <!-- CUSTOM THEME SELECTION MODAL -->
     <div
   id="themeModal"
-  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-99 modal"
+  class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-99 modal"
   role="dialog"
   aria-modal="true"
   aria-labelledby="themeModalTitle"
 >
-  <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6 text-center">
-    <h2
-      id="themeModalTitle"
-      class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
-    >
-      Choose Your Colors
-    </h2>
-
-    <!-- Color picker container: side by side -->
-    <div class="flex justify-center items-center space-x-6 my-4">
-      <div class="text-center">
-        <label for="usColorPicker" class="block text-gray-700 dark:text-white mb-2">
-          Us Color:
-        </label>
-        <input
-          type="color"
-          id="usColorPicker"
-          value="#3b82f6"
-          class="mx-auto w-12 h-12 cursor-pointer"
-        />
-      </div>
-      <div class="text-center">
-        <label for="demColorPicker" class="block text-gray-700 dark:text-white mb-2">
-          Dem Color:
-        </label>
-        <input
-          type="color"
-          id="demColorPicker"
-          value="#ef4444"
-          class="mx-auto w-12 h-12 cursor-pointer"
-        />
-      </div>
-    </div>
-
-    <!-- Randomize button placed underneath the color pickers -->
-    <div class="mb-4">
-      <button
-        type="button"
-        onclick="randomizeThemeColors()"
-        class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
-      >
-      <span>↻</span>
-        Random
+  <div class="bg-white w-full max-w-md rounded-2xl shadow-xl dark:bg-gray-800 overflow-hidden transform transition-all duration-300">
+    <!-- Header with title -->
+    <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+      <h2 id="themeModalTitle" class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        </svg>
+        Customize Theme
+      </h2>
+      <button type="button" onclick="closeThemeModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
     </div>
 
-    <!-- Button row at the bottom -->
-    <div class="flex justify-center space-x-2 mt-6">
-      <button
-        type="button"
-        onclick="applyCustomThemeColors()"
-        class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400"
-      >
-        Apply
-      </button>
-      <button
-        type="button"
-        onclick="resetThemeColors()"
-        class="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
-      >
-        Reset
-      </button>
-      <button
-        type="button"
-        onclick="closeThemeModal()"
-        class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
-      >
-        Close
-      </button>
+    <div class="p-6">
+      <!-- Color preview section -->
+      <div class="flex justify-center mb-6">
+        <div class="w-full max-w-xs bg-gray-100 dark:bg-gray-700 rounded-xl p-4 flex flex-col items-center">
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Preview</p>
+          <div class="flex w-full space-x-3">
+            <div id="previewUs" class="flex-1 h-12 rounded-lg shadow-sm flex items-center justify-center text-white font-medium" style="background-color: var(--primary-color);">Us</div>
+            <div id="previewDem" class="flex-1 h-12 rounded-lg shadow-sm flex items-center justify-center text-white font-medium" style="background-color: var(--accent-color);">Dem</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color picker section -->
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center flex flex-col items-center">
+          <label for="usColorPicker" class="block text-sm font-medium text-gray-700 dark:text-white mb-3">
+            Us Team Color
+          </label>
+          <input
+            type="color"
+            id="usColorPicker"
+            value="#3b82f6"
+            class="w-16 h-16 cursor-pointer"
+            oninput="updatePreview()"
+          />
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center flex flex-col items-center">
+          <label for="demColorPicker" class="block text-sm font-medium text-gray-700 dark:text-white mb-3">
+            Dem Team Color
+          </label>
+          <input
+            type="color"
+            id="demColorPicker"
+            value="#ef4444"
+            class="w-16 h-16 cursor-pointer"
+            oninput="updatePreview()"
+          />
+        </div>
+      </div>
+
+      <!-- Randomize button section -->
+      <div class="mb-6">
+        <button
+          type="button"
+          onclick="randomizeThemeColors(); updatePreview();"
+          class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md threed flex items-center justify-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Randomize Colors
+        </button>
+      </div>
+
+      <!-- Button row at the bottom -->
+      <div class="flex space-x-3">
+        <button
+          type="button"
+          onclick="applyCustomThemeColors()"
+          class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md threed font-medium"
+        >
+          Apply Colors
+        </button>
+        <button
+          type="button"
+          onclick="resetThemeColors(); updatePreview();"
+          class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 shadow-md threed font-medium dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500"
+        >
+          Reset Default
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+// Add this function to update the preview when color inputs change
+function updatePreview() {
+  const usColor = document.getElementById('usColorPicker').value;
+  const demColor = document.getElementById('demColorPicker').value;
+  const previewUs = document.getElementById('previewUs');
+  const previewDem = document.getElementById('previewDem');
+  
+  if (previewUs) previewUs.style.backgroundColor = usColor;
+  if (previewDem) previewDem.style.backgroundColor = demColor;
+}
+
+// Modify the randomizeThemeColors function to also update the preview
+function randomizeThemeColors() {
+  const randomHue = Math.floor(Math.random() * 360);
+  const variation = Math.floor(Math.random() * 41) - 20;
+  const complementaryHue = (randomHue + 180 + variation) % 360;
+  const saturation = Math.floor(Math.random() * 51) + 50;
+  const lightness = Math.floor(Math.random() * 41) + 20;
+  const randomUs = hslToHex(randomHue, saturation, lightness);
+  const randomDem = hslToHex(complementaryHue, saturation, lightness);
+  const usPicker = document.getElementById('usColorPicker');
+  const demPicker = document.getElementById('demColorPicker');
+  if (usPicker) usPicker.value = randomUs;
+  if (demPicker) demPicker.value = randomDem;
+  updatePreview();
+}
+
+// Update the resetThemeColors function to also update the preview
+function resetThemeColors() {
+  const defaultUsColor = "#3b82f6";
+  const defaultDemColor = "#ef4444";
+  const body = document.getElementById('bodyRoot');
+  body.style.setProperty('--primary-color', defaultUsColor);
+  body.style.setProperty('--accent-color', defaultDemColor);
+  localStorage.removeItem('customUsColor');
+  localStorage.removeItem('customDemColor');
+  const usPicker = document.getElementById('usColorPicker');
+  const demPicker = document.getElementById('demColorPicker');
+  if (usPicker) usPicker.value = defaultUsColor;
+  if (demPicker) demPicker.value = defaultDemColor;
+  updatePreview();
+}
+
+// Call updatePreview when the theme modal is opened
+function openThemeModal(event) {
+  // Prevent event bubbling to avoid automatic closing
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  
+  // First, properly hide the settings modal
+  const settingsModal = document.getElementById("settingsModal");
+  if (settingsModal) {
+    settingsModal.classList.add("hidden");
+  }
+  
+  // Now show the theme modal
+  const themeModal = document.getElementById("themeModal");
+  if (themeModal) {
+    themeModal.classList.remove("hidden");
+    
+    // Make sure clicking inside the theme modal content doesn't close it
+    const themeModalContent = themeModal.querySelector(".bg-white, .dark\\:bg-gray-800");
+    if (themeModalContent) {
+      themeModalContent.onclick = function(e) {
+        e.stopPropagation();
+      };
+    }
+    
+    // Update the preview when opening the modal
+    updatePreview();
+  }
+}
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
@@ -1349,20 +1675,69 @@ function getLocalStorage(key) {
     
     const modalHtml = `
         <div id="presetEditorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" role="dialog" aria-modal="true" aria-labelledby="presetEditorTitle">
-            <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6">
-                <h2 id="presetEditorTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Bid Presets</h2>
-                <div id="presetInputs" class="space-y-4">
+            <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800 p-6 transform transition-all">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 id="presetEditorTitle" class="text-2xl font-bold text-gray-800 dark:text-white">Edit Bid Presets</h2>
+                    <button type="button" onclick="closePresetEditorModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                    Customize your quick bid buttons. Values must be multiples of 5.
+                </p>
+                
+                <div id="presetInputs" class="space-y-3 max-h-64 overflow-y-auto pr-2 mb-4">
                     ${presetBids.filter(b => b !== "other").map((bid, index) => `
-                        <div class="flex items-center space-x-2">
-                            <input type="number" value="${bid}" class="w-24 border border-gray-300 rounded-xl px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" data-index="${index}">
-                            <button type="button" onclick="removePreset(${index})" class="text-red-600 hover:text-red-800 dark:text-red-300 dark:hover:text-red-500">${Icons.Trash}</button>
+                        <div class="flex items-center space-x-3 preset-input-row">
+                            <div class="flex-grow">
+                                <div class="relative">
+                                    <input type="number" value="${bid}" min="5" max="360" step="5" 
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+                                        data-index="${index}"
+                                        onchange="validatePresetInput(this)">
+                                    <div class="preset-error text-xs text-red-500 mt-1 hidden"></div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="removePreset(${index})" 
+                                class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-red-600 hover:text-red-700 dark:text-red-400 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                                ${Icons.Trash}
+                            </button>
                         </div>
                     `).join('')}
                 </div>
-                <button type="button" onclick="addPreset()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 threed">Add Preset</button>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="closePresetEditorModal()" class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 threed">Cancel</button>
-                    <button type="button" onclick="savePresets()" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 threed">Save</button>
+                
+                <div class="flex gap-2 flex-wrap mb-6">
+                    <button type="button" onclick="addPreset()" 
+                        class="flex items-center bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors threed">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Preset
+                    </button>
+                    
+                    <button type="button" onclick="sortPresets()" 
+                        class="flex items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors threed">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                        </svg>
+                        Sort
+                    </button>
+                </div>
+                
+                <div id="presetErrorMsg" class="text-red-500 text-sm mb-4 hidden"></div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closePresetEditorModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors threed">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="savePresets()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors threed">
+                        Save Changes
+                    </button>
                 </div>
             </div>
         </div>
@@ -1380,43 +1755,169 @@ function getLocalStorage(key) {
     }
   }
 
+  function validatePresetInput(inputElement) {
+    const value = Number(inputElement.value);
+    const errorDiv = inputElement.nextElementSibling;
+    
+    if (isNaN(value)) {
+      errorDiv.textContent = "Must be a number";
+      errorDiv.classList.remove("hidden");
+      return false;
+    } else if (value <= 0) {
+      errorDiv.textContent = "Must be greater than 0";
+      errorDiv.classList.remove("hidden");
+      return false;
+    } else if (value % 5 !== 0) {
+      errorDiv.textContent = "Must be divisible by 5";
+      errorDiv.classList.remove("hidden");
+      return false;
+    } else if (value > 360) {
+      errorDiv.textContent = "Cannot exceed 360";
+      errorDiv.classList.remove("hidden");
+      return false;
+    } else {
+      errorDiv.classList.add("hidden");
+      return true;
+    }
+  }
+
   function addPreset() {
     const presetInputs = document.getElementById('presetInputs');
     const newIndex = presetBids.filter(b => b !== "other").length;
     presetInputs.insertAdjacentHTML('beforeend', `
-        <div class="flex items-center space-x-2">
-            <input type="number" value="0" class="w-24 border border-gray-300 rounded-xl px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" data-index="${newIndex}">
-            <button type="button" onclick="removePreset(${newIndex})" class="text-red-600 hover:text-red-800 dark:text-red-300 dark:hover:text-red-500">${Icons.Trash}</button>
+        <div class="flex items-center space-x-3 preset-input-row animate-fadeIn">
+            <div class="flex-grow">
+                <div class="relative">
+                    <input type="number" value="120" min="5" max="360" step="5" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+                        data-index="${newIndex}"
+                        onchange="validatePresetInput(this)">
+                    <div class="preset-error text-xs text-red-500 mt-1 hidden"></div>
+                </div>
+            </div>
+            <button type="button" onclick="removePreset(${newIndex})" 
+                class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-red-600 hover:text-red-700 dark:text-red-400 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                ${Icons.Trash}
+            </button>
         </div>
     `);
+    
+    // Scroll to the bottom to show the new input
+    presetInputs.scrollTop = presetInputs.scrollHeight;
   }
 
   function removePreset(index) {
-    const inputs = document.querySelectorAll('#presetInputs input');
+    const inputs = document.querySelectorAll('#presetInputs .preset-input-row');
     if (inputs.length > 1) { 
-      const inputDiv = inputs[index].parentElement;
-      inputDiv.remove();
-      document.querySelectorAll('#presetInputs input').forEach((input, i) => {
-        input.setAttribute('data-index', i);
-        input.nextElementSibling.setAttribute('onclick', `removePreset(${i})`);
+      const inputDiv = inputs[index];
+      
+      // Add fade-out animation before removing
+      inputDiv.classList.add('animate-fadeOut');
+      
+      // Remove after animation completes
+      setTimeout(() => {
+        inputDiv.remove();
+        // Update indices for remaining inputs
+        document.querySelectorAll('#presetInputs .preset-input-row').forEach((row, i) => {
+          const input = row.querySelector('input');
+          const removeBtn = row.querySelector('button');
+          
+          input.setAttribute('data-index', i);
+          removeBtn.setAttribute('onclick', `removePreset(${i})`);
+        });
+      }, 150);
+    } else {
+      // Show message if attempting to remove the last preset
+      const errorMsg = document.getElementById('presetErrorMsg');
+      errorMsg.textContent = 'You must have at least one preset value.';
+      errorMsg.classList.remove('hidden');
+      
+      setTimeout(() => {
+        errorMsg.classList.add('hidden');
+      }, 3000);
+    }
+  }
+
+  function sortPresets() {
+    const inputs = document.querySelectorAll('#presetInputs input');
+    const values = Array.from(inputs).map(input => {
+      return {
+        value: Number(input.value),
+        valid: validatePresetInput(input)
+      };
+    });
+    
+    // Only sort if all values are valid
+    if (values.every(v => v.valid)) {
+      // Sort by numeric value
+      values.sort((a, b) => a.value - b.value);
+      
+      // Update the input values in the DOM
+      inputs.forEach((input, i) => {
+        input.value = values[i].value;
       });
+    } else {
+      // Show error message
+      const errorMsg = document.getElementById('presetErrorMsg');
+      errorMsg.textContent = 'Please fix the errors before sorting.';
+      errorMsg.classList.remove('hidden');
+      
+      setTimeout(() => {
+        errorMsg.classList.add('hidden');
+      }, 3000);
     }
   }
 
   function savePresets() {
     const inputs = document.querySelectorAll('#presetInputs input');
+    const errorMsg = document.getElementById('presetErrorMsg');
+    
+    // Validate all inputs first
+    let allValid = true;
+    inputs.forEach(input => {
+      const isValid = validatePresetInput(input);
+      if (!isValid) allValid = false;
+    });
+    
+    if (!allValid) {
+      errorMsg.textContent = 'Please fix the errors before saving.';
+      errorMsg.classList.remove('hidden');
+      return;
+    }
+    
     const newPresets = Array.from(inputs)
         .map(input => Number(input.value))
         .filter(val => !isNaN(val) && val > 0 && val % 5 === 0 && val <= 360)
         .sort((a, b) => a - b);
+    
+    // Check for duplicates
+    const uniqueValues = [...new Set(newPresets)];
+    if (uniqueValues.length < newPresets.length) {
+      errorMsg.textContent = 'Duplicate values are not allowed.';
+      errorMsg.classList.remove('hidden');
+      return;
+    }
     
     if (newPresets.length > 0) {
       presetBids = [...newPresets, "other"];
       savePresetBids();
       closePresetEditorModal();
       renderApp(); // Re-render to update bid buttons
+      
+      // Show success indicator
+      const successIndicator = document.getElementById('saveIndicator');
+      if (successIndicator) {
+        successIndicator.textContent = 'Bid presets updated';
+        successIndicator.classList.remove('hidden');
+        successIndicator.classList.add('show');
+        setTimeout(() => {
+          successIndicator.classList.remove('show');
+          successIndicator.classList.add('hidden');
+        }, 2000);
+      }
     } else {
-      alert("Please ensure at least one valid preset (multiple of 5, ≤ 360) is entered.");
+      errorMsg.textContent = 'Please ensure at least one valid preset is entered.';
+      errorMsg.classList.remove('hidden');
     }
   }
 
@@ -1765,6 +2266,8 @@ function closeThemeModal(event) {
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4m0 4h.01"></path></svg>',
     Undo:
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v6h6M21 17a9 9 0 0 0-9-9c-2.5 0-4.75.9-6.5 2.4L3 11"/></svg>',
+    Redo:
+      '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7v6h-6M3 17a9 9 0 0 1 9-9c2.5 0 4.75.9 6.5 2.4L21 11"/></svg>',
     Trash:
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>',
     Load:
@@ -1779,6 +2282,7 @@ function closeThemeModal(event) {
 
   const DEFAULT_STATE = {
     rounds: [],
+    undoneRounds: [], // Store rounds that have been undone
     biddingTeam: "",
     bidAmount: "",
     customBidValue: "",
@@ -2389,6 +2893,7 @@ function closeThemeModal(event) {
       }
       updateState({
         rounds: updatedRounds,
+        undoneRounds: [], // Clear undone rounds
         gameOver: true,
         winner: theWinner,
         victoryMethod,
@@ -2404,7 +2909,16 @@ function closeThemeModal(event) {
       updateTeamsStatsOnGameEnd(theWinner);
       saveCurrentGameState();
     } else {
-      updateState({ rounds: updatedRounds, biddingTeam: "", bidAmount: "", showCustomBid: false, customBidValue: "", enterBidderPoints: false, error: "" });
+      updateState({ 
+        rounds: updatedRounds, 
+        undoneRounds: [], // Clear undone rounds
+        biddingTeam: "", 
+        bidAmount: "", 
+        showCustomBid: false, 
+        customBidValue: "", 
+        enterBidderPoints: false, 
+        error: "" 
+      });
       saveCurrentGameState();
     }
 }
@@ -2425,14 +2939,72 @@ function closeThemeModal(event) {
 
   function handleUndo() {
     if (!state.rounds.length) return;
+    
+    // Get the last round and add it to undoneRounds
+    const lastRound = state.rounds[state.rounds.length - 1];
+    const newUndoneRounds = [...state.undoneRounds, lastRound];
+    
+    // Remove the last round from rounds
     const newRounds = state.rounds.slice(0, -1);
+    
     let newLastBidAmount = null, newLastBidTeam = null;
     if (newRounds.length > 0) {
       const lastRound = newRounds[newRounds.length - 1];
       newLastBidAmount = lastRound.bidAmount.toString();
       newLastBidTeam = lastRound.biddingTeam;
     }
-    updateState({ rounds: newRounds, gameOver: false, winner: null, victoryMethod: null, lastBidAmount: newLastBidAmount, lastBidTeam: newLastBidTeam });
+    
+    updateState({ 
+      rounds: newRounds, 
+      undoneRounds: newUndoneRounds,
+      gameOver: false, 
+      winner: null, 
+      victoryMethod: null, 
+      lastBidAmount: newLastBidAmount, 
+      lastBidTeam: newLastBidTeam 
+    });
+    
+    saveCurrentGameState();
+  }
+  
+  function handleRedo() {
+    if (!state.undoneRounds.length) return;
+    
+    // Get the last undone round
+    const redoRound = state.undoneRounds[state.undoneRounds.length - 1];
+    
+    // Add it back to the rounds array
+    const newRounds = [...state.rounds, redoRound];
+    
+    // Remove it from undoneRounds
+    const newUndoneRounds = state.undoneRounds.slice(0, -1);
+    
+    // Check if this round causes the game to end
+    const totals = newRounds.reduce((acc, r) => ({ 
+      us: acc.us + r.usPoints, 
+      dem: acc.dem + r.demPoints 
+    }), { us: 0, dem: 0 });
+    
+    let gameOver = false;
+    let winner = null;
+    let victoryMethod = null;
+    
+    if (totals.us >= 500 || totals.dem >= 500) {
+      gameOver = true;
+      winner = totals.us >= 500 ? "us" : "dem";
+      victoryMethod = "500+";
+    }
+    
+    updateState({ 
+      rounds: newRounds, 
+      undoneRounds: newUndoneRounds,
+      gameOver, 
+      winner, 
+      victoryMethod,
+      lastBidAmount: redoRound.bidAmount.toString(),
+      lastBidTeam: redoRound.biddingTeam
+    });
+    
     saveCurrentGameState();
   }
 
@@ -2503,6 +3075,14 @@ function closeThemeModal(event) {
 
   function handleFreezerGame() {
   if (state.gameOver || !state.rounds.length) return;
+  
+  // Check if team names are set, if not open team selection modal
+  if (!state.usTeamName || !state.demTeamName) {
+    pendingGameAction = "freeze";
+    openTeamSelectionModal();
+    return;
+  }
+  
   const totals = state.rounds.reduce(
     (acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }),
     { us: 0, dem: 0 }
@@ -3017,39 +3597,45 @@ function closeThemeModal(event) {
   }
 
   function renderScoreInputCard() {
-    const { biddingTeam, bidAmount, showCustomBid, customBidValue, rounds, gameOver } = state;
+    const { biddingTeam, bidAmount, showCustomBid, customBidValue, rounds, gameOver, undoneRounds } = state;
     if (gameOver || !biddingTeam) return "";
     const hasBid = bidAmount || showCustomBid;
     return `
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow">
-        <div class="border-b border-gray-200 p-5 flex justify-between items-center dark:border-gray-700">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+        <div class="border-b border-gray-200 p-3 flex justify-between items-center dark:border-gray-700">
+          <h2 class="text-lg font-bold text-gray-800 dark:text-white">
             Enter Bid for ${biddingTeam === "us" ? state.usTeamName || "Us" : state.demTeamName || "Dem"}
           </h2>
-          <button class="flex items-center border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
+          <div class="flex space-x-2">
+            <button class="flex items-center border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
+                  onclick="handleRedo(event)" ${!undoneRounds.length ? "disabled" : ""} title="Redo Last Action" aria-label="Redo Last Action" type="button">
+              ${Icons.Redo}Redo
+            </button>
+            <button class="flex items-center border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
                   onclick="handleUndo(event)" ${!rounds.length ? "disabled" : ""} title="Undo Last Round" aria-label="Undo Last Round" type="button">
-            ${Icons.Undo}Undo
-          </button>
+              ${Icons.Undo}Undo
+            </button>
+          </div>
         </div>
-        <div class="p-6 score-input-container ${biddingTeam ? "show" : ""}">
-          <form onsubmit="handleFormSubmit(event)" class="space-y-6">
+        <div class="p-4 score-input-container ${biddingTeam ? "show" : ""}">
+          <form onsubmit="handleFormSubmit(event)" class="space-y-4">
             <div>
-              <label for="bidAmount" class="block text-sm font-medium mb-2 text-gray-700 dark:text-white">Bid Amount</label>
-              <div class="flex flex-wrap gap-3">
+              <label for="bidAmount" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-white">Bid Amount</label>
+              <div class="flex flex-wrap gap-2">
                 ${presetBids.map((b) => {
                   const isActive = b === "other" ? showCustomBid : state.bidAmount === String(b);
                   const btnClasses = isActive ? `bg-blue-600 text-white shadow hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700` : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
                   return `
-                    <button type="button" class="px-4 py-2 text-sm font-medium threed ${btnClasses} rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    <button type="button" class="px-3 py-1.5 text-sm font-medium threed ${btnClasses} rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                             onclick="handleBidSelect('${b}')" aria-pressed="${isActive}" aria-label="Select Bid ${b === "other" ? "Other" : b}">
                       ${b === "other" ? "Other" : b}
                     </button>`;
                 }).join("")}
-                ${showCustomBid ? `
-                  <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                    <input type="number" inputmode="numeric" pattern="[0-9]*" step="5" value="${customBidValue}" onchange="handleCustomBidChange(event)" placeholder="Enter custom bid" class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400" aria-label="Custom Bid Amount" />
-                  </div>` : ""}
               </div>
+              ${showCustomBid ? `
+                <div class="mt-2">
+                  <input type="number" inputmode="numeric" pattern="[0-9]*" step="5" value="${customBidValue}" onchange="handleCustomBidChange(event)" placeholder="Enter custom bid" class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400" aria-label="Custom Bid Amount" />
+                </div>` : ""}
             </div>
             ${hasBid ? renderPointsInput() : ""}
           </form>
@@ -3069,54 +3655,58 @@ function closeThemeModal(event) {
       ? `${state.demTeamName || "Dem"} Points (Bidding)`
       : `${state.usTeamName || "Us"} Points (Non-Bidding)`;
 
-  // Tailwind color classes for the toggle buttons
-  // (Switch to 'blue' or 'red' for whichever is the bidding or non-bidding team.)
-  const biddingColor = biddingTeam === "dem" ? "red" : "blue";
-  const nonBiddingColor = biddingTeam !== "dem" ? "red" : "blue";
+  // Determine which team names to show in the toggle buttons
+  const usTeamName = state.usTeamName || "Us";
+  const demTeamName = state.demTeamName || "Dem";
+  
+  // Determine which team button should be active based on biddingTeam and enterBidderPoints
+  const usActive = (biddingTeam === "us" && enterBidderPoints) || (biddingTeam === "dem" && !enterBidderPoints);
+  const demActive = (biddingTeam === "dem" && enterBidderPoints) || (biddingTeam === "us" && !enterBidderPoints);
 
-  const biddingBtnClasses = enterBidderPoints
-    ? `bg-${biddingColor}-600 text-white shadow hover:bg-${biddingColor}-700 dark:bg-${biddingColor}-700 dark:hover:bg-${biddingColor}-800`
+  // Use primary color for Us and accent color for Dem to match main blocks
+  const usBtnClasses = usActive
+    ? `bg-primary text-white shadow hover:brightness-95 dark:hover:brightness-90`
     : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
 
-  const nonBiddingBtnClasses = !enterBidderPoints
-    ? `bg-${nonBiddingColor}-600 text-white shadow hover:bg-${nonBiddingColor}-700 dark:bg-${nonBiddingColor}-700 dark:hover:bg-${nonBiddingColor}-800`
+  const demBtnClasses = demActive
+    ? `bg-accent text-white shadow hover:brightness-95 dark:hover:brightness-90`
     : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
 
   // Return the HTML markup for the "Enter Points" form
   return `
-    <div class="space-y-6">
+    <div class="space-y-4">
       <div>
         <label
           for="pointsToggle"
-          class="block text-sm font-medium mb-2 text-gray-700 dark:text-white"
+          class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-white"
           >Enter Points For</label
         >
-        <div class="flex gap-4">
+        <div class="flex gap-3">
           <button
             type="button"
-            class="flex-1 rounded-full px-4 py-2 text-sm font-medium threed ${biddingBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-${biddingColor}-500 focus:ring-opacity-50"
-            onclick="handleBiddingPointsToggle(true)"
-            aria-pressed="${enterBidderPoints}"
+            class="flex-1 rounded-full px-3 py-1.5 text-sm font-medium threed ${usBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            onclick="handleBiddingPointsToggle(${biddingTeam === 'us' ? 'true' : 'false'})"
+            aria-pressed="${usActive}"
           >
-            Bidding Team
+            ${usTeamName}
           </button>
           <button
             type="button"
-            class="flex-1 rounded-full px-4 py-2 text-sm font-medium threed ${nonBiddingBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-${nonBiddingColor}-500 focus:ring-opacity-50"
-            onclick="handleBiddingPointsToggle(false)"
-            aria-pressed="${!enterBidderPoints}"
+            class="flex-1 rounded-full px-3 py-1.5 text-sm font-medium threed ${demBtnClasses} transition focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            onclick="handleBiddingPointsToggle(${biddingTeam === 'dem' ? 'true' : 'false'})"
+            aria-pressed="${demActive}"
           >
-            Non-Bidding Team
+            ${demTeamName}
           </button>
         </div>
       </div>
       <div>
         <label
           for="pointsInput"
-          class="block text-sm font-medium mb-2 text-gray-700 dark:text-white"
+          class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-white"
           >${labelText}</label
         >
-        <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:gap-3">
           <input
             id="pointsInput"
             type="number"
@@ -3125,12 +3715,12 @@ function closeThemeModal(event) {
             min="0"
             max="360"
             placeholder="Enter points"
-            class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
+            class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
             aria-label="Enter Points"
           />
           <button
             type="submit"
-            class="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-2 rounded-xl shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400 threed"
+            class="mt-2 sm:mt-0 bg-blue-600 text-white px-4 py-1.5 text-sm rounded-xl shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400 threed"
           >
             Submit
           </button>
@@ -3191,19 +3781,23 @@ function closeThemeModal(event) {
   }
 
   function renderApp() {
-  const { error, rounds, lastBidAmount, lastBidTeam, gameOver } = state;
+  const { error, rounds, bidAmount, showCustomBid, biddingTeam, customBidValue, gameOver } = state;
   const totals = rounds.reduce((acc, r) => ({ us: acc.us + r.usPoints, dem: acc.dem + r.demPoints }), { us: 0, dem: 0 });
   const roundNumber = rounds.length + 1;
   let lastBidHtml = "";
-  if (lastBidAmount && lastBidTeam) {
-    const arrow = lastBidTeam === "us" ? "←" : "→";
+  
+  // Only show bid when a bid is selected for the current round
+  if ((bidAmount || showCustomBid) && biddingTeam) {
+    const currentBidAmount = bidAmount || (showCustomBid ? customBidValue : "");
+    const arrow = biddingTeam === "us" ? "←" : "→";
     lastBidHtml = `
       <div class="mt-2 flex items-center justify-center space-x-1 text-gray-700 dark:text-white">
         <span class="font-medium">Bid:</span>
-        <span>${lastBidAmount}</span>
+        <span>${currentBidAmount}</span>
         <span>${arrow}</span>
       </div>`;
   }
+  
   document.getElementById("app").innerHTML = `
     <div class="text-center space-y-2">
       <div class="flex flex-col items-center">
@@ -3211,7 +3805,7 @@ function closeThemeModal(event) {
       </div>
       <p class="text-md sm:text-lg text-gray-600 dark:text-white">Tap a team to start a bid!</p>
     </div>
-    <div class="flex flex-row space-x-4 flex-wrap justify-center">
+    <div class="flex flex-row gap-3 flex-wrap justify-center">
       ${renderTeamCard("us", totals.us)}
       ${renderRoundCard(roundNumber, lastBidHtml)}
       ${renderTeamCard("dem", totals.dem)}
@@ -3246,7 +3840,7 @@ function closeThemeModal(event) {
   }
 
   function showVersionNum() {
-    alert("version 1.4.0 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team and makes bid presets customizable.");
+    alert("version 1.4.0 adds a sign in with Google button to save your game data and preserve it between different devices and a Pro Mode Toggle which shows the win probability of each team.");
   }
 
   function openAboutModal() {
