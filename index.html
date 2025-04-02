@@ -549,53 +549,119 @@ input[type="color"]:focus {
 <div
 id="savedGamesModal"
 style="z-index: 9999;"
-class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 modal"
+class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 modal"
 role="dialog"
 aria-modal="true"
 aria-labelledby="savedGamesTitle"
 >
 <div
-  class="bg-white w-full max-w-4xl rounded-xl shadow-lg overflow-y-auto dark:bg-gray-800 z-50"
+  class="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden dark:bg-gray-800 z-50"
   style="max-height: 85vh;"
 >
-  <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-    <h3
-      id="savedGamesTitle"
-      class="text-2xl font-semibold text-gray-800 dark:text-white"
-    >
-      Saved Games
-    </h3>
-    <button
-      id="closeSavedGamesModalBtn"
-      class="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:hover:text-gray-300"
-      aria-label="Close Saved Games Modal"
-      type="button"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-6 w-6 pointer-events-none"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
+  <!-- Header with tabs -->
+  <div class="border-b border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center px-6 pt-5 pb-2">
+      <h3
+        id="savedGamesTitle"
+        class="text-2xl font-bold text-gray-800 dark:text-white"
       >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  </div>
-  <div class="p-5 space-y-6">
-    <div class="rounded-xl shadow-sm p-4 bg-gray-50 dark:bg-gray-700">
-      <h4 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+        Game Library
+      </h3>
+      <button
+        id="closeSavedGamesModalBtn"
+        class="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-1 transition-colors dark:text-gray-400 dark:hover:text-white"
+        aria-label="Close Saved Games Modal"
+        type="button"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 pointer-events-none"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="flex px-6">
+      <button 
+        id="completedGamesTab" 
+        class="py-3 px-4 border-b-2 border-blue-600 text-blue-600 font-medium dark:text-blue-400 dark:border-blue-400 relative"
+        onclick="switchGamesTab('completed')"
+      >
         Completed Games
-      </h4>
-      <div id="savedGamesList" class="flex flex-col-reverse space-y-4 space-y-reverse">
+        <span class="absolute top-0 right-0 transform translate-x-1/3 -translate-y-1/2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" id="completedGamesCount">0</span>
+      </button>
+      <button 
+        id="freezerGamesTab" 
+        class="py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium dark:text-gray-400 dark:hover:text-gray-300 relative"
+        onclick="switchGamesTab('freezer')"
+      >
+        Freezer Games
+        <span class="absolute top-0 right-0 transform translate-x-1/3 -translate-y-1/2 bg-gray-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" id="freezerGamesCount">0</span>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Search and sort controls -->
+  <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex flex-col sm:flex-row gap-3">
+    <div class="relative flex-grow">
+      <input 
+        type="text" 
+        id="gameSearchInput" 
+        placeholder="Search games..." 
+        class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
+        oninput="filterGames()"
+      />
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    <div class="sm:w-40">
+      <select 
+        id="gameSortSelect" 
+        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400"
+        onchange="sortGames()"
+      >
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="highest">Highest Score</option>
+        <option value="lowest">Lowest Score</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Content area -->
+  <div class="overflow-y-auto p-6 bg-white dark:bg-gray-800" style="max-height: 60vh;">
+    <!-- Completed Games Section -->
+    <div id="completedGamesSection" class="space-y-4">
+      <div id="savedGamesList" class="grid grid-cols-1 gap-4">
+        <!-- Games will be rendered here -->
+      </div>
+      <div id="noCompletedGamesMessage" class="hidden py-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">No completed games found</p>
+        <button onclick="handleNewGame(); closeMenuOverlay(); closeSavedGamesModal();" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Start a New Game</button>
       </div>
     </div>
-    <div class="rounded-xl shadow-sm p-4 bg-gray-50 dark:bg-gray-700">
-      <h4 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">
-        Freezer Games
-      </h4>
-      <div id="freezerGamesList" class="flex flex-col-reverse space-y-4 space-y-reverse">
+    
+    <!-- Freezer Games Section -->
+    <div id="freezerGamesSection" class="space-y-4 hidden">
+      <div id="freezerGamesList" class="grid grid-cols-1 gap-4">
+        <!-- Freezer games will be rendered here -->
+      </div>
+      <div id="noFreezerGamesMessage" class="hidden py-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">No freezer games found</p>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-500">Freeze a game to continue it later</p>
       </div>
     </div>
   </div>
@@ -653,26 +719,26 @@ aria-labelledby="savedGamesTitle"
     <!-- View Saved Game Modal -->
     <div
       id="viewSavedGameModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 modal"
+      class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-4 z-50 modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="viewSavedGameTitle"
     >
       <div
-        class="bg-white w-full max-w-4xl rounded-xl shadow-lg overflow-y-auto max-h-full dark:bg-gray-800 z-50"
+        class="bg-white w-full max-w-4xl rounded-xl shadow-lg overflow-hidden dark:bg-gray-800 z-50 max-h-[95vh] sm:max-h-[90vh] flex flex-col"
       >
         <div
-          class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700"
+          class="flex justify-between items-center p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10"
         >
           <h3
             id="viewSavedGameTitle"
-            class="text-2xl font-semibold text-gray-800 dark:text-white"
+            class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white"
           >
             Game Details
           </h3>
           <button
             id="closeViewSavedGameModalBtn"
-            class="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:hover:text-gray-300"
+            class="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 p-1 rounded-lg dark:text-white dark:hover:text-gray-300"
             aria-label="Close View Saved Game Modal"
             type="button"
           >
@@ -688,7 +754,7 @@ aria-labelledby="savedGamesTitle"
             </svg>
           </button>
         </div>
-        <div id="viewSavedGameDetails" class="p-5 space-y-6"></div>
+        <div id="viewSavedGameDetails" class="p-4 sm:p-5 space-y-6 overflow-y-auto flex-grow"></div>
       </div>
     </div>
 
@@ -899,34 +965,44 @@ aria-labelledby="savedGamesTitle"
     <!-- Statistics Modal -->
     <div
       id="statisticsModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden overflow-y-auto p-4 z-50 modal flex items-center justify-center"
+      class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm hidden overflow-y-auto z-50 modal flex items-center justify-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="statisticsModalTitle"
       style="-webkit-overflow-scrolling: touch;"
     >
       <div
-        class="relative mx-auto my-8 w-full max-w-4xl bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-y-auto"
+        class="relative mx-auto my-4 w-full max-w-md bg-white rounded-xl shadow-lg dark:bg-gray-800 overflow-hidden"
+        style="max-height: 90vh;"
       >
-        <div class="p-6">
+        <!-- Header -->
+        <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
           <h2
             id="statisticsModalTitle"
-            class="text-2xl font-bold mb-4 text-gray-800 dark:text-white"
+            class="text-xl font-bold text-gray-800 dark:text-white flex items-center"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
             Statistics
           </h2>
+          <button 
+            type="button" 
+            onclick="closeStatisticsModal()" 
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 rounded-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Content area with padding -->
+        <div class="p-4 sm:p-6 overflow-y-auto" style="max-height: calc(90vh - 70px);">
           <div id="statisticsModalContent">
-            <!-- stats table/cards go here -->
+            <!-- stats content will be injected here -->
           </div>
-          <div class="flex justify-end space-x-2 mt-6">
-            <button
-              type="button"
-              onclick="closeStatisticsModal()"
-              class="bg-gray-300 text-white-700 px-4 py-2 rounded-xl hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400"
-            >
-              Close
-            </button>
-          </div>
+          
         </div>
       </div>
     </div>
@@ -2271,7 +2347,7 @@ function closeThemeModal(event) {
     Trash:
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>',
     Load:
-      '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 11H6 a2 2 0 012 2v6a2 2 0 01-2 2H4 a2 2 0 01-2-2v-6 a8.001 8.001 0 0115.356-2z"/></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>',
     Sun:
       '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m8.66-8.66h-1 M4.34 12.66h-1m15.364 4.95l-.707-.707 M6.343 6.343l-.707-.707 m12.728 0l-.707.707 M6.343 17.657l-.707.707 M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>',
     Moon:
@@ -3074,7 +3150,10 @@ function closeThemeModal(event) {
   }
 
   function handleFreezerGame() {
-  if (state.gameOver || !state.rounds.length) return;
+  if (state.gameOver || !state.rounds.length) {
+    alert("There is no active game to freeze. Please start a new game first.");
+    return;
+  }
   
   // Check if team names are set, if not open team selection modal
   if (!state.usTeamName || !state.demTeamName) {
@@ -3117,6 +3196,11 @@ function closeThemeModal(event) {
 }
 
   function confirmFreeze() {
+    if (state.gameOver || !state.rounds.length) {
+      alert("There is no active game to freeze. Please start a new game first.");
+      return;
+    }
+    
     openConfirmationModal(
       "Are you sure you want to freeze this game?",
       () => { freezeCurrentGame(); closeConfirmationModal(); closeMenuOverlay(); },
@@ -3334,52 +3418,143 @@ function closeThemeModal(event) {
   function renderReadOnlyGameDetails(game) {
     const { rounds, timestamp, usTeamName, demTeamName, durationMs, winner } = game;
     const sandbagNote = detectSandbag(rounds, winner);
+    
+    // Get final scores from the last round or from finalScore
+    let usScore = 0, demScore = 0;
+    if (rounds && rounds.length > 0) {
+      const lastRound = rounds[rounds.length - 1];
+      if (lastRound.runningTotals) {
+        usScore = lastRound.runningTotals.us;
+        demScore = lastRound.runningTotals.dem;
+      }
+    } else if (game.finalScore) {
+      usScore = game.finalScore.us;
+      demScore = game.finalScore.dem;
+    }
+
+    // Determine winner styling
+    const usWinner = winner === "us";
+    const demWinner = winner === "dem";
+    const usTeamDisplay = usTeamName || "Us";
+    const demTeamDisplay = demTeamName || "Dem";
+    
     const roundHtml = rounds.map((r, index) => {
-      const arrow = r.biddingTeam === "us" ? `← (${r.bidAmount})` : `(${r.bidAmount}) →`;
+      const bidAmount = r.bidAmount || r.bid || 0;
+      const usPoints = r.usPoints || 0;
+      const demPoints = r.demPoints || 0;
+      const usPointStyle = r.biddingTeam === "us" ? (usPoints >= bidAmount ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400") : "text-gray-800 dark:text-white";
+      const demPointStyle = r.biddingTeam === "dem" ? (demPoints >= bidAmount ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400") : "text-gray-800 dark:text-white";
+      
       return `
-        <div class="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded-xl dark:bg-gray-700">
-          <div class="text-left text-gray-800 dark:text-white font-semibold">${r.runningTotals.us}</div>
-          <div class="text-center">${arrow}</div>
-          <div class="text-right text-gray-800 dark:text-white font-semibold">${r.runningTotals.dem}</div>
+        <div class="grid grid-cols-5 gap-1 p-2 bg-gray-50 rounded-xl dark:bg-gray-700 text-sm sm:text-base mb-2">
+          <div class="text-left ${usPointStyle} font-medium">${r.runningTotals.us}</div>
+          <div class="text-center text-gray-600 dark:text-gray-300 text-xs sm:text-sm col-span-3">
+            <span class="bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full">
+              ${r.biddingTeam === "us" ? usTeamDisplay : demTeamDisplay} bid ${bidAmount}
+            </span>
+          </div>
+          <div class="text-right ${demPointStyle} font-medium">${r.runningTotals.dem}</div>
         </div>`;
     }).join("");
+
     return `
-      <div class="space-y-4">
-        <div>
-          <h4 class="text-xl font-bold text-gray-800 dark:text-white">
-            Winner: ${winner === "us" ? (usTeamName || "Us") : winner === "dem" ? (demTeamName || "Dem") : "N/A"}
-          </h4>
-          <p class="text-lg text-gray-600 dark:text-white mt-1">
-            ${usTeamName || "Us"} vs ${demTeamName || "Dem"}
-          </p>
-          <p class="text-gray-600 dark:text-white mt-1">
-            Date Played: ${new Date(timestamp).toLocaleString([], { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800 dark:text-white">Duration:</p>
-          <p class="text-gray-700 dark:text-white mt-1">
-            ${durationMs ? formatDuration(durationMs) : "N/A"}
-          </p>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800 dark:text-white">Sandbag?</p>
-          <p class="text-gray-700 dark:text-white mt-1">
-            ${sandbagNote}
-          </p>
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800 dark:text-white mb-2">
-            Round-by-Round History:
-          </p>
-          <div class="grid grid-cols-3 gap-2 font-semibold text-gray-800 dark:text-white mb-2">
-            <div class="text-left">Us</div>
-            <div class="text-center">Bid</div>
-            <div class="text-right">Dem</div>
+      <div class="space-y-6">
+        <!-- Game Header & Score Display -->
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row justify-between items-center">
+            <h4 class="text-xl font-bold text-gray-800 dark:text-white mb-2 sm:mb-0 text-center sm:text-left">
+              ${usTeamDisplay} vs ${demTeamDisplay}
+            </h4>
+            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full dark:bg-blue-900 dark:text-blue-300">
+              ${new Date(timestamp).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
           </div>
-          <div class="space-y-2">
-            ${roundHtml || "<p>No rounds recorded.</p>"}
+          
+          <!-- Score Cards -->
+          <div class="flex justify-between items-center mt-4 gap-3">
+            <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm ${usWinner ? 'ring-2 ring-green-500' : ''}">
+              <p class="text-sm text-gray-500 dark:text-gray-400">${usTeamDisplay}</p>
+              <p class="text-2xl font-bold ${usWinner ? 'text-green-600 dark:text-green-400' : 'text-gray-800 dark:text-white'}">${usScore}</p>
+              ${usWinner ? '<div class="flex items-center mt-1"><span class="text-xs font-medium text-green-600 dark:text-green-400">Winner</span><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div>' : ''}
+            </div>
+            
+            <div class="flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 w-8 h-8 font-bold text-gray-500 dark:text-gray-300">
+              vs
+            </div>
+            
+            <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm ${demWinner ? 'ring-2 ring-green-500' : ''}">
+              <p class="text-sm text-gray-500 dark:text-gray-400">${demTeamDisplay}</p>
+              <p class="text-2xl font-bold ${demWinner ? 'text-green-600 dark:text-green-400' : 'text-gray-800 dark:text-white'}">${demScore}</p>
+              ${demWinner ? '<div class="flex items-center mt-1"><span class="text-xs font-medium text-green-600 dark:text-green-400">Winner</span><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div>' : ''}
+            </div>
           </div>
+        </div>
+        
+        <!-- Game Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <div class="flex items-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="font-semibold text-gray-800 dark:text-white">Duration</p>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300">
+              ${durationMs ? formatDuration(durationMs) : "N/A"}
+            </p>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <div class="flex items-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <p class="font-semibold text-gray-800 dark:text-white">Sandbag?</p>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300">
+              ${sandbagNote}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Round History -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="font-semibold text-gray-800 dark:text-white">
+              Round-by-Round History
+            </p>
+          </div>
+          
+          <div class="grid grid-cols-5 gap-1 text-sm font-semibold text-gray-800 dark:text-white mb-2 px-2">
+            <div class="text-left">${usTeamDisplay}</div>
+            <div class="text-center col-span-3">Bid</div>
+            <div class="text-right">${demTeamDisplay}</div>
+          </div>
+          
+          <div class="space-y-2 max-h-60 overflow-y-auto rounded-xl pr-1">
+            ${roundHtml || 
+              `<div class="flex justify-center items-center py-8 text-gray-500 dark:text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>No rounds recorded</span>
+              </div>`
+            }
+          </div>
+        </div>
+        
+        <!-- Close Button -->
+        <div class="flex justify-center">
+          <button 
+            type="button" 
+            onclick="closeViewSavedGameModal()" 
+            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white transition-colors threed"
+          >
+            Close
+          </button>
         </div>
       </div>`;
   }
@@ -3398,32 +3573,52 @@ function closeThemeModal(event) {
       const demIsWinner = g.winner === "dem";
       let topTeamHTML = "", bottomTeamHTML = "";
       if (usIsWinner) {
-        topTeamHTML = `
-          <div class="flex flex-col space-y-1">
-            <span class="font-semibold text-gray-800 dark:text-white">Winner</span>
-            <div class="flex items-center space-x-2">
-              <span class="text-green-400 font-semibold">${g.usTeamName || "Us"}</span>
-              <span class="text-green-400 font-semibold">${usScore} points</span>
+        topTeamHTML = `<div class="flex justify-end mb-2">
+          <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+            Winner: ${g.usTeamName || "Us"}
+          </span>
+        </div>`;
+        
+        winnerInfo = `
+          <div class="flex items-center gap-2 mt-3">
+            <div class="flex-shrink-0 h-4 w-4 text-green-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
             </div>
-          </div>`;
-        bottomTeamHTML = `
-          <div class="flex items-center space-x-2">
-            <span class="text-red-400 font-semibold">${g.demTeamName || "Dem"}</span>
-            <span class="text-red-400 font-semibold">${demScore} points</span>
+            <span class="font-medium text-green-700 dark:text-green-400">${g.usTeamName || "Us"}: ${usScore} pts</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <div class="flex-shrink-0 h-4 w-4 text-red-500 opacity-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span class="font-medium text-gray-500 dark:text-gray-400">${g.demTeamName || "Dem"}: ${demScore} pts</span>
           </div>`;
       } else if (demIsWinner) {
-        topTeamHTML = `
-          <div class="flex flex-col space-y-1">
-            <span class="font-semibold text-gray-800 dark:text-white">Winner</span>
-            <div class="flex items-center space-x-2">
-              <span class="text-green-400 font-semibold">${g.demTeamName || "Dem"}</span>
-              <span class="text-green-400 font-semibold">${demScore} points</span>
+        topTeamHTML = `<div class="flex justify-end mb-2">
+          <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+            Winner: ${g.demTeamName || "Dem"}
+          </span>
+        </div>`;
+        
+        winnerInfo = `
+          <div class="flex items-center gap-2 mt-3">
+            <div class="flex-shrink-0 h-4 w-4 text-gray-500 opacity-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
             </div>
-          </div>`;
-        bottomTeamHTML = `
-          <div class="flex items-center space-x-2">
-            <span class="text-red-400 font-semibold">${g.usTeamName || "Us"}</span>
-            <span class="text-red-400 font-semibold">${usScore} points</span>
+            <span class="font-medium text-gray-500 dark:text-gray-400">${g.usTeamName || "Us"}: ${usScore} pts</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <div class="flex-shrink-0 h-4 w-4 text-green-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span class="font-medium text-green-700 dark:text-green-400">${g.demTeamName || "Dem"}: ${demScore} pts</span>
           </div>`;
       } else {
         topTeamHTML = `
@@ -3437,41 +3632,59 @@ function closeThemeModal(event) {
             <span class="text-gray-400 font-semibold">${demScore} points</span>
           </div>`;
       }
-      const gameDate = new Date(g.timestamp).toLocaleString();
-      const durationMarkup = `
-        <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Duration</p>
-          <p class="text-base">${g.durationMs ? formatDuration(g.durationMs) : "N/A"}</p>
-        </div>`;
+      
+      const gameDate = new Date(g.timestamp).toLocaleString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const victoryMethodDisplay = g.victoryMethod ? 
+        `<span class="text-xs font-medium text-purple-700 bg-purple-100 rounded-full px-2.5 py-0.5 dark:bg-purple-900 dark:text-purple-300">${g.victoryMethod}</span>` : '';
+      
+      const durationDisplay = g.durationMs ? 
+        `<div class="text-xs text-gray-500 dark:text-gray-400">Duration: ${formatDuration(g.durationMs)}</div>` : '';
+      
       return `
-        <div class="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white p-4 rounded-xl shadow-md mb-4 cursor-pointer" onclick="viewSavedGame(${i})">
-          <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center">
-              <span class="mr-2">${Icons.Trophy}</span>
-              <h2 class="text-xl font-bold">Game Summary</h2>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700 overflow-hidden relative" 
+             onclick="viewSavedGame(${i})" 
+             style="cursor: pointer;">
+          ${topTeamHTML}
+          <div class="p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  ${g.usTeamName || "Us"} vs ${g.demTeamName || "Dem"}
+                </h3>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">${gameDate}</div>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="viewSavedGame(${i}); event.stopPropagation();" 
+                        class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded-full"
+                        aria-label="View Saved Game" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button onclick="deleteSavedGame(${i}); event.stopPropagation();" 
+                        class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-full" 
+                        aria-label="Delete Saved Game" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div class="flex space-x-2">
-              <button onclick="viewSavedGame(${i}); event.stopPropagation();" class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-400" aria-label="View Saved Game" type="button">View</button>
-              <button onclick="deleteSavedGame(${i}); event.stopPropagation();" class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500" aria-label="Delete Saved Game" type="button">${Icons.Trash}</button>
+            
+            ${winnerInfo}
+            
+            <div class="flex items-center mt-4 space-x-2">
+              ${victoryMethodDisplay}
+              ${durationDisplay}
             </div>
-          </div>
-          <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Teams</p>
-            <div class="flex flex-col space-y-2 mt-2">
-              ${topTeamHTML}
-              ${bottomTeamHTML}
-            </div>
-          </div>
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Victory Method</p>
-              <p class="text-base">${g.victoryMethod || "N/A"}</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Date</p>
-              <p class="text-base">${gameDate}</p>
-            </div>
-            ${durationMarkup}
           </div>
         </div>`;
     }).join("");
@@ -3607,11 +3820,11 @@ function closeThemeModal(event) {
             Enter Bid for ${biddingTeam === "us" ? state.usTeamName || "Us" : state.demTeamName || "Dem"}
           </h2>
           <div class="flex space-x-2">
-            <button class="flex items-center border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
+            <button class="flex items-center border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 ${biddingTeam === "us" ? "focus:ring-blue-500" : "focus:ring-red-500"} dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
                   onclick="handleRedo(event)" ${!undoneRounds.length ? "disabled" : ""} title="Redo Last Action" aria-label="Redo Last Action" type="button">
               ${Icons.Redo}Redo
             </button>
-            <button class="flex items-center border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
+            <button class="flex items-center border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 focus:outline-none focus:ring-2 ${biddingTeam === "us" ? "focus:ring-blue-500" : "focus:ring-red-500"} dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-400 threed"
                   onclick="handleUndo(event)" ${!rounds.length ? "disabled" : ""} title="Undo Last Round" aria-label="Undo Last Round" type="button">
               ${Icons.Undo}Undo
             </button>
@@ -3624,9 +3837,16 @@ function closeThemeModal(event) {
               <div class="flex flex-wrap gap-2">
                 ${presetBids.map((b) => {
                   const isActive = b === "other" ? showCustomBid : state.bidAmount === String(b);
-                  const btnClasses = isActive ? `bg-blue-600 text-white shadow hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700` : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
+                  // Use team-specific color for active buttons instead of blue
+                  const btnClasses = isActive 
+                    ? `${biddingTeam === "us" ? "bg-primary" : "bg-accent"} text-white shadow hover:brightness-95 dark:hover:brightness-90` 
+                    : `bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500`;
+                  
+                  // Use team-specific focus ring color
+                  const focusRingColor = biddingTeam === "us" ? "focus:ring-blue-500" : "focus:ring-red-500";
+                  
                   return `
-                    <button type="button" class="px-3 py-1.5 text-sm font-medium threed ${btnClasses} rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    <button type="button" class="px-3 py-1.5 text-sm font-medium threed ${btnClasses} rounded-lg transition focus:outline-none focus:ring-2 ${focusRingColor} dark:focus:ring-blue-400"
                             onclick="handleBidSelect('${b}')" aria-pressed="${isActive}" aria-label="Select Bid ${b === "other" ? "Other" : b}">
                       ${b === "other" ? "Other" : b}
                     </button>`;
@@ -3634,7 +3854,7 @@ function closeThemeModal(event) {
               </div>
               ${showCustomBid ? `
                 <div class="mt-2">
-                  <input type="number" inputmode="numeric" pattern="[0-9]*" step="5" value="${customBidValue}" onchange="handleCustomBidChange(event)" placeholder="Enter custom bid" class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400" aria-label="Custom Bid Amount" />
+                  <input type="number" inputmode="numeric" pattern="[0-9]*" step="5" value="${customBidValue}" onchange="handleCustomBidChange(event)" placeholder="Enter custom bid" class="w-full sm:w-1/2 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 ${biddingTeam === "us" ? "focus:ring-blue-500" : "focus:ring-red-500"} transition dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400" aria-label="Custom Bid Amount" />
                 </div>` : ""}
             </div>
             ${hasBid ? renderPointsInput() : ""}
@@ -3706,7 +3926,7 @@ function closeThemeModal(event) {
           class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-white"
           >${labelText}</label
         >
-        <div class="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:gap-5">
           <input
             id="pointsInput"
             type="number"
@@ -3861,28 +4081,31 @@ function closeThemeModal(event) {
     else if (additionalStatKey === "handsWonPct") headerText = "Hands Won %";
     else if (additionalStatKey === "sandbagger") headerText = "Sandbagger?";
     else if (additionalStatKey === "360s") headerText = "360s";
+    
     let tableHTML = `
-      <div id="teamStatsTableContainer">
-        <div class="overflow-x-auto">
-          <table class="min-w-full bg-gray-50 dark:bg-gray-700 rounded-xl">
-            <thead>
-              <tr class="border-b dark:border-gray-600">
-                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">Team</th>
-                <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">Win %</th>
-                <th class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-white">${headerText}</th>
-              </tr>
-            </thead>
-            <tbody>`;
-    teamsData.forEach((team) => {
+      <div id="teamStatsTableContainer" class="mt-4">
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
+          <div class="inline-block min-w-full align-middle">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+              <thead>
+                <tr>
+                  <th scope="col" class="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 sticky left-0 z-10">Team</th>
+                  <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Win %</th>
+                  <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">${headerText}</th>
+                  <th scope="col" class="pl-3 pr-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Delete</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">`;
+    
+    teamsData.forEach((team, index) => {
+      const rowClass = index % 2 === 0 ? "" : "bg-gray-50 dark:bg-gray-700";
       tableHTML += `
-        <tr class="border-b last:border-0 dark:border-gray-700">
-          <td class="px-4 py-2 whitespace-nowrap text-gray-700 dark:text-white sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
+        <tr class="${rowClass}">
+          <td class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sticky left-0 z-10 ${rowClass}">
             ${team.name}
-            <button onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();" class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-300 dark:hover:text-red-500 ml-2 threed" aria-label="Delete Team" type="button">
-              ${Icons.Trash}
-            </button>
           </td>
-          <td class="px-4 py-2 text-center text-gray-700 dark:text-white">${team.winPercent}%</td>`;
+          <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${team.winPercent}%</td>`;
+      
       let statValue = "";
       if (additionalStatKey === "games") statValue = team.gamesPlayed;
       else if (additionalStatKey === "avgBid") statValue = team.avgBid;
@@ -3890,14 +4113,31 @@ function closeThemeModal(event) {
       else if (additionalStatKey === "handsWonPct") statValue = team.handsWonPct + "%";
       else if (additionalStatKey === "sandbagger") statValue = team.sandbagger;
       else if (additionalStatKey === "360s") statValue = team.count360;
-      tableHTML += `<td class="px-4 py-2 text-center text-gray-700 dark:text-white">${statValue}</td>
+      
+      tableHTML += `
+          <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${statValue}</td>
+          <td class="whitespace-nowrap pl-3 pr-4 py-3.5 text-sm text-center">
+            <button 
+              onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();" 
+              class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 rounded-full p-1.5 dark:text-red-400 dark:hover:text-red-300" 
+              aria-label="Delete Team" 
+              type="button"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </td>
         </tr>`;
     });
+    
     tableHTML += `
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>`;
+    
     return tableHTML;
   }
 
@@ -3905,40 +4145,100 @@ function closeThemeModal(event) {
     document.body.classList.add("modal-open");
     const stats = getStatistics();
     let content = "";
+    
     if (!stats.totalGames && !stats.teamsData.length) {
-      content = '<p class="text-gray-600 dark:text-white mt-2">No completed games and no teams yet.</p>';
+      content = `
+        <div class="py-8 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <p class="mt-4 text-gray-600 dark:text-gray-400 text-lg">No completed games and no teams yet.</p>
+          <button onclick="handleNewGame(); closeMenuOverlay(); closeStatisticsModal();" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Start a New Game</button>
+        </div>`;
     } else {
-      let topRow = "";
+      let statCards = "";
+      
       if (stats.totalGames > 0) {
-        topRow = `
-          <div class="grid grid-cols-2 gap-6 mb-8">
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
-              <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">Overall Average Bid</p>
-              <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">${stats.overallAverageBid}</p>
+        statCards = `
+          <div class="grid grid-cols-3 gap-2 mb-4">
+            <!-- Overall Average Bid Card -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-2 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-1.5 bg-blue-500 rounded-lg text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">Avg Bid</p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">${stats.overallAverageBid}</p>
+                </div>
+              </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
-              <p class="text-gray-500 dark:text-white text-sm uppercase font-semibold tracking-wide">Total Time Played</p>
-              <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">${formatDuration(stats.totalTimePlayedMs)}</p>
+            
+            <!-- Total Time Played Card -->
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-2 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-1.5 bg-purple-500 rounded-lg text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">Time Played</p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">${formatDuration(stats.totalTimePlayedMs)}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Total Games Card -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-2 shadow-sm">
+              <div class="flex items-center">
+                <div class="p-1.5 bg-green-500 rounded-lg text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">Games Played</p>
+                  <p class="text-xl font-bold text-gray-900 dark:text-white">${stats.totalGames}</p>
+                </div>
+              </div>
             </div>
           </div>`;
       }
-      let dropdown = `
-        <div class="mb-4">
-          <label for="additionalStatSelector" class="block text-sm font-medium text-gray-700 dark:text-white">Select Additional Stat</label>
-          <select id="additionalStatSelector" class="mt-1 block w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-            <option value="games">Games</option>
-            <option value="avgBid">Avg Bid</option>
-            <option value="bidSuccessPct">Bid Success %</option>
-            <option value="handsWonPct">Hands Won %</option>
-            <option value="sandbagger">Sandbagger?</option>
-            <option value="360s">360s</option>
-          </select>
+      
+      // Stat selector
+      let statSelector = `
+        <div class="mt-6 mb-4">
+          <label for="additionalStatSelector" class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Team Statistics</label>
+          <div class="relative">
+            <select 
+              id="additionalStatSelector" 
+              class="appearance-none block w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg py-2.5 px-3 text-gray-700 dark:text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400"
+            >
+              <option value="games">Games Played</option>
+              <option value="avgBid">Average Bid</option>
+              <option value="bidSuccessPct">Bid Success %</option>
+              <option value="handsWonPct">Hands Won %</option>
+              <option value="sandbagger">Sandbagger?</option>
+              <option value="360s">Perfect 360 Hands</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+              </svg>
+            </div>
+          </div>
         </div>`;
+      
       let teamStatsTable = renderTeamStatsTable(stats.teamsData, "games");
-      content = `${topRow}${dropdown}<div id="teamStatsTableWrapper">${teamStatsTable}</div>`;
+      content = `${statCards}${statSelector}<div id="teamStatsTableWrapper">${teamStatsTable}</div>`;
     }
+    
     document.getElementById("statisticsModalContent").innerHTML = content;
     document.getElementById("statisticsModal").classList.remove("hidden");
+    
     const selector = document.getElementById("additionalStatSelector");
     if (selector) {
       selector.addEventListener("change", function () {
@@ -4278,6 +4578,385 @@ function closeThemeModal(event) {
     confettiTriggered = false;
     ephemeralCustomBid = "";
     ephemeralPoints = "";
+  }
+
+  // SAVED GAMES MODAL NEW FUNCTIONS
+  function switchGamesTab(tabType) {
+    // Update tab styles
+    const completedTab = document.getElementById('completedGamesTab');
+    const freezerTab = document.getElementById('freezerGamesTab');
+    const completedSection = document.getElementById('completedGamesSection');
+    const freezerSection = document.getElementById('freezerGamesSection');
+    
+    if (tabType === 'completed') {
+      // Highlight completed tab
+      completedTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+      completedTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+      
+      // Un-highlight freezer tab
+      freezerTab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+      freezerTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+      
+      // Show/hide corresponding sections
+      completedSection.classList.remove('hidden');
+      freezerSection.classList.add('hidden');
+    } else {
+      // Highlight freezer tab
+      freezerTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+      freezerTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+      
+      // Un-highlight completed tab
+      completedTab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+      completedTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+      
+      // Show/hide corresponding sections
+      freezerSection.classList.remove('hidden');
+      completedSection.classList.add('hidden');
+    }
+    
+    // Reset search and sort
+    document.getElementById('gameSearchInput').value = '';
+    document.getElementById('gameSortSelect').value = 'newest';
+    
+    // Re-render the current tab with default sorting
+    renderGamesWithFilter();
+  }
+  
+  function updateGamesCount() {
+    const savedGames = getLocalStorage("savedGames");
+    const freezerGames = getLocalStorage("freezerGames");
+    
+    // Update count badges
+    document.getElementById('completedGamesCount').textContent = savedGames.length;
+    document.getElementById('freezerGamesCount').textContent = freezerGames.length;
+    
+    // Show/hide empty state messages
+    document.getElementById('noCompletedGamesMessage').classList.toggle('hidden', savedGames.length > 0);
+    document.getElementById('noFreezerGamesMessage').classList.toggle('hidden', freezerGames.length > 0);
+  }
+  
+  function filterGames() {
+    renderGamesWithFilter();
+  }
+  
+  function sortGames() {
+    renderGamesWithFilter();
+  }
+  
+  function renderGamesWithFilter() {
+    const searchTerm = document.getElementById('gameSearchInput').value.toLowerCase();
+    const sortOption = document.getElementById('gameSortSelect').value;
+    const isCompletedTab = !document.getElementById('completedGamesSection').classList.contains('hidden');
+    
+    if (isCompletedTab) {
+      renderSavedGames(searchTerm, sortOption);
+    } else {
+      renderFreezerGames(searchTerm, sortOption);
+    }
+  }
+  
+  function openSavedGamesModal() {
+    document.body.classList.add("modal-open");
+    
+    // Set default tab to Completed Games
+    switchGamesTab('completed');
+    
+    // Update counts
+    updateGamesCount();
+    
+    // Render games with default filter
+    renderGamesWithFilter();
+    
+    // Show modal
+    document.getElementById("savedGamesModal").classList.remove("hidden");
+    document.getElementById("savedGamesModal").focus();
+  }
+  
+  function renderSavedGames(searchTerm = '', sortOption = 'newest') {
+    const savedGames = getLocalStorage("savedGames");
+    let filteredGames = savedGames;
+    
+    // Apply search filter
+    if (searchTerm) {
+      filteredGames = savedGames.filter(g => {
+        const usTeamName = (g.usTeamName || "Us").toLowerCase();
+        const demTeamName = (g.demTeamName || "Dem").toLowerCase();
+        const gameDate = new Date(g.timestamp).toLocaleDateString();
+        
+        return usTeamName.includes(searchTerm) || 
+               demTeamName.includes(searchTerm) || 
+               gameDate.includes(searchTerm);
+      });
+    }
+    
+    // Apply sorting
+    filteredGames = sortGamesBy(filteredGames, sortOption);
+    
+    const container = document.getElementById("savedGamesList");
+    if (!filteredGames.length) {
+      document.getElementById('noCompletedGamesMessage').classList.remove('hidden');
+      container.innerHTML = '';
+      return;
+    }
+    
+    document.getElementById('noCompletedGamesMessage').classList.add('hidden');
+    
+    container.innerHTML = filteredGames.map((g, i) => {
+      const usScore = g.finalScore.us;
+      const demScore = g.finalScore.dem;
+      const usIsWinner = g.winner === "us";
+      const demIsWinner = g.winner === "dem";
+      
+      // Generate badge and winner card content
+      let winnerBadge, winnerInfo;
+      
+      if (usIsWinner) {
+        winnerBadge = `<div class="flex justify-end mb-2">
+          <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+            Winner: ${g.usTeamName || "Us"}
+          </span>
+        </div>`;
+        
+        winnerInfo = `
+          <div class="flex items-center gap-2 mt-3">
+            <div class="flex-shrink-0 h-4 w-4 text-green-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span class="font-medium text-green-700 dark:text-green-400">${g.usTeamName || "Us"}: ${usScore} pts</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <div class="flex-shrink-0 h-4 w-4 text-red-500 opacity-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span class="font-medium text-gray-500 dark:text-gray-400">${g.demTeamName || "Dem"}: ${demScore} pts</span>
+          </div>`;
+      } else if (demIsWinner) {
+        winnerBadge = `<div class="flex justify-end mb-2">
+          <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+            Winner: ${g.demTeamName || "Dem"}
+          </span>
+        </div>`;
+        
+        winnerInfo = `
+          <div class="flex items-center gap-2 mt-3">
+            <div class="flex-shrink-0 h-4 w-4 text-gray-500 opacity-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span class="font-medium text-gray-500 dark:text-gray-400">${g.usTeamName || "Us"}: ${usScore} pts</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <div class="flex-shrink-0 h-4 w-4 text-green-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span class="font-medium text-green-700 dark:text-green-400">${g.demTeamName || "Dem"}: ${demScore} pts</span>
+          </div>`;
+      } else {
+        winnerBadge = '';
+        winnerInfo = `
+          <div class="flex items-center gap-2 mt-3">
+            <span class="font-medium text-gray-700 dark:text-gray-300">${g.usTeamName || "Us"}: ${usScore} pts</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="font-medium text-gray-700 dark:text-gray-300">${g.demTeamName || "Dem"}: ${demScore} pts</span>
+          </div>`;
+      }
+      
+      const gameDate = new Date(g.timestamp).toLocaleString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const victoryMethodDisplay = g.victoryMethod ? 
+        `<span class="text-xs font-medium text-purple-700 bg-purple-100 rounded-full px-2.5 py-0.5 dark:bg-purple-900 dark:text-purple-300">${g.victoryMethod}</span>` : '';
+      
+      const durationDisplay = g.durationMs ? 
+        `<div class="text-xs text-gray-500 dark:text-gray-400">Duration: ${formatDuration(g.durationMs)}</div>` : '';
+      
+      return `
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700 overflow-hidden relative" 
+             onclick="viewSavedGame(${i})" 
+             style="cursor: pointer;">
+          ${winnerBadge}
+          <div class="p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  ${g.usTeamName || "Us"} vs ${g.demTeamName || "Dem"}
+                </h3>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">${gameDate}</div>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="viewSavedGame(${i}); event.stopPropagation();" 
+                        class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded-full"
+                        aria-label="View Saved Game" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button onclick="deleteSavedGame(${i}); event.stopPropagation();" 
+                        class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-full" 
+                        aria-label="Delete Saved Game" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            ${winnerInfo}
+            
+            <div class="flex items-center mt-4 space-x-2">
+              ${victoryMethodDisplay}
+              ${durationDisplay}
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function renderFreezerGames(searchTerm = '', sortOption = 'newest') {
+    const freezerGames = getLocalStorage("freezerGames");
+    let filteredGames = freezerGames;
+    
+    // Apply search filter
+    if (searchTerm) {
+      filteredGames = freezerGames.filter(g => {
+        const usTeamName = (g.usName || "Us").toLowerCase();
+        const demTeamName = (g.demName || "Dem").toLowerCase();
+        const gameDate = new Date(g.timestamp).toLocaleDateString();
+        
+        return usTeamName.includes(searchTerm) || 
+               demTeamName.includes(searchTerm) || 
+               gameDate.includes(searchTerm);
+      });
+    }
+    
+    // Apply sorting
+    filteredGames = sortGamesBy(filteredGames, sortOption);
+    
+    const container = document.getElementById("freezerGamesList");
+    if (!filteredGames.length) {
+      document.getElementById('noFreezerGamesMessage').classList.remove('hidden');
+      container.innerHTML = '';
+      return;
+    }
+    
+    document.getElementById('noFreezerGamesMessage').classList.add('hidden');
+    
+    container.innerHTML = filteredGames.map((g, i) => {
+      const usScore = g.finalScore.us;
+      const demScore = g.finalScore.dem;
+      
+      // Calculate who's ahead
+      let leadingTeam = '';
+      let scoreGap = Math.abs(usScore - demScore);
+      
+      if (usScore > demScore) {
+        leadingTeam = g.usName || "Us";
+      } else if (demScore > usScore) {
+        leadingTeam = g.demName || "Dem";
+      }
+      
+      const leadBadge = leadingTeam ? 
+        `<div class="flex justify-end mb-2">
+          <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+            Leading: ${leadingTeam} (+${scoreGap})
+          </span>
+        </div>` : '';
+      
+      const gameDate = new Date(g.timestamp).toLocaleString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const lastBidDisplay = g.lastBid ? 
+        `<span class="text-xs font-medium text-blue-700 bg-blue-100 rounded-full px-2.5 py-0.5 dark:bg-blue-900 dark:text-blue-300">Last Bid: ${g.lastBid}</span>` : '';
+      
+      const accumulatedTimeDisplay = g.accumulatedTime ? 
+        `<div class="text-xs text-gray-500 dark:text-gray-400">Played: ${formatDuration(g.accumulatedTime)}</div>` : '';
+      
+      return `
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700 overflow-hidden relative" 
+             onclick="loadFreezerGame(${i})" 
+             style="cursor: pointer;">
+          <div class="p-5">
+            ${leadBadge}
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  ${g.usName || "Us"} vs ${g.demName || "Dem"}
+                </h3>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Frozen: ${gameDate}</div>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="loadFreezerGame(${i}); event.stopPropagation();" 
+                        class="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded-full"
+                        aria-label="Load Freezer Game" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </button>
+                <button onclick="deleteFreezerGame(${i}); event.stopPropagation();" 
+                        class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-full" 
+                        aria-label="Delete Freezer Game" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2 mt-3">
+              <span class="font-medium text-gray-700 dark:text-gray-300">${g.usName || "Us"}: ${usScore} pts</span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="font-medium text-gray-700 dark:text-gray-300">${g.demName || "Dem"}: ${demScore} pts</span>
+            </div>
+            
+            <div class="flex items-center mt-4 space-x-2">
+              ${lastBidDisplay}
+              ${accumulatedTimeDisplay}
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function sortGamesBy(games, sortOption) {
+    switch (sortOption) {
+      case 'oldest':
+        return [...games].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      case 'highest':
+        return [...games].sort((a, b) => {
+          const aMax = Math.max(a.finalScore.us, a.finalScore.dem);
+          const bMax = Math.max(b.finalScore.us, b.finalScore.dem);
+          return bMax - aMax;
+        });
+      case 'lowest':
+        return [...games].sort((a, b) => {
+          const aMax = Math.max(a.finalScore.us, a.finalScore.dem);
+          const bMax = Math.max(b.finalScore.us, b.finalScore.dem);
+          return aMax - bMax;
+        });
+      case 'newest':
+      default:
+        return [...games].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }
   }
 </script>
   </body>
