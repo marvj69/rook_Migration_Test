@@ -1361,10 +1361,10 @@ function calculateWinProbability(currentGame, historicalGames) {
       }
        function openThemeModal(event) {
         if (event) { event.preventDefault(); event.stopPropagation(); }
-        closeModal("settingsModal"); // Hide settings modal
-        openModal("themeModal");
+        document.getElementById("settingsModal")?.classList.add("hidden");
         const themeModalEl = document.getElementById("themeModal");
         if (themeModalEl) {
+            themeModalEl.classList.remove("hidden");
             const content = themeModalEl.querySelector(".bg-white, .dark\\:bg-gray-800");
             if (content) content.onclick = e => e.stopPropagation(); // Prevent closing on content click
             initializeCustomThemeColors(); // Ensure pickers and preview are up-to-date
@@ -1372,8 +1372,8 @@ function calculateWinProbability(currentGame, historicalGames) {
       }
       function closeThemeModal(event) {
         if (event) { event.preventDefault(); event.stopPropagation(); }
-        closeModal("themeModal");
-        openModal("settingsModal"); // Show settings modal again
+        document.getElementById("themeModal")?.classList.add("hidden");
+        document.getElementById("settingsModal")?.classList.remove("hidden"); // Show settings modal again
       }
       function showSaveIndicator(message = "Saved") {
         const el = document.getElementById("saveIndicator");
