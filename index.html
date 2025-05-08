@@ -983,7 +983,7 @@
       let confirmationCallback = null;
       let noCallback = null;
       let pendingGameAction = null; // For actions requiring team name input first
-      
+
       let presetBids;
         try {
           const raw = localStorage.getItem(PRESET_BIDS_KEY);
@@ -1117,13 +1117,6 @@ function calculateWinProbability(currentGame, historicalGames) {
     { name: "Bid Strength", value: bidStrengthFactor, description: `High bids: us (${usHighBids}), dem (${demHighBids})` }
   ];
   
-  // Console output
-  console.log(`Win Probabilities: US=${adjustedProb}%, DEM=${100 - adjustedProb}%`);
-  console.log("Factors:");
-  factors.forEach(factor => {
-    console.log(`${factor.name}: ${factor.value}% - ${factor.description}`);
-  });
-  
   return {
     us: adjustedProb,
     dem: 100 - adjustedProb,
@@ -1147,14 +1140,27 @@ function calculateWinProbability(currentGame, historicalGames) {
       }
 
       function getLocalStorage(key) {
-        try {
-          const item = localStorage.getItem(key);
-          return item ? JSON.parse(item) : (key === "savedGames" || key === "freezerGames" ? [] : {});
-        } catch (error) {
-          console.error(`Error parsing localStorage item ${key}:`, error);
-          return (key === "savedGames" || key === "freezerGames" ? [] : {});
-        }
-      }
+  // grab the raw string (or null if the key isn’t present)
+  const raw = localStorage.getItem(key);
+
+  // nothing stored yet → sensible defaults
+  if (raw === null) {
+    // for the two keys that always hold arrays we return an empty array,
+    // everything else gets an empty object so later code can still `...spread`
+    if (key === "savedGames" || key === "freezerGames") return [];
+    return {};
+  }
+
+  // try to parse JSON — most of our keys are JSON-encoded
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    // not valid JSON (legacy plain string, hand-edited, etc.)
+    console.warn(`localStorage[${key}] is not JSON – returning the raw value`, err);
+    return raw;        // fall back to the literal string so the app keeps running
+  }
+}
+
       
       // --- Icons ---
       const Icons = { // SVG strings for icons to avoid multiple DOM elements
@@ -1311,18 +1317,49 @@ function calculateWinProbability(currentGame, historicalGames) {
         const savedTheme = localStorage.getItem(THEME_KEY);
         if (savedTheme) document.getElementById("bodyRoot").className = savedTheme; // Simplified theme application
       }
-      function initializeCustomThemeColors() {
-        const usColor = localStorage.getItem('customUsColor');
-        const demColor = localStorage.getItem('customDemColor');
-        const body = document.getElementById('bodyRoot');
-        if (usColor) body.style.setProperty('--primary-color', usColor);
-        if (demColor) body.style.setProperty('--accent-color', demColor);
-        const usPicker = document.getElementById('usColorPicker');
-        const demPicker = document.getElementById('demColorPicker');
-        if (usPicker && usColor) usPicker.value = usColor;
-        if (demPicker && demColor) demPicker.value = demColor;
-        updatePreview(); // Ensure preview matches
-      }
+      function isValidHexColor(colorString) {
+  if (!colorString || typeof colorString !== 'string') return false;
+  // Basic hex color validation (e.g., #RRGGBB or #RGB)
+  return /^#([0-9A-F]{3}){1,2}$/i.test(colorString);
+}
+
+function initializeCustomThemeColors() {
+  const rootStyles = getComputedStyle(document.documentElement);
+  const defaultUsColor = rootStyles.getPropertyValue('--primary-color').trim() || "#3b82f6";
+  const defaultDemColor = rootStyles.getPropertyValue('--accent-color').trim() || "#ef4444";
+
+  let usColor = localStorage.getItem('customUsColor');
+  let demColor = localStorage.getItem('customDemColor');
+
+  const body = document.getElementById('bodyRoot');
+  const usPicker = document.getElementById('usColorPicker');
+  const demPicker = document.getElementById('demColorPicker');
+
+  if (isValidHexColor(usColor)) {
+    body.style.setProperty('--primary-color', usColor);
+    if (usPicker) usPicker.value = usColor;
+  } else {
+    if (usColor !== null) { // Only warn if there was an attempt to set an invalid color
+        console.warn(`Invalid customUsColor ("${usColor}") in localStorage. Using default.`);
+        // localStorage.removeItem('customUsColor'); // Optionally remove invalid item
+    }
+    body.style.setProperty('--primary-color', defaultUsColor);
+    if (usPicker) usPicker.value = defaultUsColor;
+  }
+
+  if (isValidHexColor(demColor)) {
+    body.style.setProperty('--accent-color', demColor);
+    if (demPicker) demPicker.value = demColor;
+  } else {
+    if (demColor !== null) {
+        console.warn(`Invalid customDemColor ("${demColor}") in localStorage. Using default.`);
+        // localStorage.removeItem('customDemColor');
+    }
+    body.style.setProperty('--accent-color', defaultDemColor);
+    if (demPicker) demPicker.value = defaultDemColor;
+  }
+  updatePreview(); // Ensure preview matches
+}
       function applyCustomThemeColors() {
         const usColor = document.getElementById('usColorPicker').value;
         const demColor = document.getElementById('demColorPicker').value;
@@ -1416,23 +1453,39 @@ function calculateWinProbability(currentGame, historicalGames) {
         }
       }
       function loadCurrentGameState() {
-        let loadedState = getLocalStorage(ACTIVE_GAME_KEY);
-        if (loadedState && Object.keys(loadedState).length > 0 && Array.isArray(loadedState.rounds)) {
-          // Ensure all DEFAULT_STATE keys are present, preferring loaded values
-          const completeLoadedState = { ...DEFAULT_STATE, ...loadedState };
-          // Ensure showWinProbability is correctly set from localStorage PRO_MODE_KEY
-          completeLoadedState.showWinProbability = JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false;
-          updateState(completeLoadedState);
-        } else {
-          updateState({
-   ...DEFAULT_STATE,
-    usTeamName : "",
-    demTeamName: "",
-    showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY)) || false,
-    startTime: Date.now()
-  });
-        }
-      }
+  let loadedState = null; // Initialize to null
+  try {
+    const storedStateString = localStorage.getItem(ACTIVE_GAME_KEY);
+    if (storedStateString) {
+      loadedState = JSON.parse(storedStateString);
+    }
+  } catch (e) {
+    console.error("Error parsing activeGameState from localStorage. Will reset to default state.", e);
+    localStorage.removeItem(ACTIVE_GAME_KEY); // Critical: remove the corrupted state
+    // loadedState remains null, so it will fall through to using DEFAULT_STATE
+  }
+
+  if (loadedState && typeof loadedState === 'object' && loadedState !== null && Array.isArray(loadedState.rounds)) {
+    // Ensure all DEFAULT_STATE keys are present, preferring loaded values
+    const completeLoadedState = { ...DEFAULT_STATE, ...loadedState };
+    // Ensure showWinProbability is correctly set from localStorage PRO_MODE_KEY
+    completeLoadedState.showWinProbability = JSON.parse(localStorage.getItem(PRO_MODE_KEY) || "false"); // Add try-catch for this too
+    updateState(completeLoadedState);
+  } else {
+    if (loadedState) { // If it was parsed but didn't meet structure checks
+        console.warn("Loaded activeGameState has invalid structure. Resetting to default state.");
+        localStorage.removeItem(ACTIVE_GAME_KEY); // Remove invalid structure
+    }
+    // Fallback to default state
+    updateState({
+      ...DEFAULT_STATE,
+      usTeamName: "", // Or load from a separate team name storage if you have one
+      demTeamName: "",
+      showWinProbability: JSON.parse(localStorage.getItem(PRO_MODE_KEY) || "false"), // Add try-catch here as well
+      startTime: Date.now() // Start time for a new game
+    });
+  }
+}
       function saveCurrentGameState() {
         if (state.gameOver) {
           localStorage.removeItem(ACTIVE_GAME_KEY);
