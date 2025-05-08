@@ -1361,10 +1361,10 @@ function calculateWinProbability(currentGame, historicalGames) {
       }
        function openThemeModal(event) {
         if (event) { event.preventDefault(); event.stopPropagation(); }
-        document.getElementById("settingsModal")?.classList.add("hidden");
+        closeModal("settingsModal"); // Hide settings modal
+        openModal("themeModal");
         const themeModalEl = document.getElementById("themeModal");
         if (themeModalEl) {
-            themeModalEl.classList.remove("hidden");
             const content = themeModalEl.querySelector(".bg-white, .dark\\:bg-gray-800");
             if (content) content.onclick = e => e.stopPropagation(); // Prevent closing on content click
             initializeCustomThemeColors(); // Ensure pickers and preview are up-to-date
@@ -1372,8 +1372,8 @@ function calculateWinProbability(currentGame, historicalGames) {
       }
       function closeThemeModal(event) {
         if (event) { event.preventDefault(); event.stopPropagation(); }
-        document.getElementById("themeModal")?.classList.add("hidden");
-        document.getElementById("settingsModal")?.classList.remove("hidden"); // Show settings modal again
+        closeModal("themeModal");
+        openModal("settingsModal"); // Show settings modal again
       }
       function showSaveIndicator(message = "Saved") {
         const el = document.getElementById("saveIndicator");
@@ -1479,9 +1479,16 @@ function calculateWinProbability(currentGame, historicalGames) {
         document.getElementById(modalId)?.focus(); // For accessibility
       }
       function closeModal(modalId) {
-        document.getElementById(modalId)?.classList.add("hidden");
-        document.body.classList.remove("modal-open");
-        document.getElementById("app")?.classList.remove("modal-active");
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add("hidden");
+        // Only remove modal-open if no other modals are visible
+        const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(
+          m => !m.classList.contains('hidden')
+        );
+        if (!anyModalOpen) {
+          document.body.classList.remove("modal-open");
+          document.getElementById("app")?.classList.remove("modal-active");
+        }
       }
       function openSavedGamesModal() {
         updateGamesCount();
@@ -2515,7 +2522,7 @@ function handleGameOverSaveClick(e) {
             winPercent: t.gamesPlayed > 0 ? ((t.wins / t.gamesPlayed) * 100).toFixed(1) : "0.0",
             avgBid: t.bidsMade > 0 ? (t.totalBidAmount / t.bidsMade).toFixed(0) : "N/A",
             bidSuccessPct: t.bidsMade > 0 ? ((t.bidsSucceeded / t.bidsMade) * 100).toFixed(1) : "N/A",
-            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.33) ? "Yes" : "No", // Example threshold
+            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.5) ? "Yes" : "No", // Example threshold
             count360: t.perfect360s
         })).sort((a,b) => b.lastPlayed - a.lastPlayed); // Sort by most recently played
 
