@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Rook Score</title>
+    <title>Rook Score Taking</title>
     <link rel="manifest" href="manifest.json" /> <!-- Kept for PWA functionality -->
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -428,7 +428,7 @@
 
     <!-- Version Number -->
     <div class="absolute top-0 right-0 m-4 p-2 text-gray-800 font-medium text-xs bg-white bg-opacity-70 rounded shadow px-3 py-1 dark:bg-gray-800 dark:text-white cursor-pointer" onclick="showVersionNum()">
-      <p>version 1.4.502</p>
+      <p>version 1.4.5</p>
     </div>
 
     <!-- Main App Container -->
@@ -567,7 +567,7 @@
               <li class="flex items-start"><div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div><span class="ml-2"><strong>Settings Button:</strong> Access game rules, Pro Mode, theme color customization, and bid presets from the new settings menu.</span></li>
               <li class="flex items-start"><div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div><span class="ml-2"><strong>Settings Explained:</strong> 
                 <ul class='list-disc list-inside ml-4'>
-                  <li><strong>Game Rules:</strong> Toggle 'Must win by making bid' to require the bidder to make their bid to win, even if over 500 points.</li>
+                  <li><strong>Game Rules:</strong> Toggle "Must win by making bid" to require the bidder to make their bid to win, even if over 500 points.</li>
                   <li><strong>Pro Mode:</strong> Enable to show win probability during games.</li>
                   <li><strong>Customize Theme Colors:</strong> Personalize team colors for "Us" and "Dem".</li>
                   <li><strong>Edit Bid Presets:</strong> Change the quick bid buttons to your preferred values.</li>
@@ -983,7 +983,15 @@
       let confirmationCallback = null;
       let noCallback = null;
       let pendingGameAction = null; // For actions requiring team name input first
-      let presetBids = JSON.parse(localStorage.getItem(PRESET_BIDS_KEY)) || [120, 125, 130, 135, 140, 145, "other"];
+      
+      let presetBids;
+        try {
+          const raw = localStorage.getItem(PRESET_BIDS_KEY);
+          const parsed = JSON.parse(raw);
+          presetBids   = Array.isArray(parsed) && parsed.length ? parsed : null;
+         } catch (_) { presetBids = null; }
+        if (!presetBids) presetBids = [120,125,130,135,140,145,"other"]; 
+
       let scoreCardHasAnimated  = false;
       let historyCardHasAnimated = false;
 
@@ -2070,14 +2078,16 @@ function handleGameOverSaveClick(e) {
             </div>`;
         }
         return `
-          <div class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-all rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-[calc(33%-1rem)] sm:min-w-0 w-auto h-32 p-2"
-               onclick="handleTeamClick('${teamKey}')" tabindex="0" role="button" aria-pressed="${isSelected}" aria-label="Select ${teamLabel}">
-            <div class="text-center">
-              <h2 class="text-base sm:text-xl font-semibold truncate max-w-[100px] sm:max-w-[120px]">${teamLabel}</h2>
-              <p class="text-2xl font-bold">${score}</p>
-              ${winProbDisplay}
-            </div>
-          </div>`;
+          <button type="button"
+    class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-all rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-[calc(33%-1rem)] sm:min-w-0 w-auto h-32 p-2"
+    onclick="handleTeamClick('${teamKey}')"
+    aria-pressed="${isSelected}" aria-label="Select ${teamLabel}">
+    <div class="text-center">
+      <h2 class="text-base sm:text-xl font-semibold truncate max-w-[100px] sm:max-w-[120px]">${teamLabel}</h2>
+      <p class="text-2xl font-bold">${score}</p>
+      ${winProbDisplay}
+    </div>
+  </button>`;
       }
       function renderRoundCard(roundNumber, lastBidDisplayHtml) {
         return `
@@ -2515,7 +2525,7 @@ function handleGameOverSaveClick(e) {
             winPercent: t.gamesPlayed > 0 ? ((t.wins / t.gamesPlayed) * 100).toFixed(1) : "0.0",
             avgBid: t.bidsMade > 0 ? (t.totalBidAmount / t.bidsMade).toFixed(0) : "N/A",
             bidSuccessPct: t.bidsMade > 0 ? ((t.bidsSucceeded / t.bidsMade) * 100).toFixed(1) : "N/A",
-            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.33) ? "Yes" : "No", // Example threshold
+            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.5) ? "Yes" : "No", // Example threshold
             count360: t.perfect360s
         })).sort((a,b) => b.lastPlayed - a.lastPlayed); // Sort by most recently played
 
@@ -2646,6 +2656,14 @@ let statVal = lookup[additionalStatKey] ?? '0';
             }
         }, { passive: true });
       });
+
+      // SAFETY-NET: make sure the app starts with pointer-events ON
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.remove('modal-open');          // scrolling again
+  document.getElementById('app')?.classList.remove('modal-active');
+  // also be sure every .modal starts hidden
+  document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+});
 
       if ('serviceWorker' in navigator) {
         let refreshing;
