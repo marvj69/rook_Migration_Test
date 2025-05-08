@@ -2070,14 +2070,16 @@ function handleGameOverSaveClick(e) {
             </div>`;
         }
         return `
-          <div class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-all rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-[calc(33%-1rem)] sm:min-w-0 w-auto h-32 p-2"
-               onclick="handleTeamClick('${teamKey}')" tabindex="0" role="button" aria-pressed="${isSelected}" aria-label="Select ${teamLabel}">
-            <div class="text-center">
-              <h2 class="text-base sm:text-xl font-semibold truncate max-w-[100px] sm:max-w-[120px]">${teamLabel}</h2>
-              <p class="text-2xl font-bold">${score}</p>
-              ${winProbDisplay}
-            </div>
-          </div>`;
+          <button type="button"
+    class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-all rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-[calc(33%-1rem)] sm:min-w-0 w-auto h-32 p-2"
+    onclick="handleTeamClick('${teamKey}')"
+    aria-pressed="${isSelected}" aria-label="Select ${teamLabel}">
+    <div class="text-center">
+      <h2 class="text-base sm:text-xl font-semibold truncate max-w-[100px] sm:max-w-[120px]">${teamLabel}</h2>
+      <p class="text-2xl font-bold">${score}</p>
+      ${winProbDisplay}
+    </div>
+  </button>`;
       }
       function renderRoundCard(roundNumber, lastBidDisplayHtml) {
         return `
