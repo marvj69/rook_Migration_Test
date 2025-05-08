@@ -2070,16 +2070,14 @@ function handleGameOverSaveClick(e) {
             </div>`;
         }
         return `
-          <button type="button"
-    class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-all rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-[calc(33%-1rem)] sm:min-w-0 w-auto h-32 p-2"
-    onclick="handleTeamClick('${teamKey}')"
-    aria-pressed="${isSelected}" aria-label="Select ${teamLabel}">
-    <div class="text-center">
-      <h2 class="text-base sm:text-xl font-semibold truncate max-w-[100px] sm:max-w-[120px]">${teamLabel}</h2>
-      <p class="text-2xl font-bold">${score}</p>
-      ${winProbDisplay}
-    </div>
-  </button>`;
+          <div class="${colorClass} ${selectedEffect} threed text-white cursor-pointer transition-all rounded-xl shadow-md flex flex-col items-center justify-center flex-1 min-w-[calc(33%-1rem)] sm:min-w-0 w-auto h-32 p-2"
+               onclick="handleTeamClick('${teamKey}')" tabindex="0" role="button" aria-pressed="${isSelected}" aria-label="Select ${teamLabel}">
+            <div class="text-center">
+              <h2 class="text-base sm:text-xl font-semibold truncate max-w-[100px] sm:max-w-[120px]">${teamLabel}</h2>
+              <p class="text-2xl font-bold">${score}</p>
+              ${winProbDisplay}
+            </div>
+          </div>`;
       }
       function renderRoundCard(roundNumber, lastBidDisplayHtml) {
         return `
@@ -2517,7 +2515,7 @@ function handleGameOverSaveClick(e) {
             winPercent: t.gamesPlayed > 0 ? ((t.wins / t.gamesPlayed) * 100).toFixed(1) : "0.0",
             avgBid: t.bidsMade > 0 ? (t.totalBidAmount / t.bidsMade).toFixed(0) : "N/A",
             bidSuccessPct: t.bidsMade > 0 ? ((t.bidsSucceeded / t.bidsMade) * 100).toFixed(1) : "N/A",
-            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.5) ? "Yes" : "No", // Example threshold
+            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.33) ? "Yes" : "No", // Example threshold
             count360: t.perfect360s
         })).sort((a,b) => b.lastPlayed - a.lastPlayed); // Sort by most recently played
 
@@ -2648,14 +2646,6 @@ let statVal = lookup[additionalStatKey] ?? '0';
             }
         }, { passive: true });
       });
-
-      // SAFETY-NET: make sure the app starts with pointer-events ON
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.remove('modal-open');          // scrolling again
-  document.getElementById('app')?.classList.remove('modal-active');
-  // also be sure every .modal starts hidden
-  document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
-});
 
       if ('serviceWorker' in navigator) {
         let refreshing;
