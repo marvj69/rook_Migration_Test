@@ -1479,16 +1479,9 @@ function calculateWinProbability(currentGame, historicalGames) {
         document.getElementById(modalId)?.focus(); // For accessibility
       }
       function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.classList.add("hidden");
-        // Only remove modal-open if no other modals are visible
-        const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(
-          m => !m.classList.contains('hidden')
-        );
-        if (!anyModalOpen) {
-          document.body.classList.remove("modal-open");
-          document.getElementById("app")?.classList.remove("modal-active");
-        }
+        document.getElementById(modalId)?.classList.add("hidden");
+        document.body.classList.remove("modal-open");
+        document.getElementById("app")?.classList.remove("modal-active");
       }
       function openSavedGamesModal() {
         updateGamesCount();
