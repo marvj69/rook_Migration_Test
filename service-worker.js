@@ -1,4 +1,4 @@
-const CACHE_NAME = "rook-cache-v1.4.511";
+const CACHE_NAME = "rook-cache-v1.4.512";
 const OFFLINE_URL = "index.html"; // Use relative path
 
 const urlsToCache = [
@@ -23,12 +23,16 @@ self.addEventListener("fetch", (event) => {
   // Handle navigation requests
   if (event.request.mode === "navigate") {
     event.respondWith(
-      caches.match("./index.html").then((cachedResponse) => {
-        return cachedResponse || fetch(event.request).catch(() => {
-          return caches.match(OFFLINE_URL);
-        });
-      })
-    );
+     fetch(event.request)
+       .then((networkResponse) => {
+         // put fresh index.html in the current versioned cache
+         return caches.open(CACHE_NAME).then((cache) => {
+           cache.put("./index.html", networkResponse.clone());
+           return networkResponse;
+         });
+       })
+       .catch(() => caches.match("./index.html")) // offline fallback
+   );
   } else {
     // Handle other assets
     event.respondWith(
@@ -40,15 +44,16 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-});
+  self.clients.claim();
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    );
+  });
