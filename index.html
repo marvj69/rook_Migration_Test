@@ -2649,6 +2649,14 @@ let statVal = lookup[additionalStatKey] ?? '0';
         }, { passive: true });
       });
 
+      // SAFETY-NET: make sure the app starts with pointer-events ON
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.remove('modal-open');          // scrolling again
+  document.getElementById('app')?.classList.remove('modal-active');
+  // also be sure every .modal starts hidden
+  document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+});
+
       if ('serviceWorker' in navigator) {
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
