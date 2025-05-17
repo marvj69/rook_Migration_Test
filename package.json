@@ -1,0 +1,12 @@
+{
+  "name": "rook_migration_test",
+  "version": "1.0.0",
+  "description": "This web application provides a user-friendly interface for tracking scores in the card game Rook. It features a responsive design, customizable themes, and robust functionality to manage game rounds, bids, and statistics.",
+  "main": "service-worker.js",
+  "scripts": {
+    "test": "node test/run_tests.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
