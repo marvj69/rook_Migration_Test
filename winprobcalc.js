@@ -133,3 +133,8 @@ function calculateWinProbability(currentGame, historicalGames) {
     factors: factors
   };
 }
+
+// Export for Node.js testing
+if (typeof module !== "undefined") {
+  module.exports = { calculateWinProbability, renderWinProbability };
+}
