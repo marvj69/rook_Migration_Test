@@ -27,6 +27,13 @@ self.addEventListener("activate", event => {
   self.clients.claim();                  // control pages without reload
 });
 
+/* ----------  MESSAGE  ---------- */
+self.addEventListener("message", event => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 /* ----------  FETCH  ---------- */
 self.addEventListener("fetch", event => {
   const { request } = event;
