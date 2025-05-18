@@ -389,7 +389,7 @@
         <li><button type="button" onclick="handleFreezerGame(); toggleMenu(event);">Freeze Game</button></li>
         <li><button type="button" onclick="openSettingsModal(); toggleMenu(event);">Settings</button></li>
         <li><button type="button" onclick="openAboutModal(); toggleMenu(event);">About</button></li>
-        <li><button type="button" onclick="openStatisticsModal(); toggleMenu(event);">Statistics</button></li>
+        <li><button id="openStatisticsModal" type="button" class="flex items-center justify-between w-full" onclick="openStatisticsModal(); toggleMenu(event)">Player Statistics</button></li>
         <li>
           <label for="darkModeToggle" class="flex items-center justify-between w-full cursor-pointer">
             <span>Dark Mode</span>
@@ -442,7 +442,7 @@
 
     <!-- Saved Games Modal -->
     <div id="savedGamesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 modal" role="dialog" aria-modal="true" aria-labelledby="savedGamesTitle">
-      <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden dark:bg-gray-800 flex flex-col" style="max-height: 85vh;">
+      <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden dark:bg-gray-800 flex flex-col" style="height: 85vh;">
         <header class="border-b border-gray-200 dark:border-gray-700">
           <div class="flex justify-between items-center px-6 pt-5 pb-2">
             <h3 id="savedGamesTitle" class="text-2xl font-bold text-gray-800 dark:text-white">Game Library</h3>
@@ -617,17 +617,25 @@
     <div id="teamSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 modal" role="dialog" aria-modal="true" aria-labelledby="teamSelectionModalTitle">
       <div class="bg-white w-full max-w-md rounded-xl shadow-lg dark:bg-gray-800">
         <div class="p-6">
-          <h2 id="teamSelectionModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Enter Team Names</h2>
+          <h2 id="teamSelectionModalTitle" class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Enter Player Names</h2>
           <form id="teamSelectionForm" class="space-y-4">
-            <div>
-              <label for="selectUsTeam" class="block text-sm font-medium text-gray-700 dark:text-white">Team "Us"</label>
-              <select id="selectUsTeam" name="selectUsTeam" class="mt-1 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white"></select>
-              <input type="text" id="newUsTeamName" name="newUsTeamName" class="mt-2 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white hidden" placeholder="New Name for Us" />
-            </div>
-            <div>
-              <label for="selectDemTeam" class="block text-sm font-medium text-gray-700 dark:text-white">Team "Dem"</label>
-              <select id="selectDemTeam" name="selectDemTeam" class="mt-1 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white"></select>
-              <input type="text" id="newDemTeamName" name="newDemTeamName" class="mt-2 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white hidden" placeholder="New Name for Dem" />
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label for="usPlayer1" class="block text-sm font-medium text-gray-700 dark:text-white">Us Player 1</label>
+                <input type="text" id="usPlayer1" name="usPlayer1" class="mt-1 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" placeholder="Alice" autocomplete="off" />
+              </div>
+              <div>
+                <label for="usPlayer2" class="block text-sm font-medium text-gray-700 dark:text-white">Us Player 2</label>
+                <input type="text" id="usPlayer2" name="usPlayer2" class="mt-1 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" placeholder="Bob" autocomplete="off" />
+              </div>
+              <div>
+                <label for="demPlayer1" class="block text-sm font-medium text-gray-700 dark:text-white">Dem Player 1</label>
+                <input type="text" id="demPlayer1" name="demPlayer1" class="mt-1 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" placeholder="Charlie" autocomplete="off" />
+              </div>
+              <div>
+                <label for="demPlayer2" class="block text-sm font-medium text-gray-700 dark:text-white">Dem Player 2</label>
+                <input type="text" id="demPlayer2" name="demPlayer2" class="mt-1 block w-full border border-gray-300 rounded-xl px-4 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white" placeholder="Dana" autocomplete="off" />
+              </div>
             </div>
             <div class="flex justify-end space-x-2">
               <button type="button" onclick="closeTeamSelectionModal();" class="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-400 dark:hover:bg-gray-600 dark:focus:ring-blue-400">Cancel</button>
@@ -1007,8 +1015,7 @@ role="dialog" aria-modal="true" aria-labelledby="zeroPointsModalTitle">
             }
         });
       });
-      </script>
-    <script src="winprobcalc.js"></script>
+    </script>
     <script>
       "use strict";
 
@@ -1026,6 +1033,7 @@ role="dialog" aria-modal="true" aria-labelledby="zeroPointsModalTitle">
         savedScoreInputStates: { us: null, dem: null }, lastBidAmount: null,
         lastBidTeam: null, usTeamName: "", demTeamName: "", startTime: null,
         accumulatedTime: 0, showWinProbability: false, pendingPenalty: null,
+        usPlayers: ["", ""], demPlayers: ["", ""]
       };
 
       // --- Global State ---
@@ -1047,6 +1055,135 @@ role="dialog" aria-modal="true" aria-labelledby="zeroPointsModalTitle">
 
       let scoreCardHasAnimated  = false;
       let historyCardHasAnimated = false;
+
+      function renderWinProbability() {
+  // Only show if enabled
+  if (!state.showWinProbability) return "";
+  
+  const { rounds, usTeamName, demTeamName, gameOver } = state;
+  if (rounds.length === 0 || gameOver) return "";
+  const historicalGames = getLocalStorage("savedGames");
+  const winProb = calculateWinProbability(state, historicalGames);
+  const labelUs = usTeamName || "Us";
+  const labelDem = demTeamName || "Dem";
+  return `
+    <div id="winProbabilityDisplay" class="text-center text-sm text-gray-600 dark:text-gray-300">
+      <span class="inline-block px-4">${labelUs}: ${winProb.us.toFixed(1)}%</span>
+      <span class="inline-block px-4">${labelDem}: ${winProb.dem.toFixed(1)}%</span>
+    </div>
+  `;
+}
+
+function calculateWinProbability(currentGame, historicalGames) {
+  const { rounds } = currentGame;
+  
+  if (!rounds || rounds.length === 0) {
+    console.log("Win Probabilities: US=50%, DEM=50%");
+    console.log("Factors: None - No rounds played");
+    return { us: 50, dem: 50, factors: [] };
+  }
+  
+  // Get current scores
+  const lastRound = rounds[rounds.length - 1];
+  const currentScores = lastRound.runningTotals || { us: 0, dem: 0 };
+  const scoreDiff = currentScores.us - currentScores.dem;
+  const roundsPlayed = rounds.length;
+  
+  // Base probability calculation from score difference
+  let baseProb = 50 + (scoreDiff / 15);  // Each 12 points is worth 1% advantage
+  
+  // Adjust for tendency to come back from behind
+  let comebackFactor = 0;
+  
+  // Find similar historical games based on completion status and rounds
+  const relevantGames = historicalGames.filter(game => {
+    return game.rounds && 
+           game.rounds.length > 0 && 
+           game.rounds.length >= roundsPlayed && 
+           game.finalScore && 
+           (game.finalScore.us !== undefined || game.finalScore.dem !== undefined);
+  });
+  
+  // Analyze comebacks in historical games
+  if (relevantGames.length > 0) {
+    let comebackCount = 0;
+    let totalSimilarSituations = 0;
+    
+    relevantGames.forEach(game => {
+      if (!game.rounds || game.rounds.length <= roundsPlayed) return;
+      
+      const historicalRound = game.rounds[roundsPlayed - 1];
+      const finalScores = game.finalScore;
+      
+      if (!historicalRound || !finalScores) return;
+      
+      const historicalScores = historicalRound.runningTotals;
+      if (!historicalScores) return;
+      
+      const historicalLeader = historicalScores.us > historicalScores.dem ? "us" : "dem";
+      const finalWinner = finalScores.us > finalScores.dem ? "us" : "dem";
+      
+      if (historicalLeader !== finalWinner) {
+        comebackCount++;
+      }
+      
+      totalSimilarSituations++;
+    });
+    
+    if (totalSimilarSituations > 0) {
+      const comebackRate = comebackCount / totalSimilarSituations;
+      comebackFactor = Math.round(comebackRate * 10); // Max 10% adjustment
+    }
+  }
+  
+  // Momentum factor based on recent rounds
+  let momentumFactor = 0;
+  if (rounds.length >= 3) {
+    let recentUsPoints = 0;
+    let recentDemPoints = 0;
+    
+    for (let i = rounds.length - 3; i < rounds.length; i++) {
+      if (i >= 0) {
+        recentUsPoints += rounds[i].usPoints || 0;
+        recentDemPoints += rounds[i].demPoints || 0;
+      }
+    }
+    
+    if (recentUsPoints > recentDemPoints) {
+      momentumFactor = 2;
+    } else if (recentDemPoints > recentUsPoints) {
+      momentumFactor = -2;
+    }
+  }
+  
+  // Bid strength factor
+  let bidStrengthFactor = 0;
+  const usHighBids = rounds.filter(r => r.biddingTeam === "us" && r.bidAmount >= 140).length;
+  const demHighBids = rounds.filter(r => r.biddingTeam === "dem" && r.bidAmount >= 140).length;
+  
+  if (usHighBids > demHighBids) {
+    bidStrengthFactor = 2;
+  } else if (demHighBids > usHighBids) {
+    bidStrengthFactor = -2;
+  }
+  
+  // Calculate final probability
+  const adjustedProb = Math.min(Math.max(baseProb + momentumFactor + comebackFactor + bidStrengthFactor, 1), 99);
+  
+  // Factors for explanation
+  const factors = [
+    { name: "Score Difference", value: Math.round((scoreDiff / 20)), description: `${Math.abs(scoreDiff)} point difference` },
+    { name: "Momentum", value: momentumFactor, description: momentumFactor !== 0 ? `Recent rounds trend` : "No clear momentum" },
+    { name: "Comeback Tendency", value: comebackFactor, description: `Based on ${relevantGames.length} completed games` },
+    { name: "Bid Strength", value: bidStrengthFactor, description: `High bids: us (${usHighBids}), dem (${demHighBids})` }
+  ];
+  
+  return {
+    us: adjustedProb,
+    dem: 100 - adjustedProb,
+    factors: factors
+  };
+}
 
       // --- Local Storage & Sync ---
       function setLocalStorage(key, value) {
@@ -1248,7 +1385,56 @@ function openZeroPointsModal(chooseCallback) {
         renderApp();
         showSaveIndicator("Bid presets updated");
       }
-      
+      // ————————————————
+// ONE-TIME LEGACY → PLAYER MIGRATION
+// ————————————————
+function migrateLegacyTeamData() {
+  if (localStorage.getItem('legacyTeamMigrationDone')) return;
+  const splitNames = name =>
+    (name||'').split(/\s*&\s*|\s+and\s+/i)
+             .map(s=>s.trim())
+             .filter(Boolean);
+  // 1) Pull savedGames and players
+  const savedGamesKey = 'savedGames';
+  const playersKey    = 'players';
+  const savedGames = JSON.parse(localStorage.getItem(savedGamesKey)||'[]');
+  const playersObj = {};
+
+  // 2) Migrate each game
+  savedGames.forEach(game => {
+    // only migrate if usPlayers isn’t already set
+    if (!Array.isArray(game.usPlayers)) {
+      game.usPlayers = splitNames(game.usTeamName);
+      if (game.usPlayers.length!==2)
+        game.usPlayers = [game.usTeamName, game.usTeamName];
+    }
+    if (!Array.isArray(game.demPlayers)) {
+      game.demPlayers = splitNames(game.demTeamName);
+      if (game.demPlayers.length!==2)
+        game.demPlayers = [game.demTeamName, game.demTeamName];
+    }
+    // 3) Accumulate per-player stats
+    const winnerSide = game.winner; // 'us' or 'dem'
+    game.usPlayers.forEach(p=>{
+      playersObj[p] = playersObj[p]||{wins:0,losses:0,gamesPlayed:0};
+      playersObj[p].gamesPlayed++;
+      if (winnerSide==='us') playersObj[p].wins++;
+      else if (winnerSide==='dem') playersObj[p].losses++;
+    });
+    game.demPlayers.forEach(p=>{
+      playersObj[p] = playersObj[p]||{wins:0,losses:0,gamesPlayed:0};
+      playersObj[p].gamesPlayed++;
+      if (winnerSide==='dem') playersObj[p].wins++;
+      else if (winnerSide==='us') playersObj[p].losses++;
+    });
+  });
+
+  // 4) Persist back to localStorage
+  localStorage.setItem(savedGamesKey, JSON.stringify(savedGames));
+  localStorage.setItem(playersKey, JSON.stringify(playersObj));
+  localStorage.setItem('legacyTeamMigrationDone','true');
+}
+
       // --- Migrations ---
       // Removed performDataMigration and all migration logic
 
@@ -1511,17 +1697,23 @@ function initializeCustomThemeColors() {
       // --- Team Stats Helpers ---
       function getTeamsObject() { return getLocalStorage("teams") || {}; }
       function setTeamsObject(obj) { setLocalStorage("teams", obj); }
-      function updateTeamsStatsOnGameEnd(winner) {
-        if (!state.usTeamName || !state.demTeamName) return;
-        const teams = getTeamsObject();
-        const usKey = state.usTeamName.trim(), demKey = state.demTeamName.trim();
-        if (!teams[usKey]) teams[usKey] = { wins: 0, losses: 0, gamesPlayed: 0 };
-        if (!teams[demKey]) teams[demKey] = { wins: 0, losses: 0, gamesPlayed: 0 };
-        teams[usKey].gamesPlayed++;
-        teams[demKey].gamesPlayed++;
-        if (winner === "us") { teams[usKey].wins++; teams[demKey].losses++; }
-        else if (winner === "dem") { teams[demKey].wins++; teams[usKey].losses++; }
-        setTeamsObject(teams);
+      function updatePlayersStatsOnGameEnd(winnerSide) {
+        // winnerSide: 'us' or 'dem'
+        if (!Array.isArray(state.usPlayers) || !Array.isArray(state.demPlayers)) return;
+        const playersObj = getPlayersObject();
+        const us = state.usPlayers, dem = state.demPlayers;
+        // Increment gamesPlayed for all
+        us.forEach(name => { if (playersObj[name]) playersObj[name].gamesPlayed++; });
+        dem.forEach(name => { if (playersObj[name]) playersObj[name].gamesPlayed++; });
+        // Increment wins/losses
+        if (winnerSide === 'us') {
+          us.forEach(name => { if (playersObj[name]) playersObj[name].wins++; });
+          dem.forEach(name => { if (playersObj[name]) playersObj[name].losses++; });
+        } else if (winnerSide === 'dem') {
+          dem.forEach(name => { if (playersObj[name]) playersObj[name].wins++; });
+          us.forEach(name => { if (playersObj[name]) playersObj[name].losses++; });
+        }
+        setPlayersObject(playersObj);
       }
       function recalcTeamsStats() { /* See getStatistics for actual calculation logic */ }
       function addTeamIfNotExists(teamName) {
@@ -1574,7 +1766,10 @@ function initializeCustomThemeColors() {
         newNo.addEventListener("click", (e) => { e.stopPropagation(); if (noCallback) noCallback(); });
       }
       function closeConfirmationModal() { closeModal("confirmationModal"); confirmationCallback = null; noCallback = null; }
-      function openTeamSelectionModal() { populateTeamSelects(); openModal("teamSelectionModal"); }
+      function openTeamSelectionModal() {
+        // Removed populateTeamSelects();
+        openModal("teamSelectionModal");
+      }
       function closeTeamSelectionModal() { closeModal("teamSelectionModal"); }
       function openSettingsModal() {
         const mustWinToggle = document.getElementById("mustWinByBidToggle");
@@ -1674,7 +1869,7 @@ function applyCheatPenaltyRound(flaggedTeam) {
     startTime: gameFinished ? null : state.startTime,
     pendingPenalty: null
   });
-  if (gameFinished && theWinner) updateTeamsStatsOnGameEnd(theWinner);
+  if (gameFinished && theWinner) updatePlayersStatsOnGameEnd(theWinner);
   saveCurrentGameState();
 }
 
@@ -1834,7 +2029,7 @@ function handleCustomBidChange(e) {
             biddingTeam: "", bidAmount: "", showCustomBid: false, customBidValue: "", enterBidderPoints: false, error: "",
             accumulatedTime: finalAccumulated, startTime: gameFinished ? null : state.startTime, pendingPenalty: null 
         });
-        if (gameFinished && theWinner) updateTeamsStatsOnGameEnd(theWinner);
+        if (gameFinished && theWinner) updatePlayersStatsOnGameEnd(theWinner);
         saveCurrentGameState();
       }
       function handleUndo() {
@@ -2081,7 +2276,7 @@ function handleGameOverSaveClick(e) {
       
       // --- Misc UI & Utility ---
       function showVersionNum() {
-        alert("Version 1.4.5 adds an option to select: 'must win game by taking bid', a 'redo' button, improved 0-point handling, new cheating penalty and sandbag detection features, enhanced win probability calculations and visual polish, and various bug fixes.");
+        alert("Version 1.4.5(build 522) adds an option to select: 'must win game by taking bid', a 'redo' button, improved 0-point handling, new cheating penalty and sandbag detection features, enhanced win probability calculations and visual polish, and various bug fixes.");
       }
       function formatDuration(ms) {
         if (!ms || ms < 0) return "0:00";
@@ -2118,24 +2313,44 @@ function handleGameOverSaveClick(e) {
       }
       function handleTeamSelectionSubmit(e) {
         e.preventDefault();
-        const getTeamName = (selId, inputId) => {
-            const selVal = document.getElementById(selId).value;
-            return selVal === "NEW_TEAM" ? document.getElementById(inputId).value.trim() : selVal;
-        };
-        let finalUs = getTeamName("selectUsTeam", "newUsTeamName");
-        let finalDem = getTeamName("selectDemTeam", "newDemTeamName");
+        // Get player names from inputs
+        const usPlayer1 = document.getElementById('usPlayer1').value.trim();
+        const usPlayer2 = document.getElementById('usPlayer2').value.trim();
+        const demPlayer1 = document.getElementById('demPlayer1').value.trim();
+        const demPlayer2 = document.getElementById('demPlayer2').value.trim();
 
-        if (!finalUs && !finalDem && (state.usTeamName && state.demTeamName)) { // If user cancels with existing names, keep them
-            finalUs = state.usTeamName;
-            finalDem = state.demTeamName;
-        } else { // Validate new/selected names
-            if (!finalUs || finalUs === "NEW_TEAM") { alert("Please provide a name for Team 'Us'."); return; }
-            if (!finalDem || finalDem === "NEW_TEAM") { alert("Please provide a name for Team 'Dem'."); return; }
-            if (finalUs === finalDem) { alert("Team names must be different."); return; }
+        // Validate
+        if (!usPlayer1 || !usPlayer2 || !demPlayer1 || !demPlayer2) {
+          alert('Please enter all four player names.');
+          return;
+        }
+        // Prevent duplicate names
+        const allNames = [usPlayer1, usPlayer2, demPlayer1, demPlayer2];
+        const nameSet = new Set(allNames.map(n => n.toLowerCase()));
+        if (nameSet.size !== 4) {
+          alert('Player names must be unique.');
+          return;
         }
 
-        addTeamIfNotExists(finalUs); addTeamIfNotExists(finalDem);
-        updateState({ usTeamName: finalUs, demTeamName: finalDem });
+        // For legacy display, set team names as "Us" and "Dem" (or join player names)
+        const usTeamName = `${usPlayer1} & ${usPlayer2}`;
+        const demTeamName = `${demPlayer1} & ${demPlayer2}`;
+
+        // Add players to playersObject if not present
+        const playersObj = getPlayersObject();
+        [usPlayer1, usPlayer2, demPlayer1, demPlayer2].forEach(name => {
+          if (!playersObj[name]) {
+            playersObj[name] = { wins: 0, losses: 0, gamesPlayed: 0 };
+          }
+        });
+        setPlayersObject(playersObj);
+
+        updateState({
+          usPlayers: [usPlayer1, usPlayer2],
+          demPlayers: [demPlayer1, demPlayer2],
+          usTeamName,
+          demTeamName
+        });
         saveCurrentGameState();
         closeTeamSelectionModal();
         if (pendingGameAction === "freeze") { confirmFreeze(); }
@@ -2620,98 +2835,67 @@ function handleGameOverSaveClick(e) {
       function renderStatisticsContent() {
         const stats = getStatistics();
         let content = "";
-        if (!stats.totalGames && !stats.teamsData.length) {
-            content = `<div class="py-8 text-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg><p class="mt-4 text-gray-600 dark:text-gray-400 text-lg">No stats yet. Play some games!</p><button onclick="handleNewGame(); closeMenuOverlay(); closeStatisticsModal();" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Start New Game</button></div>`;
+        if (!stats.totalGames && !stats.playersData.length) {
+          content = `<div class="py-8 text-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg><p class="mt-4 text-gray-600 dark:text-gray-400 text-lg">No stats yet. Play some games!</p><button onclick="handleNewGame(); closeMenuOverlay(); closeStatisticsModal();" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Start New Game</button></div>`;
         } else {
-            const statCard = (title, value, iconSvg, color) => `
-                <div class="bg-gradient-to-br from-${color}-50 to-${color}-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-2.5 shadow-sm">
-                  <div class="flex items-center"><div class="p-1.5 bg-${color}-500 rounded-lg text-white">${iconSvg}</div>
-                    <div class="ml-2"><p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">${title}</p><p class="text-lg font-bold text-gray-900 dark:text-white">${value}</p></div>
-                  </div></div>`;
-            
-            const icons = {
-                avgBid: '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>',
-                timePlayed: '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                gamesPlayed: '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>'
-            };
-            let statCardsHtml = stats.totalGames > 0 ? `<div class="grid grid-cols-3 gap-2 mb-4">
-                ${statCard("Avg Bid", stats.overallAverageBid, icons.avgBid, "blue")}
-                ${statCard("Time Played", formatDuration(stats.totalTimePlayedMs), icons.timePlayed, "purple")}
-                ${statCard("Games Played", stats.totalGames, icons.gamesPlayed, "green")}
-            </div>` : "";
-
-            let statSelector = `<div class="mt-6 mb-4"><label for="additionalStatSelector" class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Team Statistics</label><div class="relative"><select id="additionalStatSelector" class="appearance-none block w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg py-2.5 px-3 text-gray-700 dark:text-white leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400"><option value="games">Games Played</option><option value="avgBid">Avg Bid</option><option value="bidSuccessPct">Bid Success %</option><option value="sandbagger">Sandbagger?</option><option value="360s">360s</option></select><div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg></div></div></div>`;
-            let teamStatsTable = renderTeamStatsTable(stats.teamsData, "games");
-            content = `${statCardsHtml}${statSelector}<div id="teamStatsTableWrapper">${teamStatsTable}</div>`;
+          content = `<div class="mb-4"><label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Player Statistics</label></div>`;
+          content += renderTeamStatsTable(stats.playersData);
         }
         document.getElementById("statisticsModalContent").innerHTML = content;
-        const selector = document.getElementById("additionalStatSelector");
-        if (selector) {
-            selector.addEventListener("change", function () {
-                document.getElementById("teamStatsTableWrapper").innerHTML = renderTeamStatsTable(getStatistics().teamsData, this.value);
-            });
-        }
       }
       function getStatistics() {
         const savedGames = getLocalStorage("savedGames").filter(g => g && Array.isArray(g.rounds) && g.rounds.length > 0);
-        const teamData = {}; // Using object for easier access by team name
-        let totalBids = 0, sumOfBids = 0, totalGameDuration = 0;
-
-        savedGames.forEach(game => {
-            totalGameDuration += game.durationMs || 0;
-            const teamsInGame = [game.usTeamName || "Us", game.demTeamName || "Dem"];
-            teamsInGame.forEach(teamName => {
-                if (!teamData[teamName]) {
-                    teamData[teamName] = { name: teamName, gamesPlayed: 0, wins: 0, totalBidAmount: 0, bidsMade: 0, bidsSucceeded: 0, handsPlayed: 0, handsWon: 0, sandbagGames: 0, perfect360s: 0, lastPlayed: 0 };
-                }
-                teamData[teamName].gamesPlayed++;
-                if (new Date(game.timestamp).getTime() > teamData[teamName].lastPlayed) {
-                    teamData[teamName].lastPlayed = new Date(game.timestamp).getTime();
-                }
-            });
-
-            if (game.winner === "us") teamData[game.usTeamName || "Us"].wins++;
-            else if (game.winner === "dem") teamData[game.demTeamName || "Dem"].wins++;
-            
-            if (isGameSandbagForTeam(game, game.usTeamName || "Us")) teamData[game.usTeamName || "Us"].sandbagGames++;
-            if (isGameSandbagForTeam(game, game.demTeamName || "Dem")) teamData[game.demTeamName || "Dem"].sandbagGames++;
-
-            game.rounds.forEach(round => {
-                sumOfBids += round.bidAmount; totalBids++;
-                const biddingTeamName = round.biddingTeam === "us" ? (game.usTeamName || "Us") : (game.demTeamName || "Dem");
-                const nonBiddingTeamName = round.biddingTeam === "us" ? (game.demTeamName || "Dem") : (game.usTeamName || "Us");
-
-                teamData[biddingTeamName].handsPlayed++;
-                teamData[nonBiddingTeamName].handsPlayed++;
-                teamData[biddingTeamName].bidsMade++;
-                teamData[biddingTeamName].totalBidAmount += round.bidAmount;
-
-                if ((round.biddingTeam === "us" && round.usPoints >= round.bidAmount) || (round.biddingTeam === "dem" && round.demPoints >= round.bidAmount)) {
-                    teamData[biddingTeamName].bidsSucceeded++;
-                }
-                if (round.usPoints > round.demPoints) teamData[game.usTeamName || "Us"].handsWon++;
-                else if (round.demPoints > round.usPoints) teamData[game.demTeamName || "Dem"].handsWon++;
-                
-                if (round.usPoints === 360) teamData[game.usTeamName || "Us"].perfect360s++;
-                if (round.demPoints === 360) teamData[game.demTeamName || "Dem"].perfect360s++;
-            });
+        const playersObj = getPlayersObject();
+        // Defensive: If no playersObj, fallback to old team logic
+        let playerData = {};
+        // Aggregate stats from playersObj
+        Object.entries(playersObj).forEach(([name, stats]) => {
+          playerData[name] = { name, ...stats };
         });
-
-        const teamsArray = Object.values(teamData).map(t => ({
-            ...t,
-            winPercent: t.gamesPlayed > 0 ? ((t.wins / t.gamesPlayed) * 100).toFixed(1) : "0.0",
-            avgBid: t.bidsMade > 0 ? (t.totalBidAmount / t.bidsMade).toFixed(0) : "N/A",
-            bidSuccessPct: t.bidsMade > 0 ? ((t.bidsSucceeded / t.bidsMade) * 100).toFixed(1) : "N/A",
-            sandbagger: t.gamesPlayed > 0 && (t.sandbagGames / t.gamesPlayed > 0.5) ? "Yes" : "No", // Example threshold
-            count360: t.perfect360s
-        })).sort((a,b) => b.lastPlayed - a.lastPlayed); // Sort by most recently played
-
+        // For legacy games (no player arrays), add team names as pseudo-players
+        savedGames.forEach(game => {
+          if (!Array.isArray(game.usPlayers) || !Array.isArray(game.demPlayers)) {
+            // Use team names as pseudo-players
+            [game.usTeamName || "Us", game.demTeamName || "Dem"].forEach(teamName => {
+              if (!playerData[teamName]) playerData[teamName] = { name: teamName, wins: 0, losses: 0, gamesPlayed: 0 };
+              playerData[teamName].gamesPlayed++;
+            });
+            if (game.winner === "us" && playerData[game.usTeamName || "Us"]) playerData[game.usTeamName || "Us"].wins++;
+            if (game.winner === "dem" && playerData[game.demTeamName || "Dem"]) playerData[game.demTeamName || "Dem"].wins++;
+            if (game.winner === "us" && playerData[game.demTeamName || "Dem"]) playerData[game.demTeamName || "Dem"].losses++;
+            if (game.winner === "dem" && playerData[game.usTeamName || "Us"]) playerData[game.usTeamName || "Us"].losses++;
+          }
+        });
+        // Compute win %
+        const playersArray = Object.values(playerData).map(p => ({
+          ...p,
+          winPercent: p.gamesPlayed > 0 ? ((p.wins / p.gamesPlayed) * 100).toFixed(1) : "0.0"
+        })).sort((a, b) => b.gamesPlayed - a.gamesPlayed || b.winPercent - a.winPercent);
         return {
-            totalGames: savedGames.length,
-            overallAverageBid: totalBids > 0 ? (sumOfBids / totalBids).toFixed(0) : "N/A",
-            teamsData: teamsArray,
-            totalTimePlayedMs: totalGameDuration
+          totalGames: savedGames.length,
+          playersData: playersArray
         };
+      }
+      function renderTeamStatsTable(playersData) {
+        let tableHTML = `<div id="teamStatsTableContainer" class="mt-4"><div class="overflow-x-auto -mx-4 sm:mx-0"><div class="inline-block min-w-full align-middle"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600"><thead><tr>
+    <th scope="col" class="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 sticky left-0 z-10">Player</th>
+    <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Games</th>
+    <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Wins</th>
+    <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Losses</th>
+    <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Win %</th>
+    </tr></thead><tbody class="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">`;
+        playersData.forEach((player, index) => {
+          const rowClass = index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700";
+          tableHTML += `<tr class="${rowClass}">
+            <td class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sticky left-0 z-10 ${rowClass}">${player.name}</td>
+            <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${player.gamesPlayed}</td>
+            <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${player.wins}</td>
+            <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${player.losses}</td>
+            <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${player.winPercent}%</td>
+          </tr>`;
+        });
+        tableHTML += `</tbody></table></div></div></div>`;
+        return tableHTML;
       }
       function isGameSandbagForTeam(game, teamName, threshold = 2) {
         let sandbagOpportunities = 0;
@@ -2730,36 +2914,6 @@ function handleGameOverSaveClick(e) {
         });
         return sandbagOpportunities >= threshold;
       }
-      function renderTeamStatsTable(teamsData, additionalStatKey) {
-        const headers = { games: "Games", avgBid: "Avg Bid", bidSuccessPct: "Bid Success %", sandbagger: "Sandbagger?", "360s": "360s" };
-        let tableHTML = `<div id="teamStatsTableContainer" class="mt-4"><div class="overflow-x-auto -mx-4 sm:mx-0"><div class="inline-block min-w-full align-middle"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600"><thead><tr>
-            <th scope="col" class="py-3 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 sticky left-0 z-10">Team</th>
-            <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Win %</th>
-            <th scope="col" class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">${headers[additionalStatKey] || 'Stat'}</th>
-            <th scope="col" class="pl-3 pr-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">Del</th>
-            </tr></thead><tbody class="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">`;
-        teamsData.forEach((team, index) => {
-            const rowClass = index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700"; // Ensure sticky respects row color
-            const lookup = {
-  games   : team.gamesPlayed,
-  "360s"  : team.count360,
-  avgBid  : team.avgBid,
-  bidSuccessPct : team.bidSuccessPct,
-  sandbagger    : team.sandbagger
-};
-let statVal = lookup[additionalStatKey] ?? '0';
-
-            if (additionalStatKey.includes('Pct') && typeof statVal === 'string' && !statVal.includes('%') && statVal !== 'N/A') statVal += '%';
-
-            tableHTML += `<tr class="${rowClass}">
-                <td class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sticky left-0 z-10 ${rowClass}">${team.name}</td>
-                <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${team.winPercent}%</td>
-                <td class="whitespace-nowrap px-3 py-3.5 text-sm text-center text-gray-700 dark:text-gray-300">${statVal}</td>
-                <td class="whitespace-nowrap pl-3 pr-4 py-3.5 text-sm text-center"><button onclick="handleDeleteTeam('${team.name}'); event.stopPropagation();" class="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 rounded-full p-1.5 dark:text-red-400 dark:hover:text-red-300" aria-label="Delete Team">${Icons.Trash}</button></td></tr>`;
-        });
-        tableHTML += `</tbody></table></div></div></div>`;
-        return tableHTML;
-      }
       function handleDeleteTeam(teamName) {
         openConfirmationModal(`Delete team "${teamName}" and all game data? This is irreversible.`, () => {
             const teams = getTeamsObject(); delete teams[teamName]; setTeamsObject(teams);
@@ -2774,9 +2928,22 @@ let statVal = lookup[additionalStatKey] ?? '0';
         }, closeConfirmationModal);
       }
 
+      // --- Player Stats Helpers --- 
+    const getPlayersObject = () => JSON.parse(localStorage.getItem('players') || '{}');
+    const setPlayersObject = obj => localStorage.setItem('players', JSON.stringify(obj));
+
+    // --- Migration: Support legacy team stats ---
+    function hasPlayerStats() {
+      // Returns true if player arrays and playersObject exist
+      try {
+        const playersObj = getPlayersObject();
+        return Array.isArray(state.usPlayers) && Array.isArray(state.demPlayers) && Object.keys(playersObj).length > 0;
+      } catch (e) { return false; }
+    }
+
       // --- Initialization ---
       document.addEventListener("DOMContentLoaded", () => {
-        // Removed performDataMigration();
+        migrateLegacyTeamData();      // ← run once
         initializeDarkMode();
         initializeTheme(); // Predefined themes
         initializeCustomThemeColors(); // Custom primary/accent
@@ -2875,6 +3042,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateState({ pendingPenalty: null });
         showSaveIndicator("Penalty removed");
       }
+    
     </script>
 </body>
 </html>
