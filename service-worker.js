@@ -1,12 +1,13 @@
 /* --------  service-worker.js  -------- */
 
-const CACHE_NAME   = "rook-v1.4.503";      //  ←  bump on every release
+const CACHE_NAME   = "rook-v1.4.504";      //  ←  bump on every release
 const CORE_ASSETS  = [
   "/",                       // alias for index.html when online
   "/index.html",             // app shell
   "/manifest.json",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png",
+  "/dist/output.css",
 ];
 
 /* ----------  INSTALL  ---------- */
