@@ -146,13 +146,9 @@
         border-bottom-right-radius: 0.75rem;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        will-change: transform;
       }
       nav.show {
         left: 0; /* Shown */
-      }
-      nav.dragging {
-        transition: none; /* Disable transition during drag */
       }
       html.dark nav {
         background-color: #2d3748; /* dark:bg-gray-700 equivalent */
@@ -216,15 +212,9 @@
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 1150;
         display: none;
-        transition: opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        opacity: 0;
       }
       .menu-overlay.show {
         display: block;
-        opacity: 1;
-      }
-      .menu-overlay.dragging {
-        transition: none; /* Disable transition during drag */
       }
 
       /* Modal Styling */
@@ -266,26 +256,6 @@
       /* Scrollbar Hiding */
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-      /* Swipe indicator */
-      .swipe-indicator {
-        position: fixed;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 60px;
-        background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.3));
-        border-top-right-radius: 4px;
-        border-bottom-right-radius: 4px;
-        z-index: 1100;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-      }
-      .swipe-indicator.show {
-        opacity: 1;
-      }
 
       /* Save Indicator */
       #saveIndicator {
@@ -477,9 +447,6 @@
       </ul>
     </nav>
     <div id="menuOverlay" class="menu-overlay" onclick="closeMenuOverlay()" aria-hidden="true"></div>
-
-    <!-- Swipe Indicator -->
-    <div id="swipeIndicator" class="swipe-indicator"></div>
 
     <!-- Version Number -->
     <div class="absolute top-0 right-0 m-4 p-2 text-gray-800 font-medium text-xs bg-white bg-opacity-70 rounded shadow px-3 py-1 dark:bg-gray-800 dark:text-white cursor-pointer" onclick="showVersionNum()">
@@ -1799,220 +1766,6 @@ function initializeCustomThemeColors() {
         document.body.classList.toggle("overflow-hidden", isOpen);
       }
       function closeMenuOverlay() { toggleMenu(null); } // Simplified close
-
-      // --- Swipe Gesture Handling ---
-      let swipeState = {
-        startX: 0,
-        startY: 0,
-        currentX: 0,
-        currentY: 0,
-        isDragging: false,
-        isMenuOpen: false,
-        startTime: 0,
-        threshold: 40, // Minimum distance for swipe
-        maxVerticalDistance: 120, // Maximum vertical movement allowed
-        menuWidth: 280
-      };
-
-      function initSwipeGestures() {
-        const menu = document.getElementById("menu");
-        const overlay = document.getElementById("menuOverlay");
-        const indicator = document.getElementById("swipeIndicator");
-        
-        // Touch events for opening menu from left edge
-        document.addEventListener('touchstart', handleTouchStart, { passive: false });
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('touchend', handleTouchEnd, { passive: false });
-        
-        // Mouse events for desktop testing
-        document.addEventListener('mousedown', handleMouseStart, { passive: false });
-        document.addEventListener('mousemove', handleMouseMove, { passive: false });
-        document.addEventListener('mouseup', handleMouseEnd, { passive: false });
-        
-        // Show swipe indicator briefly on page load
-        setTimeout(() => {
-          if (!menu.classList.contains('show')) {
-            indicator.classList.add('show');
-            setTimeout(() => indicator.classList.remove('show'), 2000);
-          }
-        }, 1000);
-      }
-
-      function handleTouchStart(e) {
-        handlePointerStart(e.touches[0].clientX, e.touches[0].clientY, e);
-      }
-
-      function handleMouseStart(e) {
-        handlePointerStart(e.clientX, e.clientY, e);
-      }
-
-      function handlePointerStart(x, y, e) {
-        const menu = document.getElementById("menu");
-        swipeState.isMenuOpen = menu.classList.contains('show');
-        swipeState.startX = x;
-        swipeState.startY = y;
-        swipeState.currentX = x;
-        swipeState.currentY = y;
-        swipeState.startTime = Date.now();
-        
-        // Check if starting from left edge (for opening) or from menu area (for closing)
-        const isFromLeftEdge = x <= 30; // 30px from left edge
-        const isFromMenuArea = swipeState.isMenuOpen && x <= swipeState.menuWidth; // Within menu area
-        
-        if (isFromLeftEdge || isFromMenuArea) {
-          swipeState.isDragging = true;
-          e.preventDefault();
-        }
-      }
-
-      function handleTouchMove(e) {
-        if (swipeState.isDragging) {
-          handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, e);
-        }
-      }
-
-      function handleMouseMove(e) {
-        if (swipeState.isDragging) {
-          handlePointerMove(e.clientX, e.clientY, e);
-        }
-      }
-
-      function handlePointerMove(x, y, e) {
-        if (!swipeState.isDragging) return;
-        
-        swipeState.currentX = x;
-        swipeState.currentY = y;
-        
-        const deltaX = x - swipeState.startX;
-        const deltaY = Math.abs(y - swipeState.startY);
-        
-        // Cancel if too much vertical movement
-        if (deltaY > swipeState.maxVerticalDistance) {
-          cancelSwipe();
-          return;
-        }
-        
-        const menu = document.getElementById("menu");
-        const overlay = document.getElementById("menuOverlay");
-        
-        // Add dragging class to disable transitions
-        menu.classList.add('dragging');
-        overlay.classList.add('dragging');
-        
-        if (swipeState.isMenuOpen) {
-          // Menu is open, handle closing gesture
-          if (deltaX < 0) { // Swiping left
-            const progress = Math.max(0, Math.min(1, Math.abs(deltaX) / swipeState.menuWidth));
-            const newLeft = -progress * swipeState.menuWidth;
-            menu.style.left = `${newLeft}px`;
-            
-            // Update overlay opacity
-            const overlayOpacity = 1 - progress;
-            overlay.style.opacity = overlayOpacity;
-            overlay.style.display = 'block';
-          }
-        } else {
-          // Menu is closed, handle opening gesture
-          if (deltaX > 0) { // Swiping right
-            const progress = Math.max(0, Math.min(1, deltaX / swipeState.menuWidth));
-            const newLeft = -swipeState.menuWidth + (progress * swipeState.menuWidth);
-            menu.style.left = `${newLeft}px`;
-            
-                         // Update overlay opacity
-             const overlayOpacity = progress;
-            overlay.style.opacity = overlayOpacity;
-            overlay.style.display = 'block';
-          }
-        }
-        
-        e.preventDefault();
-      }
-
-      function handleTouchEnd(e) {
-        handlePointerEnd(e);
-      }
-
-      function handleMouseEnd(e) {
-        handlePointerEnd(e);
-      }
-
-      function handlePointerEnd(e) {
-        if (!swipeState.isDragging) return;
-        
-        const deltaX = swipeState.currentX - swipeState.startX;
-        const deltaY = Math.abs(swipeState.currentY - swipeState.startY);
-        const deltaTime = Date.now() - swipeState.startTime;
-        const velocity = Math.abs(deltaX) / deltaTime; // pixels per ms
-        
-        const menu = document.getElementById("menu");
-        const overlay = document.getElementById("menuOverlay");
-        const icon = document.getElementById("hamburgerIcon");
-        
-        // Remove dragging class to re-enable transitions
-        menu.classList.remove('dragging');
-        overlay.classList.remove('dragging');
-        
-        // Clear inline styles
-        menu.style.left = '';
-        overlay.style.opacity = '';
-        
-        let shouldToggle = false;
-        
-        if (swipeState.isMenuOpen) {
-          // Menu is open, check if should close
-          const swipeDistance = Math.abs(deltaX);
-          const swipeThreshold = swipeState.menuWidth * 0.3; // 30% of menu width
-          
-          if (deltaX < 0 && (swipeDistance > swipeThreshold || velocity > 0.5)) {
-            shouldToggle = true; // Close menu
-          }
-        } else {
-          // Menu is closed, check if should open
-          const swipeDistance = deltaX;
-          const swipeThreshold = swipeState.threshold;
-          
-          if (deltaX > 0 && (swipeDistance > swipeThreshold || velocity > 0.5)) {
-            shouldToggle = true; // Open menu
-          }
-        }
-        
-        if (shouldToggle) {
-          // Toggle menu state
-          const isOpen = !swipeState.isMenuOpen;
-          menu.classList.toggle("show", isOpen);
-          icon.classList.toggle("open", isOpen);
-          overlay.classList.toggle("show", isOpen);
-          document.body.classList.toggle("overflow-hidden", isOpen);
-        } else {
-          // Snap back to original position
-          if (!swipeState.isMenuOpen) {
-            overlay.style.display = 'none';
-          }
-        }
-        
-        // Reset swipe state
-        swipeState.isDragging = false;
-        swipeState.startX = 0;
-        swipeState.startY = 0;
-        swipeState.currentX = 0;
-        swipeState.currentY = 0;
-      }
-
-      function cancelSwipe() {
-        const menu = document.getElementById("menu");
-        const overlay = document.getElementById("menuOverlay");
-        
-        menu.classList.remove('dragging');
-        overlay.classList.remove('dragging');
-        menu.style.left = '';
-        overlay.style.opacity = '';
-        
-        if (!swipeState.isMenuOpen) {
-          overlay.style.display = 'none';
-        }
-        
-        swipeState.isDragging = false;
-      }
 
       function openModal(modalId) {
         document.getElementById(modalId)?.classList.remove("hidden");
@@ -3600,9 +3353,14 @@ let statVal = lookup[additionalStatKey] ?? '0';
                 }
             });
         });
-        
-        // Initialize swipe gestures for menu
-        initSwipeGestures();
+        document.body.addEventListener('touchend', e => {
+            const touchEndX = e.changedTouches[0].clientX;
+            if (touchStartX < 50 && touchEndX > touchStartX + 50) { // Swipe right from left edge
+                 if (!document.getElementById("menu").classList.contains("show")) toggleMenu(e); // Open if closed
+            } else if (document.getElementById("menu").classList.contains("show") && touchEndX < touchStartX - 50) { // Swipe left when menu open
+                 if (document.getElementById("menu").classList.contains("show")) toggleMenu(e); // Close if open
+            }
+        }, { passive: true });
       });
 
       // SAFETY-NET: make sure the app starts with pointer-events ON
@@ -3659,6 +3417,82 @@ document.addEventListener('DOMContentLoaded', () => {
           closeTeamSelectionModal();
         }
       }
+    </script>
+    <script>
+      // Swipe-and-drag gesture for menu open/close
+      (function() {
+          const menu = document.getElementById("menu");
+          const overlay = document.getElementById("menuOverlay");
+          const icon = document.getElementById("hamburgerIcon");
+          let startX = 0;
+          let currentX = 0;
+          let isDragging = false;
+          let isOpening = false;
+          const menuWidth = menu.offsetWidth;
+
+          function onTouchStart(e) {
+              startX = e.touches[0].clientX;
+              currentX = startX;
+              if (!menu.classList.contains("show") && startX <= 20) {
+                  isDragging = true;
+                  isOpening = true;
+                  menu.style.transition = "none";
+                  overlay.classList.add("show");
+                  overlay.style.opacity = "0";
+                  document.body.classList.add("overflow-hidden");
+              } else if (menu.classList.contains("show") && startX <= menuWidth) {
+                  isDragging = true;
+                  isOpening = false;
+                  menu.style.transition = "none";
+              }
+          }
+
+          function onTouchMove(e) {
+              if (!isDragging) return;
+              currentX = e.touches[0].clientX;
+              let deltaX = currentX - startX;
+              if (isOpening) {
+                  const left = Math.min(0, -menuWidth + currentX);
+                  menu.style.left = left + "px";
+                  overlay.style.opacity = (menuWidth + left) / menuWidth;
+              } else {
+                  const left = Math.min(0, deltaX);
+                  menu.style.left = left + "px";
+                  overlay.style.opacity = (menuWidth + left) / menuWidth;
+              }
+          }
+
+          function onTouchEnd() {
+              if (!isDragging) return;
+              isDragging = false;
+              const deltaX = currentX - startX;
+              const threshold = menuWidth / 3;
+              let shouldOpen;
+              if (isOpening) {
+                  shouldOpen = deltaX > threshold;
+              } else {
+                  shouldOpen = deltaX > -threshold;
+              }
+              menu.style.transition = "";
+              if (shouldOpen) {
+                  menu.classList.add("show");
+                  icon.classList.add("open");
+                  overlay.classList.add("show");
+                  document.body.classList.add("overflow-hidden");
+              } else {
+                  menu.classList.remove("show");
+                  icon.classList.remove("open");
+                  overlay.classList.remove("show");
+                  document.body.classList.remove("overflow-hidden");
+              }
+              menu.style.left = "";
+              overlay.style.opacity = "";
+          }
+
+          document.addEventListener("touchstart", onTouchStart, { passive: false });
+          document.addEventListener("touchmove", onTouchMove, { passive: false });
+          document.addEventListener("touchend", onTouchEnd, { passive: true });
+      })();
     </script>
 </body>
 </html>
