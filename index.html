@@ -599,7 +599,7 @@
             </ul>
           </section>
           <section class="bg-yellow-50 dark:bg-gray-700 rounded-xl p-5 shadow-sm mb-6">
-            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0zM4.93 4.93l1.07 1.07M18 18l1.07 1.07M4.93 19.07l1.07-1.07M18 6l1.07-1.07M12 2a10 10 0 100 20 10 10 0 000-20zM12 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM12 6a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" /></svg>Report an Issue</h3>
+            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Report an Issue</h3>
             <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Found a problem? Click below to open an email draft with debug info. Please describe the issue.</p>
             <button type="button" onclick="handleBugReportClick()" class="w-full bg-yellow-500 text-white px-4 py-2.5 rounded-xl hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 transition-colors duration-200 font-medium threed flex items-center justify-center shadow-md"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>Create Bug Report Email</button>
           </section>
@@ -994,8 +994,8 @@ role="dialog" aria-modal="true" aria-labelledby="zeroPointsModalTitle">
           console.warn("Firebase not initialized for sync.");
           return false;
         }
-        if (!window.firebaseAuth.currentUser || window.firebaseAuth.currentUser.isAnonymous) {
-          console.log("User not signed in with Google or is anonymous. Not syncing to Firestore.");
+        if (!window.firebaseAuth.currentUser) {
+          console.log("User not authenticated. Not syncing to Firestore.");
           return false;
         }
         try {
@@ -1379,7 +1379,7 @@ function calculateWinProbability(state, historicalGames) {
       function setLocalStorage(key, value) {
         try {
           localStorage.setItem(key, JSON.stringify(value));
-          if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth?.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+          if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth?.currentUser) {
             // Non-blocking sync
             setTimeout(() => {
               window.syncToFirestore(key, value).catch(err => console.warn(`Firestore sync failed for ${key}:`, err));
@@ -1719,7 +1719,7 @@ function initializeCustomThemeColors() {
         ephemeralPoints = "";
         localStorage.removeItem(ACTIVE_GAME_KEY);
         // Attempt to also clear from Firebase if user is signed in
-        if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth?.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+        if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth?.currentUser) {
             window.syncToFirestore(ACTIVE_GAME_KEY, null); // Sync deletion of active game
         }
       }
@@ -1760,7 +1760,7 @@ function initializeCustomThemeColors() {
       function saveCurrentGameState() {
         if (state.gameOver) {
           localStorage.removeItem(ACTIVE_GAME_KEY);
-          if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth?.currentUser && !window.firebaseAuth.currentUser.isAnonymous) {
+          if (window.syncToFirestore && window.firebaseReady && window.firebaseAuth?.currentUser) {
             window.syncToFirestore(ACTIVE_GAME_KEY, null);
           }
         } else {
