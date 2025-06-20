@@ -580,7 +580,7 @@
             </div>
           </section>
           <section class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 shadow-sm mb-6">
-            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>What's New in v1.4.6</h3>
+            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-white flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>What's New in v1.4.6 (Build 5)</h3>
             <ul class="space-y-2 text-gray-700 dark:text-gray-200">
               <li class="flex items-start"><div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div><span class="ml-2"><strong>Improved 0-Point Handling:</strong> Added a smart popup to confirm if a 0-point team should trigger a 180 or 360-point bonus to the bidding team.</span></li>
               <li class="flex items-start"><div class="flex-shrink-0 h-5 w-5 text-green-600 dark:text-green-400"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div><span class="ml-2"><strong>Enhanced Table-Talk Feature:</strong> Choose which team committed table-talk violation (not just bidding team)</span></li>
@@ -800,11 +800,6 @@ role="dialog" aria-modal="true" aria-labelledby="zeroPointsModalTitle">
    <button id="zeroPts360Btn"
            class="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 threed">
      360
-   </button>
-
-   <button id="zeroPtsZeroBtn"
-           class="px-4 py-2 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 threed">
-     Keep&nbsp;0
    </button>
  </div>
 
@@ -1871,52 +1866,48 @@ function initializeCustomThemeColors() {
       function openViewSavedGameModal() { openModal("viewSavedGameModal"); }
       function closeViewSavedGameModal() { closeModal("viewSavedGameModal"); openModal("savedGamesModal"); } // Reopen parent
 
-      // Add zero points modal handlers
-      let zeroPointsCallback = null;
       function openZeroPointsModal(callback) {
-          zeroPointsCallback = callback;
-          openModal("zeroPointsModal");
-          const btn180 = document.getElementById("zeroPts180Btn");
-          const btn360 = document.getElementById("zeroPts360Btn");
-          const btnZero = document.getElementById("zeroPtsZeroBtn");
-          const btnCancel = document.getElementById("zeroPtsCancelBtn");
-
-          const newBtn180 = btn180.cloneNode(true);
-          btn180.parentNode.replaceChild(newBtn180, btn180);
-          newBtn180.addEventListener("click", (e) => {
-              e.stopPropagation();
-              closeZeroPointsModal();
-              zeroPointsCallback(180);
-          });
-
-          const newBtn360 = btn360.cloneNode(true);
-          btn360.parentNode.replaceChild(newBtn360, btn360);
-          newBtn360.addEventListener("click", (e) => {
-              e.stopPropagation();
-              closeZeroPointsModal();
-              zeroPointsCallback(360);
-          });
-
-          const newBtnZero = btnZero.cloneNode(true);
-          btnZero.parentNode.replaceChild(newBtnZero, btnZero);
-          newBtnZero.addEventListener("click", (e) => {
-              e.stopPropagation();
-              closeZeroPointsModal();
-              zeroPointsCallback(0);
-          });
-
-          const newBtnCancel = btnCancel.cloneNode(true);
-          btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
-          newBtnCancel.addEventListener("click", (e) => {
-              e.stopPropagation();
-              closeZeroPointsModal();
-              // Do not call callback on cancel
-          });
+        let zeroPointsCallback = callback;
+        
+        // Open the modal
+        openModal("zeroPointsModal");
+        
+        // Add event listeners to the buttons
+        const btn180 = document.getElementById("zeroPts180Btn");
+        const btn360 = document.getElementById("zeroPts360Btn");
+        const btnCancel = document.getElementById("zeroPtsCancelBtn");
+        
+        // Remove existing listeners by cloning nodes
+        const newBtn180 = btn180.cloneNode(true);
+        const newBtn360 = btn360.cloneNode(true);
+        const newBtnCancel = btnCancel.cloneNode(true);
+        
+        btn180.parentNode.replaceChild(newBtn180, btn180);
+        btn360.parentNode.replaceChild(newBtn360, btn360);
+        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+        
+        // Add new event listeners
+        newBtn180.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeModal("zeroPointsModal");
+          if (zeroPointsCallback) zeroPointsCallback(180);
+        });
+        
+        newBtn360.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeModal("zeroPointsModal");
+          if (zeroPointsCallback) zeroPointsCallback(360);
+        });
+        
+        newBtnCancel.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeModal("zeroPointsModal");
+          // No callback on cancel
+        });
       }
 
       function closeZeroPointsModal() {
-          closeModal("zeroPointsModal");
-          zeroPointsCallback = null;
+        closeModal("zeroPointsModal");
       }
 
       // --- Game Actions & Logic ---
@@ -2627,10 +2618,10 @@ function handleGameOverSaveClick(e) {
         
         if (roundTime > ROUND_WARNING_TIME || currentTime > GAME_WARNING_TIME) {
           if (roundTime > MAX_ROUND_TIME_MS * 0.9) {
-            warningMessage = "⚠️ Round time is very high! Consider saving the game.";
+            warningMessage = "⚠️ Round time is very high! Consider starting a new game.";
             warningLevel = "danger";
           } else if (currentTime > MAX_GAME_TIME_MS * 0.9) {
-            warningMessage = "⚠️ Game time is very high! Consider finishing the game.";
+            warningMessage = "⚠️ Game time is very high! Consider starting a new game.";
             warningLevel = "danger";
           } else if (roundTime > ROUND_WARNING_TIME) {
             warningMessage = "⏰ Round has been active for " + formatDuration(roundTime);
