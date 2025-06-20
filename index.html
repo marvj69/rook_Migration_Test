@@ -1871,6 +1871,54 @@ function initializeCustomThemeColors() {
       function openViewSavedGameModal() { openModal("viewSavedGameModal"); }
       function closeViewSavedGameModal() { closeModal("viewSavedGameModal"); openModal("savedGamesModal"); } // Reopen parent
 
+      // Add zero points modal handlers
+      let zeroPointsCallback = null;
+      function openZeroPointsModal(callback) {
+          zeroPointsCallback = callback;
+          openModal("zeroPointsModal");
+          const btn180 = document.getElementById("zeroPts180Btn");
+          const btn360 = document.getElementById("zeroPts360Btn");
+          const btnZero = document.getElementById("zeroPtsZeroBtn");
+          const btnCancel = document.getElementById("zeroPtsCancelBtn");
+
+          const newBtn180 = btn180.cloneNode(true);
+          btn180.parentNode.replaceChild(newBtn180, btn180);
+          newBtn180.addEventListener("click", (e) => {
+              e.stopPropagation();
+              closeZeroPointsModal();
+              zeroPointsCallback(180);
+          });
+
+          const newBtn360 = btn360.cloneNode(true);
+          btn360.parentNode.replaceChild(newBtn360, btn360);
+          newBtn360.addEventListener("click", (e) => {
+              e.stopPropagation();
+              closeZeroPointsModal();
+              zeroPointsCallback(360);
+          });
+
+          const newBtnZero = btnZero.cloneNode(true);
+          btnZero.parentNode.replaceChild(newBtnZero, btnZero);
+          newBtnZero.addEventListener("click", (e) => {
+              e.stopPropagation();
+              closeZeroPointsModal();
+              zeroPointsCallback(0);
+          });
+
+          const newBtnCancel = btnCancel.cloneNode(true);
+          btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+          newBtnCancel.addEventListener("click", (e) => {
+              e.stopPropagation();
+              closeZeroPointsModal();
+              // Do not call callback on cancel
+          });
+      }
+
+      function closeZeroPointsModal() {
+          closeModal("zeroPointsModal");
+          zeroPointsCallback = null;
+      }
+
       // --- Game Actions & Logic ---
       function handleCheatFlag() {
   if (!state.biddingTeam) return;  // Can't apply penalty without an active bidding team
