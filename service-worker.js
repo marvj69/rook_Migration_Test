@@ -1,4 +1,4 @@
-const CACHE_NAME = "rook-cache-v1.4.549";
+const CACHE_NAME = "rook-cache-v1.4.560";
 const OFFLINE_URL = "index.html"; // Use relative path
 
 const urlsToCache = [
@@ -9,7 +9,7 @@ const urlsToCache = [
   "./icons/icon-512x512.png",
   "./service-worker.js",
   // External CDN resources for offline functionality
-  "https://cdn.tailwindcss.com",
+  "https://cdn.tailwindcss.com/3.4.16",
   "https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
 ];
 
@@ -51,6 +51,10 @@ self.addEventListener("fetch", (event) => {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseClone);
+              // Also cache the base tailwind URL to handle redirects
+              if (event.request.url === 'https://cdn.tailwindcss.com') {
+                cache.put('https://cdn.tailwindcss.com/3.4.16', responseClone.clone());
+              }
             });
           }
           return networkResponse;
