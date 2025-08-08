@@ -1,4 +1,4 @@
-const CACHE_NAME = "rook-cache-v1.562";
+const CACHE_NAME = "rook-cache-v1.4.560";
 const OFFLINE_URL = "index.html"; // Use relative path
 
 const urlsToCache = [
@@ -8,89 +8,83 @@ const urlsToCache = [
   "./icons/icon-192x192.png",
   "./icons/icon-512x512.png",
   "./service-worker.js",
-  // External CDN resources for offline functionality
-  "https://cdn.tailwindcss.com/3.4.16",
-  "https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
+  // External CDN resources for offline functionality (precache what is safe)
+  "https://cdn.tailwindcss.com",
+  "https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js",
+  "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js",
+  "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js",
+  "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
 ];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
 });
 
 self.addEventListener("fetch", (event) => {
-  // Handle navigation requests
+  // Handle navigation requests (network-first with offline fallback)
   if (event.request.mode === "navigate") {
     event.respondWith(
-      caches.match("./index.html").then((cachedResponse) => {
-        if (cachedResponse) {
-          // Serve cached version immediately
-          // Update cache in background (stale-while-revalidate)
-          fetch(event.request)
-            .then((networkResponse) => {
-              return caches.open(CACHE_NAME).then((cache) => {
-                cache.put("./index.html", networkResponse.clone());
-              });
-            })
-            .catch(() => {}); // Ignore network errors when updating cache
-          
-          return cachedResponse;
-        }
-        
-        // If not in cache, fetch from network
-        return fetch(event.request)
-          .then((networkResponse) => {
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put("./index.html", networkResponse.clone());
-              return networkResponse;
-            });
-          })
-          .catch(() => caches.match("./index.html")); // Final fallback
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put("./index.html", networkResponse.clone());
+            return networkResponse;
+          });
+        })
+        .catch(() => caches.match("./index.html"))
     );
-  } else {
-    // Handle other assets (including external CDN resources)
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        
-        return fetch(event.request).then((networkResponse) => {
-          // Cache external resources for offline use
-          if (event.request.url.includes('cdn.tailwindcss.com') || 
-              event.request.url.includes('cdn.jsdelivr.net')) {
+    return;
+  }
+
+  // Runtime cache for external script resources incl. Firebase ESM modules
+  const url = event.request.url;
+  const shouldRuntimeCache = (
+    url.includes('cdn.tailwindcss.com') ||
+    url.includes('cdn.jsdelivr.net') ||
+    url.includes('www.gstatic.com/firebasejs')
+  );
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (shouldRuntimeCache && networkResponse && networkResponse.ok) {
             const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-              // Also cache the base tailwind URL to handle redirects
-              if (event.request.url === 'https://cdn.tailwindcss.com') {
-                cache.put('https://cdn.tailwindcss.com/3.4.16', responseClone.clone());
-              }
-            });
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
           }
           return networkResponse;
+        })
+        .catch(async () => {
+          // If the request is for a runtime-cached library, try any cached version
+          if (shouldRuntimeCache) {
+            const cache = await caches.open(CACHE_NAME);
+            const keys = await cache.keys();
+            const match = keys.find((req) => req.url === url);
+            if (match) return cache.match(match);
+          }
+          // As a last resort do nothing special; let it fail
+          throw new Error('Network error and no cache match');
         });
-      })
-    );
-  }
+    })
+  );
 });
 
 self.addEventListener("activate", (event) => {
   self.clients.claim();
-    event.waitUntil(
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-    );
-  });
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      )
+    )
+  );
+});
