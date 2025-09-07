@@ -1,85 +1,109 @@
-const CACHE_NAME = "rook-cache-v1.4.552"; // Updated version to trigger re-install
-const OFFLINE_URL = "index.html"; 
+const VERSION = '1.4.6-b6';
+const STATIC_CACHE = 'rook-static-' + VERSION;
+const RUNTIME_CACHE = 'rook-runtime-' + VERSION;
 
-// Added all required Firebase modules to the cache list
-const urlsToCache = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./icons/icon-192x192.png",
-  "./icons/icon-512x512.png",
-  "./service-worker.js",
-  // External CDN resources required for offline functionality
-  "https://cdn.tailwindcss.com",
-  "https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js",
-  "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js",
-  "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js",
-  "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/assets/tailwind.min.css'
 ];
 
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("Opened cache and caching assets");
-      return cache.addAll(urlsToCache);
-    }).catch(err => {
-      console.error("Failed to cache assets during install:", err);
-    })
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(APP_SHELL))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener("fetch", (event) => {
-  // Handle navigation requests (e.g., loading the app itself) with a network-first strategy
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          // If the network is available, update the cache with the latest version
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
-        })
-        .catch(() => {
-          // If the network fails, serve the cached offline page
-          console.log("Fetch failed; returning offline page from cache.");
-          return caches.match(OFFLINE_URL);
-        })
-    );
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((k) => k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+            .map((k) => caches.delete(k))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigate(request));
     return;
   }
 
-  // For all other requests (assets, scripts, etc.), use a cache-first strategy
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      // If the resource is in the cache, return it
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      // Otherwise, fetch it from the network
-      return fetch(event.request).then((networkResponse) => {
-        // And cache the newly fetched resource for future offline use
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-      });
-    })
-  );
+  const url = new URL(request.url);
+
+  if (url.origin === location.origin) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  event.respondWith(networkFirstWithTimeout(request, 3000));
 });
 
-self.addEventListener("activate", (event) => {
-  // This claims control over the page immediately
-  self.clients.claim();
-  // This removes old, unused caches
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
-      );
+async function handleNavigate(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cached =
+    (await cache.match('/index.html', { ignoreSearch: true })) ||
+    (await cache.match('index.html', { ignoreSearch: true }));
+
+  const network = fetch(request)
+    .then((resp) => {
+      cache.put('/index.html', resp.clone());
+      return resp;
     })
+    .catch(() => null);
+
+  return cached || (await network) ||
+    new Response('<!doctype html><title>Offline</title><p>Offline</p>', {
+      headers: { 'Content-Type': 'text/html' }
+    });
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request, { ignoreSearch: true });
+  if (cached) return cached;
+
+  try {
+    const resp = await fetch(request);
+    caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, resp.clone()));
+    return resp;
+  } catch (e) {
+    if (request.destination === 'style') {
+      return caches.match('/assets/tailwind.min.css');
+    }
+    throw e;
+  }
+}
+
+async function networkFirstWithTimeout(request, timeoutMs) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const timer = new Promise((resolve) =>
+    setTimeout(async () => {
+      const cached = await cache.match(request);
+      if (cached) resolve(cached);
+    }, timeoutMs)
   );
-});
+
+  const network = fetch(request)
+    .then((resp) => {
+      if (request.method === 'GET' && resp.status === 200) {
+        cache.put(request, resp.clone());
+      }
+      return resp;
+    })
+    .catch(async () => {
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      return new Response('', { status: 504 });
+    });
+
+  return Promise.race([network, timer]).then((result) => result || network);
+}
