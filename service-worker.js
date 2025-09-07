@@ -9,6 +9,8 @@ const APP_SHELL = [
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/assets/tailwind.min.css'
+  '/assets/confetti.min.js'
+
 ];
 
 self.addEventListener('install', (event) => {
